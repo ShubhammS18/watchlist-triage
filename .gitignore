@@ -29,3 +29,6 @@ credentials*.json
 data/raw/
 raw_data/
 raw/
+
+# Claude Code personal settings
+.claude/settings.local.json
