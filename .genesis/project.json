@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-07T10:07:05.754Z"
+    "updated_at": "2026-10-07T10:11:36.084Z"
   },
   "policy": {
     "ponytail": "full",
@@ -23,11 +23,11 @@
     }
   },
   "lifecycle": {
-    "phase": "specification",
+    "phase": "planning",
     "status": "active",
-    "active_task": "SPEC-1",
+    "active_task": null,
     "blocker": null,
-    "next_action": "Ask the human to review SPEC.md, then record explicit specification approval."
+    "next_action": "Create requirement-linked implementation tasks with executable gates, then run genesis plan check."
   },
   "commands": {},
   "workflow": {
@@ -104,7 +104,7 @@
       "id": "SPEC-1",
       "type": "specification",
       "path": "SPEC.md",
-      "status": "checked",
+      "status": "approved",
       "requirements": [
         "AC-1",
         "AC-10",
@@ -165,7 +165,12 @@
         "NFR-8"
       ],
       "source_hash": "5dfdbe19a96cc04be14889b0fed6a25ad73a7f929e3c7375ebf37990bc4bc494",
-      "approval": null
+      "approval": {
+        "human": "Shubham Suradkar",
+        "reason": "I'm comfortable building against this spec because it clearly defines what the system must do, how success will be checked, and what is out of scope. The rules for setting targets and calculating metrics are settled, and the actual target numbers will be set after the baseline milestone.",
+        "at": "2026-10-07T10:11:36.052Z",
+        "source_hash": "5dfdbe19a96cc04be14889b0fed6a25ad73a7f929e3c7375ebf37990bc4bc494"
+      }
     }
   ],
   "assumptions": [],
@@ -190,7 +195,7 @@
     {
       "id": "SPEC-1",
       "outcome": "Produce an approved, implementation-ready product specification",
-      "state": "active",
+      "state": "done",
       "risk": "medium",
       "owner": null,
       "scope": [
@@ -203,8 +208,13 @@
           "id": "independent-review",
           "command": "",
           "mandatory": true,
-          "status": "pending",
-          "evidence": null,
+          "status": "pass",
+          "evidence": {
+            "human": "Shubham Suradkar",
+            "reason": "I'm comfortable building against this spec because it clearly defines what the system must do, how success will be checked, and what is out of scope. The rules for setting targets and calculating metrics are settled, and the actual target numbers will be set after the baseline milestone.",
+            "source_hash": "7157a64dab8bf928c4b7c02f69c02aff026d9caa35780d47fa75ed0c66f3a2ac",
+            "observed_at": "2026-10-07T10:11:36.052Z"
+          },
           "kind": "review"
         }
       ],
@@ -214,7 +224,7 @@
       "failures": [],
       "limitations": [],
       "created_at": "2026-10-07T06:37:05.693Z",
-      "updated_at": "2026-10-07T09:46:12.141Z"
+      "updated_at": "2026-10-07T10:11:36.052Z"
     }
   ],
   "learning_proposals": [],
