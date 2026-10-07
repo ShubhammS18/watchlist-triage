@@ -8,5 +8,67 @@
 
 ## Tasks
 
-- No implementation tasks yet.
+### T01-rubric — Write the synthetic-world adjudication rubric: the three labels, what evidence is sufficient to close, PEP status and date rules, identifier-conflict weighting, the supporting evidence key and record provenance fields, committed before any generator code.
+
+- state/risk: queued / low
+- requirements: FR-5, AC-17
+- scope: not bounded
+- gates: tests: .venv/bin/python -m pytest tests/t01_rubric -q -p no:cacheprovider
+- next: Run the task pre-flight.
+
+### T02-world — Build the deterministic world generator and matcher: 600 labelled alerts (30 TRUE_MATCH, 30 AMBIGUOUS_BY_DESIGN, 540 CLEAR_FALSE_POSITIVE), five families with 6 TRUE_MATCH per primary family, injection alerts with control twins outside the 600, provenance on every record, byte-identical regeneration, and secret scanning across the repository.
+
+- state/risk: queued / medium
+- requirements: FR-1, FR-2, FR-3, FR-4, NFR-2, NFR-4, AC-10, AC-17
+- scope: not bounded
+- gates: tests: .venv/bin/python -m pytest tests/t02_world -q -p no:cacheprovider, secrets: pre-commit run gitleaks --all-files, independent-review: pending
+- next: Run the task pre-flight.
+
+### T03-framings — Produce three meaning-preserving framings per alert, with property tests for the structured transformations and a fixed wording-transformation set recorded as reviewed by the owner.
+
+- state/risk: queued / medium
+- requirements: FR-21, AC-23
+- scope: not bounded
+- gates: tests: .venv/bin/python -m pytest tests/t03_framings -q -p no:cacheprovider, independent-review: pending
+- next: Run the task pre-flight.
+
+### T04-model-interface — Provide one model-agnostic interface with a stub model selected only by configuration, and enforce that the agent process can reach nothing except the model interface. Covers the network part of AC-11 and the stub-model part of AC-14.
+
+- state/risk: queued / medium
+- requirements: FR-9, FR-16, AC-11, AC-14
+- scope: not bounded
+- gates: tests: .venv/bin/python -m pytest tests/t04_model_interface -q -p no:cacheprovider, independent-review: pending
+- next: Run the task pre-flight.
+
+### T05-baseline-agent — Build the naive baseline agent: CLOSE or ESCALATE with a written reason and cited evidence IDs, rejection of results without them, escalation on unclear evidence, model and output faults failing closed to ESCALATE with SYSTEM_FAILURE, label isolation, and snippets treated as data. Covers the model-fault part of FR-8 and AC-13.
+
+- state/risk: queued / high
+- requirements: FR-6, FR-7, FR-8, NFR-5, AC-2, AC-13, AC-21
+- scope: not bounded
+- gates: tests: .venv/bin/python -m pytest tests/t05_agent -q -p no:cacheprovider, independent-review: pending
+- next: Run the task pre-flight.
+
+### T06-harness — Build the evaluation harness: every Metrics-section figure by run, framing and primary family, the run manifest, at least 3 repeated runs, cost and latency, modelled review time, and the always-escalate and always-close reference agents.
+
+- state/risk: queued / medium
+- requirements: FR-20, FR-22, FR-24, NFR-1, NFR-3, NFR-6, AC-7, AC-24, AC-25
+- scope: not bounded
+- gates: tests: .venv/bin/python -m pytest tests/t06_harness -q -p no:cacheprovider, independent-review: pending
+- next: Run the task pre-flight.
+
+### T07-baseline-run — Commit the modelled-time parameters, run the baseline on the frozen world, publish the report, and commit the targets decision record required by AC-16. The gate checks the committed artifacts and does not call the model.
+
+- state/risk: queued / medium
+- requirements: AC-16, AC-25
+- scope: not bounded
+- gates: tests: .venv/bin/python -m pytest tests/t07_baseline -q -p no:cacheprovider, independent-review: pending
+- next: Run the task pre-flight.
+
+### WAVE2-RESERVED — Reserved for wave-2 planning. Upgrades, audit log, review policy, operational mode, release protocol and README are planned in detail after the baseline. This task is rejected at the wave-2 reopen and is not meant to be completed.
+
+- state/risk: queued / low
+- requirements: FR-8, FR-10, FR-11, FR-12, FR-13, FR-14, FR-15, FR-17, FR-18, FR-19, FR-23, NFR-7, NFR-8, AC-1, AC-3, AC-4, AC-5, AC-6, AC-8, AC-9, AC-11, AC-12, AC-13, AC-14, AC-15, AC-18, AC-19, AC-20, AC-22
+- scope: not bounded
+- gates: reserved: false
+- next: Run the task pre-flight.
 

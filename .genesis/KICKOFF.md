@@ -6,7 +6,7 @@
 - phase/status: planning/active
 - active task: none
 - blocker: none
-- next action: Create requirement-linked implementation tasks with executable gates, then run genesis plan check.
+- next action: Finish defining requirement-linked tasks, then run genesis plan check.
 - phase instruction: Create requirement-linked implementation tasks with executable gates. Do not write product implementation code.
 
 ## Resume

@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-07T10:11:36.084Z"
+    "updated_at": "2026-10-07T13:41:22.003Z"
   },
   "policy": {
     "ponytail": "full",
@@ -27,7 +27,7 @@
     "status": "active",
     "active_task": null,
     "blocker": null,
-    "next_action": "Create requirement-linked implementation tasks with executable gates, then run genesis plan check."
+    "next_action": "Finish defining requirement-linked tasks, then run genesis plan check."
   },
   "commands": {},
   "workflow": {
@@ -96,7 +96,10 @@
         "NFR-8"
       ]
     },
-    "plan_check": null,
+    "plan_check": {
+      "at": "2026-10-07T13:41:22.002Z",
+      "source_hash": "4bdf4d6d9f551bc99762d34a2b7a89eb84c614f371682401d812cc0bcc84e8d1"
+    },
     "plan_approval": null
   },
   "artifacts": [
@@ -225,6 +228,387 @@
       "limitations": [],
       "created_at": "2026-10-07T06:37:05.693Z",
       "updated_at": "2026-10-07T10:11:36.052Z"
+    },
+    {
+      "id": "T01-rubric",
+      "outcome": "Write the synthetic-world adjudication rubric: the three labels, what evidence is sufficient to close, PEP status and date rules, identifier-conflict weighting, the supporting evidence key and record provenance fields, committed before any generator code.",
+      "state": "queued",
+      "risk": "low",
+      "owner": "claude-code",
+      "scope": [],
+      "dependencies": [],
+      "requirements": [
+        "FR-5",
+        "AC-17"
+      ],
+      "inputs": [],
+      "environment": [],
+      "scenarios": [],
+      "gates": [
+        {
+          "id": "tests",
+          "kind": "command",
+          "command": ".venv/bin/python -m pytest tests/t01_rubric -q -p no:cacheprovider",
+          "mandatory": true,
+          "status": "pending",
+          "evidence": null
+        }
+      ],
+      "next_action": "Run the task pre-flight.",
+      "blocker": null,
+      "notes": [],
+      "failures": [],
+      "limitations": [],
+      "created_at": "2026-10-07T13:41:16.678Z",
+      "updated_at": "2026-10-07T13:41:16.688Z"
+    },
+    {
+      "id": "T02-world",
+      "outcome": "Build the deterministic world generator and matcher: 600 labelled alerts (30 TRUE_MATCH, 30 AMBIGUOUS_BY_DESIGN, 540 CLEAR_FALSE_POSITIVE), five families with 6 TRUE_MATCH per primary family, injection alerts with control twins outside the 600, provenance on every record, byte-identical regeneration, and secret scanning across the repository.",
+      "state": "queued",
+      "risk": "medium",
+      "owner": "claude-code",
+      "scope": [],
+      "dependencies": [
+        "T01-rubric"
+      ],
+      "requirements": [
+        "FR-1",
+        "FR-2",
+        "FR-3",
+        "FR-4",
+        "NFR-2",
+        "NFR-4",
+        "AC-10",
+        "AC-17"
+      ],
+      "inputs": [],
+      "environment": [],
+      "scenarios": [],
+      "gates": [
+        {
+          "id": "tests",
+          "kind": "command",
+          "command": ".venv/bin/python -m pytest tests/t02_world -q -p no:cacheprovider",
+          "mandatory": true,
+          "status": "pending",
+          "evidence": null
+        },
+        {
+          "id": "secrets",
+          "kind": "command",
+          "command": "pre-commit run gitleaks --all-files",
+          "mandatory": true,
+          "status": "pending",
+          "evidence": null
+        },
+        {
+          "id": "independent-review",
+          "kind": "review",
+          "command": "",
+          "mandatory": true,
+          "status": "pending",
+          "evidence": null
+        }
+      ],
+      "next_action": "Run the task pre-flight.",
+      "blocker": null,
+      "notes": [],
+      "failures": [],
+      "limitations": [],
+      "created_at": "2026-10-07T13:41:16.785Z",
+      "updated_at": "2026-10-07T13:41:16.785Z"
+    },
+    {
+      "id": "T03-framings",
+      "outcome": "Produce three meaning-preserving framings per alert, with property tests for the structured transformations and a fixed wording-transformation set recorded as reviewed by the owner.",
+      "state": "queued",
+      "risk": "medium",
+      "owner": "claude-code",
+      "scope": [],
+      "dependencies": [
+        "T02-world"
+      ],
+      "requirements": [
+        "FR-21",
+        "AC-23"
+      ],
+      "inputs": [],
+      "environment": [],
+      "scenarios": [],
+      "gates": [
+        {
+          "id": "tests",
+          "kind": "command",
+          "command": ".venv/bin/python -m pytest tests/t03_framings -q -p no:cacheprovider",
+          "mandatory": true,
+          "status": "pending",
+          "evidence": null
+        },
+        {
+          "id": "independent-review",
+          "kind": "review",
+          "command": "",
+          "mandatory": true,
+          "status": "pending",
+          "evidence": null
+        }
+      ],
+      "next_action": "Run the task pre-flight.",
+      "blocker": null,
+      "notes": [],
+      "failures": [],
+      "limitations": [],
+      "created_at": "2026-10-07T13:41:16.880Z",
+      "updated_at": "2026-10-07T13:41:16.880Z"
+    },
+    {
+      "id": "T04-model-interface",
+      "outcome": "Provide one model-agnostic interface with a stub model selected only by configuration, and enforce that the agent process can reach nothing except the model interface. Covers the network part of AC-11 and the stub-model part of AC-14.",
+      "state": "queued",
+      "risk": "medium",
+      "owner": "claude-code",
+      "scope": [],
+      "dependencies": [
+        "T03-framings"
+      ],
+      "requirements": [
+        "FR-9",
+        "FR-16",
+        "AC-11",
+        "AC-14"
+      ],
+      "inputs": [],
+      "environment": [],
+      "scenarios": [],
+      "gates": [
+        {
+          "id": "tests",
+          "kind": "command",
+          "command": ".venv/bin/python -m pytest tests/t04_model_interface -q -p no:cacheprovider",
+          "mandatory": true,
+          "status": "pending",
+          "evidence": null
+        },
+        {
+          "id": "independent-review",
+          "kind": "review",
+          "command": "",
+          "mandatory": true,
+          "status": "pending",
+          "evidence": null
+        }
+      ],
+      "next_action": "Run the task pre-flight.",
+      "blocker": null,
+      "notes": [],
+      "failures": [],
+      "limitations": [],
+      "created_at": "2026-10-07T13:41:16.975Z",
+      "updated_at": "2026-10-07T13:41:16.975Z"
+    },
+    {
+      "id": "T05-baseline-agent",
+      "outcome": "Build the naive baseline agent: CLOSE or ESCALATE with a written reason and cited evidence IDs, rejection of results without them, escalation on unclear evidence, model and output faults failing closed to ESCALATE with SYSTEM_FAILURE, label isolation, and snippets treated as data. Covers the model-fault part of FR-8 and AC-13.",
+      "state": "queued",
+      "risk": "high",
+      "owner": "claude-code",
+      "scope": [],
+      "dependencies": [
+        "T04-model-interface"
+      ],
+      "requirements": [
+        "FR-6",
+        "FR-7",
+        "FR-8",
+        "NFR-5",
+        "AC-2",
+        "AC-13",
+        "AC-21"
+      ],
+      "inputs": [],
+      "environment": [],
+      "scenarios": [],
+      "gates": [
+        {
+          "id": "tests",
+          "kind": "command",
+          "command": ".venv/bin/python -m pytest tests/t05_agent -q -p no:cacheprovider",
+          "mandatory": true,
+          "status": "pending",
+          "evidence": null
+        },
+        {
+          "id": "independent-review",
+          "kind": "review",
+          "command": "",
+          "mandatory": true,
+          "status": "pending",
+          "evidence": null
+        }
+      ],
+      "next_action": "Run the task pre-flight.",
+      "blocker": null,
+      "notes": [],
+      "failures": [],
+      "limitations": [],
+      "created_at": "2026-10-07T13:41:17.063Z",
+      "updated_at": "2026-10-07T13:41:17.064Z"
+    },
+    {
+      "id": "T06-harness",
+      "outcome": "Build the evaluation harness: every Metrics-section figure by run, framing and primary family, the run manifest, at least 3 repeated runs, cost and latency, modelled review time, and the always-escalate and always-close reference agents.",
+      "state": "queued",
+      "risk": "medium",
+      "owner": "claude-code",
+      "scope": [],
+      "dependencies": [
+        "T05-baseline-agent"
+      ],
+      "requirements": [
+        "FR-20",
+        "FR-22",
+        "FR-24",
+        "NFR-1",
+        "NFR-3",
+        "NFR-6",
+        "AC-7",
+        "AC-24",
+        "AC-25"
+      ],
+      "inputs": [],
+      "environment": [],
+      "scenarios": [],
+      "gates": [
+        {
+          "id": "tests",
+          "kind": "command",
+          "command": ".venv/bin/python -m pytest tests/t06_harness -q -p no:cacheprovider",
+          "mandatory": true,
+          "status": "pending",
+          "evidence": null
+        },
+        {
+          "id": "independent-review",
+          "kind": "review",
+          "command": "",
+          "mandatory": true,
+          "status": "pending",
+          "evidence": null
+        }
+      ],
+      "next_action": "Run the task pre-flight.",
+      "blocker": null,
+      "notes": [],
+      "failures": [],
+      "limitations": [],
+      "created_at": "2026-10-07T13:41:17.152Z",
+      "updated_at": "2026-10-07T13:41:17.153Z"
+    },
+    {
+      "id": "T07-baseline-run",
+      "outcome": "Commit the modelled-time parameters, run the baseline on the frozen world, publish the report, and commit the targets decision record required by AC-16. The gate checks the committed artifacts and does not call the model.",
+      "state": "queued",
+      "risk": "medium",
+      "owner": "claude-code",
+      "scope": [],
+      "dependencies": [
+        "T06-harness"
+      ],
+      "requirements": [
+        "AC-16",
+        "AC-25"
+      ],
+      "inputs": [],
+      "environment": [],
+      "scenarios": [],
+      "gates": [
+        {
+          "id": "tests",
+          "kind": "command",
+          "command": ".venv/bin/python -m pytest tests/t07_baseline -q -p no:cacheprovider",
+          "mandatory": true,
+          "status": "pending",
+          "evidence": null
+        },
+        {
+          "id": "independent-review",
+          "kind": "review",
+          "command": "",
+          "mandatory": true,
+          "status": "pending",
+          "evidence": null
+        }
+      ],
+      "next_action": "Run the task pre-flight.",
+      "blocker": null,
+      "notes": [],
+      "failures": [],
+      "limitations": [],
+      "created_at": "2026-10-07T13:41:17.244Z",
+      "updated_at": "2026-10-07T13:41:17.244Z"
+    },
+    {
+      "id": "WAVE2-RESERVED",
+      "outcome": "Reserved for wave-2 planning. Upgrades, audit log, review policy, operational mode, release protocol and README are planned in detail after the baseline. This task is rejected at the wave-2 reopen and is not meant to be completed.",
+      "state": "queued",
+      "risk": "low",
+      "owner": "claude-code",
+      "scope": [],
+      "dependencies": [
+        "T07-baseline-run"
+      ],
+      "requirements": [
+        "FR-8",
+        "FR-10",
+        "FR-11",
+        "FR-12",
+        "FR-13",
+        "FR-14",
+        "FR-15",
+        "FR-17",
+        "FR-18",
+        "FR-19",
+        "FR-23",
+        "NFR-7",
+        "NFR-8",
+        "AC-1",
+        "AC-3",
+        "AC-4",
+        "AC-5",
+        "AC-6",
+        "AC-8",
+        "AC-9",
+        "AC-11",
+        "AC-12",
+        "AC-13",
+        "AC-14",
+        "AC-15",
+        "AC-18",
+        "AC-19",
+        "AC-20",
+        "AC-22"
+      ],
+      "inputs": [],
+      "environment": [],
+      "scenarios": [],
+      "gates": [
+        {
+          "id": "reserved",
+          "kind": "command",
+          "command": "false",
+          "mandatory": true,
+          "status": "pending",
+          "evidence": null
+        }
+      ],
+      "next_action": "Run the task pre-flight.",
+      "blocker": null,
+      "notes": [],
+      "failures": [],
+      "limitations": [],
+      "created_at": "2026-10-07T13:41:17.332Z",
+      "updated_at": "2026-10-07T13:41:17.332Z"
     }
   ],
   "learning_proposals": [],
