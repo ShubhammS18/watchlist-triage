@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-07T09:46:12.141Z"
+    "updated_at": "2026-10-07T10:07:05.754Z"
   },
   "policy": {
     "ponytail": "full",
@@ -170,7 +170,21 @@
   ],
   "assumptions": [],
   "invariants": [],
-  "decisions": [],
+  "decisions": [
+    {
+      "id": "DEC-SPEC-V3.1",
+      "title": "Specification v3.1 accepted after independent review.",
+      "text": "Three Codex review rounds plus a two-item closure check. Round 1 BLOCK, 17 findings, all adopted (raw-data minimization and reviewer identity narrowed). Round 2 BLOCK, 13 findings, all fixed. Round 3 BLOCK on 2 partial fixes with no new blockers, fixed in v3.1. Closure check APPROVE. Owner decisions: D1 contradictory evidence is never a clear false positive; D2 hash chain plus a checkpoint in public git history; D3 a pre-registered fresh-seed world; D4 world mix of 30 TRUE_MATCH, 30 AMBIGUOUS_BY_DESIGN and 540 CLEAR_FALSE_POSITIVE; D5 round 3 limited to closure. Review texts are in docs/reviews/. Limitation: reviewer verdicts were pasted by the owner and are not cryptographically attested. Approval covers commit 7fba5db, SPEC.md hash 5dfdbe19a96cc04be14889b0fed6a25ad73a7f929e3c7375ebf37990bc4bc494. Round 2 marked 11 round-1 items as partially fixed; their remaining gaps were carried into round-2 findings, and only QA_SAMPLING and buyer scope were re-checked individually. The Kim and Yang 2024 citation was verified by the owner against the publisher page on 2026-10-07.",
+      "status": "accepted",
+      "source": "docs/reviews/spec-review-round-1.md, docs/reviews/spec-review-round-2.md, docs/reviews/spec-review-round-3.md, docs/reviews/spec-review-round-3-closure.md",
+      "recorded_at": "2026-10-07T10:07:05.740Z",
+      "paths": [],
+      "tags": [
+        "spec",
+        "review"
+      ]
+    }
+  ],
   "knowledge": [],
   "tasks": [
     {

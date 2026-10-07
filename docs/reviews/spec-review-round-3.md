@@ -1,0 +1,25 @@
+Independent review by a fresh Codex session (read-only). Pasted verbatim by the owner.
+
+**Verdict: BLOCK** — findings 1 and 8 remain partially resolved: release targets and the review-time gate are still underspecified.
+
+Reviewed SPEC.md v3 (SPEC.md) against the listed findings and the v2→v3 diff only.
+
+| Finding | Status | Requirement or section addressing it; remaining gap |
+|---|---|---|
+| 1\. Always-escalate could pass; targets lacked floors/direction | **PARTIALLY FIXED** | **AC-7** requires “always-escalate reference agent fails AC-6”; **AC-6** requires assisted time to be “lower than” manual time; **AC-16** bounds over-escalation against baseline. The trivial-agent loophole is closed, but citation accuracy and consistency still have no minimum acceptable bounds, and the cost target is set without an explicit requirement to meet it. |
+| 2\. Injection acceptance protected only TRUE\_MATCH | **FIXED** | **AC-12:** “Zero divergences are allowed for any label,” across every pair, run and framing. **FR-3** requires injection cases across all three labels. |
+| 3\. Three runs conflicted with one fresh-seed run | **FIXED** | **FR-23:** “One fresh-seed world is generated and scored over 3 repeated runs.” **NFR-3** consistently requires at least three runs for every world. |
+| 4\. 85% clear false positives mismatched the stated rate | **FIXED** | **FR-1** specifies 540 clear false positives among 600 alerts; **Glossary** defines the benchmark false-positive rate as “90% of the world.” **Problem** distinguishes the deliberately chosen synthetic rate from the published industry statistic. |
+| 5\. Family arithmetic and control-twin counting | **FIXED** | **FR-2:** “exactly 6 TRUE\_MATCH alerts per primary family,” with one primary family each. **FR-1:** control twins “are not counted” in the 600; **Metrics** excludes secondary memberships from totals. |
+| 6\. Field values in reasons contradicted logging requirements | **FIXED** | Renumbered **FR-15:** “The free-text reason may contain synthetic customer-record values.” **AC-22** restricts its check to structured fields, and **NFR-7** requires disclosure of the reason-text allowance. |
+| 7\. Evaluation and operational lifecycles were conflated | **FIXED** | **FR-10:** evaluation has “no human review, no L2 queue records and no final dispositions.” **AC-15**, **AC-18** and **AC-20** assign operational checks to the demo set; AC-20 tests evaluation isolation. |
+| 8\. Release metrics lacked formulas | **PARTIALLY FIXED** | **Metrics** now defines populations, rates, consistency and cost denominators. However, “Modelled review time” mixes a per-alert proposal-review term with aggregate escalation/second-review terms, leaving AC-6’s normalization ambiguous; citation accuracy also lacks a zero-denominator rule. |
+| 9\. Fresh-seed integrity relied solely on history | **FIXED** | **FR-23** requires a “pre-registered protocol,” a freeze commit, commit-derived seed, publication regardless of outcome, and no replacement seed after failure. **AC-19** checks the corresponding artifacts; this establishes a declared protocol without claiming proof against undisclosed experimentation. |
+| 10\. Framing transformations lacked meaning-preservation checks | **FIXED** | **AC-23** requires property tests preserving “dates, identifiers and normalized names” and recorded owner review of the wording set. **FR-21** fixes that set before baseline; **Glossary** requires framings to preserve meaning. |
+| 11\. Checks overstated what they could prove | **FIXED** | **AC-11** uses a scoped capability-allowlist check; **FR-13** and **NFR-7** disclose self-asserted identities; **AC-22** covers structured/typed records; **AC-18** covers every demo-set export; **AC-19** checks protocol artifacts. **NFR-7** expressly requires disclosure of “the narrowed scope of each automated check.” |
+| 12\. Pipeline faults were not fail-safe | **FIXED** | **FR-8:** on audit, enqueue, checkpoint or persistence failure, “the alert stays not final and is flagged.” **AC-13** adds audit-write, enqueue and crash tests requiring no final CLOSE, lost escalation or duplicate disposition. |
+| 13\. Public industry statistic lacked citation | **FIXED** | **Problem** now supplies authors, year, journal and DOI. **NFR-8** requires citations and a public-text release checklist; this confirms citation presence, without externally validating the paper in this repository-only review. |
+| Round 1: QA\_SAMPLING acceptance coverage | **FIXED** | **AC-8:** “sampled closes require a second identity, unsampled closes finalize with one, and the sampling rate is logged.” **FR-13** specifies deterministic sampling and logging of rate changes. |
+| Round 1: Buyer-facing scope declared a non-goal | **FIXED** | **Non-goals:** “Buyer-facing features such as pricing, return-on-investment or management dashboards.” This explicitly excludes buyer-facing functionality while retaining the buyer persona in **Users**. |
+
+**New BLOCKER-level findings introduced by v3:** None.
