@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-07T13:41:22.003Z"
+    "updated_at": "2026-10-07T13:53:10.796Z"
   },
   "policy": {
     "ponytail": "full",
@@ -23,11 +23,11 @@
     }
   },
   "lifecycle": {
-    "phase": "planning",
+    "phase": "build",
     "status": "active",
-    "active_task": null,
+    "active_task": "T01-rubric",
     "blocker": null,
-    "next_action": "Finish defining requirement-linked tasks, then run genesis plan check."
+    "next_action": "Run the task pre-flight."
   },
   "commands": {},
   "workflow": {
@@ -100,7 +100,12 @@
       "at": "2026-10-07T13:41:22.002Z",
       "source_hash": "4bdf4d6d9f551bc99762d34a2b7a89eb84c614f371682401d812cc0bcc84e8d1"
     },
-    "plan_approval": null
+    "plan_approval": {
+      "human": "Shubham Suradkar",
+      "reason": "I approve this plan because it follows a logical order, from creating a synthetic world to building a baseline agent and measuring it. Every task is linked to spec requirements with a test that proves it is done. Higher-risk tasks must go through independent review and my sign-off, and I can plan later upgrades after the baseline, based on real failures.",
+      "at": "2026-10-07T13:53:10.774Z",
+      "source_hash": "4bdf4d6d9f551bc99762d34a2b7a89eb84c614f371682401d812cc0bcc84e8d1"
+    }
   },
   "artifacts": [
     {
@@ -232,7 +237,7 @@
     {
       "id": "T01-rubric",
       "outcome": "Write the synthetic-world adjudication rubric: the three labels, what evidence is sufficient to close, PEP status and date rules, identifier-conflict weighting, the supporting evidence key and record provenance fields, committed before any generator code.",
-      "state": "queued",
+      "state": "active",
       "risk": "low",
       "owner": "claude-code",
       "scope": [],
@@ -260,7 +265,19 @@
       "failures": [],
       "limitations": [],
       "created_at": "2026-10-07T13:41:16.678Z",
-      "updated_at": "2026-10-07T13:41:16.688Z"
+      "updated_at": "2026-10-07T13:41:16.688Z",
+      "base_manifest": {
+        ".gitignore": "05272076c15c79ba32ab1d10bbad87ff61436dfd0a365d60c0e0b550edb2e4db",
+        ".pre-commit-config.yaml": "a4f5b7a2d670240a85022e3080fba11c904157f0a26bd4ed864502bcbe832dc9",
+        "CLAUDE.md": "005ed5c58b524ee06153c8facd4bd1f2216f81c5d98497abc1d09554932f3621",
+        "LICENSE": "e37947574b26d42dec642954a8a6fbd2de2252c8c98385a3ca2e0bf4ed948b0c",
+        "README.md": "f69536d234f3cc301d06bd601675ec6d96a9ca9fd5c45a7ef1fe912e80bbcc6f",
+        "SPEC.md": "90275b1a9cb076894f9a23a8a871d1dec9692671c17741ce62092d75b7eb5e7b",
+        "docs/reviews/spec-review-round-1.md": "77f2f786179a1a0707475e248cdd816cbc765221792905bfd12a60141a1b5dee",
+        "docs/reviews/spec-review-round-2.md": "2149bcd8993aa36998e70df480a9a73a8ba075a73b15f49b1283ea1618088744",
+        "docs/reviews/spec-review-round-3-closure.md": "06a0b7c26d7fe24c4aa1a678089b826d3eeb5e75bab2aa84cc608063e4b00dfe",
+        "docs/reviews/spec-review-round-3.md": "ff97d6ac2683ac3b0078bc416549a6451e9b0640fdb960525f838c63d169fb94"
+      }
     },
     {
       "id": "T02-world",
