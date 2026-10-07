@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-07T09:35:23.328Z"
+    "updated_at": "2026-10-07T09:46:12.141Z"
   },
   "policy": {
     "ponytail": "full",
@@ -34,8 +34,8 @@
     "type": "new-product",
     "started_at": "2026-10-07T06:37:05.693Z",
     "spec_check": {
-      "at": "2026-10-07T09:35:23.313Z",
-      "source_hash": "2c49a6586114fb319912d3f7d5f189ba8142a4a0159f6b0edd35657806a3151e",
+      "at": "2026-10-07T09:46:12.128Z",
+      "source_hash": "5dfdbe19a96cc04be14889b0fed6a25ad73a7f929e3c7375ebf37990bc4bc494",
       "requirements": [
         "AC-1",
         "AC-10",
@@ -164,7 +164,7 @@
         "NFR-7",
         "NFR-8"
       ],
-      "source_hash": "2c49a6586114fb319912d3f7d5f189ba8142a4a0159f6b0edd35657806a3151e",
+      "source_hash": "5dfdbe19a96cc04be14889b0fed6a25ad73a7f929e3c7375ebf37990bc4bc494",
       "approval": null
     }
   ],
@@ -200,7 +200,7 @@
       "failures": [],
       "limitations": [],
       "created_at": "2026-10-07T06:37:05.693Z",
-      "updated_at": "2026-10-07T09:35:23.328Z"
+      "updated_at": "2026-10-07T09:46:12.141Z"
     }
   ],
   "learning_proposals": [],
