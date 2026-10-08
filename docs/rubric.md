@@ -1,4 +1,4 @@
-# Synthetic-world adjudication rubric, version 1.0
+# Synthetic-world adjudication rubric, version 1.1
 
 ## Scope
 
@@ -31,7 +31,7 @@ An alert may be closed only when all three of these hold:
 2. No decisive identifier agrees.
 3. No snippet links the customer to the listed person.
 
-A nationality conflict on its own never closes an alert and never sets its label. When a decisive identifier has a hard conflict, the three close conditions above decide. When identity is confirmed under the TRUE_MATCH clean pattern, the alert is TRUE_MATCH. A hard-case TRUE_MATCH, whose supporting evidence key shows the customer is the listed person, is also TRUE_MATCH. In every other case it is AMBIGUOUS_BY_DESIGN.
+A nationality conflict on its own never closes an alert and never sets its label. When a decisive identifier has a hard conflict, the three close conditions above decide. When identity is confirmed under the TRUE_MATCH clean pattern, the alert is TRUE_MATCH, except for a former PEP more than 12 months out of office, which the PEP section decides. A hard-case TRUE_MATCH, whose supporting evidence key shows the customer is the listed person, is also TRUE_MATCH. In every other case it is AMBIGUOUS_BY_DESIGN.
 
 In every other case the alert is escalated.
 
@@ -113,3 +113,7 @@ The frozen world has 600 alerts:
 - 540 CLEAR_FALSE_POSITIVE
 
 Control twins are generated in addition to these and are outside the 600.
+
+## Changelog
+
+1.1: a former PEP more than 12 months out of office is decided by the PEP section, not by the clean pattern.

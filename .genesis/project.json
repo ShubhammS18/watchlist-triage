@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-08T07:45:44.925Z"
+    "updated_at": "2026-10-08T08:16:49.542Z"
   },
   "policy": {
     "ponytail": "full",
@@ -204,6 +204,30 @@
       "status": "accepted",
       "source": "owner decision in chat, 2026-10-08",
       "recorded_at": "2026-10-08T07:45:38.787Z",
+      "paths": [],
+      "tags": [
+        "rubric"
+      ]
+    },
+    {
+      "id": "DEC-T02-WORLD-DESIGN",
+      "title": "Synthetic world design choices for T02",
+      "text": "I chose how the synthetic world is built. Names come from small fictional name-part lists in the repo, so there is no library and no data licence issue. Variants use Latin script only, which I state as a known limit. The generated world is committed with a reference hash, and a drift check regenerates it in a temp folder. The matcher compares names only and allows a one-character spelling difference per name part. The world has 15 injection alerts, 5 per label, each with a control twin outside the 600. ID numbers use an obviously synthetic format so they can never match a real ID. Of the 540 clear false positives, 30 per hard family are hard cases and the rest are plain. Ambiguous alerts are 6 per family.",
+      "status": "accepted",
+      "source": "owner decision in chat, 2026-10-08",
+      "recorded_at": "2026-10-08T08:09:20.662Z",
+      "paths": [],
+      "tags": [
+        "world"
+      ]
+    },
+    {
+      "id": "DEC-RUBRIC-PEP-PRECEDENCE",
+      "title": "Former PEP beyond 12 months is decided by the PEP section",
+      "text": "I found that two rubric sentences disagreed. One said a confirmed identity is TRUE_MATCH. The PEP section said a confirmed former PEP more than 12 months out of office with no continuing-risk snippet is AMBIGUOUS. I chose to amend the rubric to version 1.1 so the PEP section wins for that case, because it is the more specific rule and the public rubric should not contradict itself.",
+      "status": "accepted",
+      "source": "owner decision in chat, 2026-10-08",
+      "recorded_at": "2026-10-08T08:16:49.525Z",
       "paths": [],
       "tags": [
         "rubric"

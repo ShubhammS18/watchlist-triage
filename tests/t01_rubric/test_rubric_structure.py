@@ -26,6 +26,7 @@ SECTIONS = [
     "Supporting evidence key",
     "Provenance",
     "World mix",
+    "Changelog",
 ]
 LABEL_ACTIONS = {
     "TRUE_MATCH": "ESCALATE",
@@ -49,7 +50,7 @@ def section(text, title, level):
 
 
 def test_version_line(text):
-    assert re.search(r"^# Synthetic-world adjudication rubric, version 1\.0$", text, re.M)
+    assert re.search(r"^# Synthetic-world adjudication rubric, version 1\.1$", text, re.M)
 
 
 @pytest.mark.parametrize("title", SECTIONS)
