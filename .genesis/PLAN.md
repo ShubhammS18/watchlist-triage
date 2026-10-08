@@ -10,7 +10,7 @@
 
 ### T01-rubric — Write the synthetic-world adjudication rubric: the three labels, what evidence is sufficient to close, PEP status and date rules, identifier-conflict weighting, the supporting evidence key and record provenance fields, committed before any generator code.
 
-- state/risk: active / low
+- state/risk: done / low
 - requirements: FR-5, AC-17
 - scope: not bounded
 - gates: tests: .venv/bin/python -m pytest tests/t01_rubric -q -p no:cacheprovider
@@ -18,7 +18,7 @@
 
 ### T02-world — Build the deterministic world generator and matcher: 600 labelled alerts (30 TRUE_MATCH, 30 AMBIGUOUS_BY_DESIGN, 540 CLEAR_FALSE_POSITIVE), five families with 6 TRUE_MATCH per primary family, injection alerts with control twins outside the 600, provenance on every record, byte-identical regeneration, and secret scanning across the repository.
 
-- state/risk: queued / medium
+- state/risk: active / medium
 - requirements: FR-1, FR-2, FR-3, FR-4, NFR-2, NFR-4, AC-10, AC-17
 - scope: not bounded
 - gates: tests: .venv/bin/python -m pytest tests/t02_world -q -p no:cacheprovider, secrets: pre-commit run gitleaks --all-files, independent-review: pending

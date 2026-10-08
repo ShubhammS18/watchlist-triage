@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-07T13:53:10.796Z"
+    "updated_at": "2026-10-08T07:45:44.925Z"
   },
   "policy": {
     "ponytail": "full",
@@ -25,7 +25,7 @@
   "lifecycle": {
     "phase": "build",
     "status": "active",
-    "active_task": "T01-rubric",
+    "active_task": "T02-world",
     "blocker": null,
     "next_action": "Run the task pre-flight."
   },
@@ -196,6 +196,18 @@
         "spec",
         "review"
       ]
+    },
+    {
+      "id": "DEC-RUBRIC-CLOSE-RULE",
+      "title": "Only date of birth or ID number can rule out identity",
+      "text": "I decided the agent can close an alert only when date of birth or ID number conflicts, no decisive identifier agrees, and nothing links the customer to the listed person. Nationality is weak evidence because it can be wrong or change. If I let it close alerts, the agent could miss a real match, and a missed match costs more than an extra escalation. So a nationality mismatch alone never closes an alert or sets its label.",
+      "status": "accepted",
+      "source": "owner decision in chat, 2026-10-08",
+      "recorded_at": "2026-10-08T07:45:38.787Z",
+      "paths": [],
+      "tags": [
+        "rubric"
+      ]
     }
   ],
   "knowledge": [],
@@ -237,7 +249,7 @@
     {
       "id": "T01-rubric",
       "outcome": "Write the synthetic-world adjudication rubric: the three labels, what evidence is sufficient to close, PEP status and date rules, identifier-conflict weighting, the supporting evidence key and record provenance fields, committed before any generator code.",
-      "state": "active",
+      "state": "done",
       "risk": "low",
       "owner": "claude-code",
       "scope": [],
@@ -255,8 +267,14 @@
           "kind": "command",
           "command": ".venv/bin/python -m pytest tests/t01_rubric -q -p no:cacheprovider",
           "mandatory": true,
-          "status": "pending",
-          "evidence": null
+          "status": "pass",
+          "evidence": {
+            "path": ".genesis/evidence/T01-rubric-tests-9e49ca22-e9dc-41f5-bace-0383eb62d861.json",
+            "hash": "556e644307438a6fef0c056f9dbc3725c247e64eabb505b136fe3346265364a2",
+            "source_hash": "1421e8ca5ec83eed8dd40d4ddb26d4c4d99300a420a86e232a334cd3f415298b",
+            "config_hash": "bb7ba4052e002025e4e942e8ae799ee53675f9ab73523c982cde6da9bbbb7309",
+            "observed_at": "2026-10-08T07:45:42.189Z"
+          }
         }
       ],
       "next_action": "Run the task pre-flight.",
@@ -265,7 +283,7 @@
       "failures": [],
       "limitations": [],
       "created_at": "2026-10-07T13:41:16.678Z",
-      "updated_at": "2026-10-07T13:41:16.688Z",
+      "updated_at": "2026-10-08T07:45:44.915Z",
       "base_manifest": {
         ".gitignore": "05272076c15c79ba32ab1d10bbad87ff61436dfd0a365d60c0e0b550edb2e4db",
         ".pre-commit-config.yaml": "a4f5b7a2d670240a85022e3080fba11c904157f0a26bd4ed864502bcbe832dc9",
@@ -282,7 +300,7 @@
     {
       "id": "T02-world",
       "outcome": "Build the deterministic world generator and matcher: 600 labelled alerts (30 TRUE_MATCH, 30 AMBIGUOUS_BY_DESIGN, 540 CLEAR_FALSE_POSITIVE), five families with 6 TRUE_MATCH per primary family, injection alerts with control twins outside the 600, provenance on every record, byte-identical regeneration, and secret scanning across the repository.",
-      "state": "queued",
+      "state": "active",
       "risk": "medium",
       "owner": "claude-code",
       "scope": [],
@@ -334,7 +352,22 @@
       "failures": [],
       "limitations": [],
       "created_at": "2026-10-07T13:41:16.785Z",
-      "updated_at": "2026-10-07T13:41:16.785Z"
+      "updated_at": "2026-10-07T13:41:16.785Z",
+      "base_manifest": {
+        ".gitignore": "05272076c15c79ba32ab1d10bbad87ff61436dfd0a365d60c0e0b550edb2e4db",
+        ".pre-commit-config.yaml": "a4f5b7a2d670240a85022e3080fba11c904157f0a26bd4ed864502bcbe832dc9",
+        "CLAUDE.md": "005ed5c58b524ee06153c8facd4bd1f2216f81c5d98497abc1d09554932f3621",
+        "LICENSE": "e37947574b26d42dec642954a8a6fbd2de2252c8c98385a3ca2e0bf4ed948b0c",
+        "README.md": "f69536d234f3cc301d06bd601675ec6d96a9ca9fd5c45a7ef1fe912e80bbcc6f",
+        "SPEC.md": "90275b1a9cb076894f9a23a8a871d1dec9692671c17741ce62092d75b7eb5e7b",
+        "docs/reviews/spec-review-round-1.md": "77f2f786179a1a0707475e248cdd816cbc765221792905bfd12a60141a1b5dee",
+        "docs/reviews/spec-review-round-2.md": "2149bcd8993aa36998e70df480a9a73a8ba075a73b15f49b1283ea1618088744",
+        "docs/reviews/spec-review-round-3-closure.md": "06a0b7c26d7fe24c4aa1a678089b826d3eeb5e75bab2aa84cc608063e4b00dfe",
+        "docs/reviews/spec-review-round-3.md": "ff97d6ac2683ac3b0078bc416549a6451e9b0640fdb960525f838c63d169fb94",
+        "docs/rubric.md": "e577bdcc2d7281f1411064c0ad0e570d2b14e3d13b6d55297b30027a0d13056b",
+        "requirements-dev.txt": "d1ac357aa5e967f33262a73eb43d974e7749cf8ceb73ede5c459c9c8e5e72658",
+        "tests/t01_rubric/test_rubric_structure.py": "03d0688d5b739c6291c01c293e24b482502cfaf97132d8e4ac93090d4d5f25a9"
+      }
     },
     {
       "id": "T03-framings",
@@ -631,7 +664,32 @@
   "learning_proposals": [],
   "cleanup_proposals": [],
   "controls": [],
-  "attempts": [],
+  "attempts": [
+    {
+      "id": "9e49ca22-e9dc-41f5-bace-0383eb62d861",
+      "task": "T01-rubric",
+      "kind": "gate",
+      "command": ".venv/bin/python -m pytest tests/t01_rubric -q -p no:cacheprovider",
+      "timeout": 120000,
+      "authorization": null,
+      "pid": 3542,
+      "child_pid": 3554,
+      "started_at": "2026-10-08T07:45:41.564Z",
+      "status": "passed",
+      "before_hash": "1421e8ca5ec83eed8dd40d4ddb26d4c4d99300a420a86e232a334cd3f415298b",
+      "config_hash": "bb7ba4052e002025e4e942e8ae799ee53675f9ab73523c982cde6da9bbbb7309",
+      "environment": {
+        "node": "v24.21.0",
+        "platform": "linux",
+        "arch": "x64",
+        "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+        "variables": {}
+      },
+      "cost": null,
+      "stop_reason": null,
+      "ended_at": "2026-10-08T07:45:42.189Z"
+    }
+  ],
   "authorizations": [],
   "experiments": [],
   "incidents": [],

@@ -1,0 +1,30 @@
+{
+  "task": "T01-rubric",
+  "gate": "tests",
+  "kind": "command",
+  "attempt": "9e49ca22-e9dc-41f5-bace-0383eb62d861",
+  "command": ".venv/bin/python -m pytest tests/t01_rubric -q -p no:cacheprovider",
+  "started_at": "2026-10-08T07:45:41.564Z",
+  "observed_at": "2026-10-08T07:45:42.189Z",
+  "exit_code": 0,
+  "signal": null,
+  "stdout": ".......................                                                  [100%]\n23 passed in 0.05s\n",
+  "stderr": "",
+  "failure": null,
+  "receipt": null,
+  "revision": {
+    "commit": "5267c4e164cbe175be28c26232a4177dd07ab61e",
+    "dirty": true
+  },
+  "source_hash": "1421e8ca5ec83eed8dd40d4ddb26d4c4d99300a420a86e232a334cd3f415298b",
+  "before_hash": "1421e8ca5ec83eed8dd40d4ddb26d4c4d99300a420a86e232a334cd3f415298b",
+  "config_hash": "bb7ba4052e002025e4e942e8ae799ee53675f9ab73523c982cde6da9bbbb7309",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "arch": "x64",
+    "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+    "variables": {}
+  },
+  "hash": "556e644307438a6fef0c056f9dbc3725c247e64eabb505b136fe3346265364a2"
+}
