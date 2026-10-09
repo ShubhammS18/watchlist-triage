@@ -1,4 +1,4 @@
-# Synthetic-world adjudication rubric, version 1.1
+# Synthetic-world adjudication rubric, version 1.2
 
 ## Scope
 
@@ -41,9 +41,9 @@ In every other case the alert is escalated.
 
 The customer is the listed person. The generator plants these alerts.
 
-Clean pattern: the names match, two or more strong identifiers agree with at least one of them a decisive identifier, and no decisive identifier conflicts. A nationality conflict does not break the clean pattern. Identity is confirmed when the clean pattern holds.
+Clean pattern: the names match, two or more strong identifiers agree with at least one of them a decisive identifier, and no decisive identifier conflicts. Names match when, after lowercasing and removing titles and diacritics, their name parts pair one to one in any order and each pair is equal or differs by one character. A listed alias is compared in the same way as the listed name. A nationality conflict does not break the clean pattern. Identity is confirmed when the clean pattern holds.
 
-Hard-case TRUE_MATCH alerts may depart from the clean pattern. For those, the supporting evidence key names the items that show the customer is the listed person.
+A hard-case TRUE_MATCH may depart from the clean pattern in one way: exactly one decisive identifier agrees, no decisive identifier conflicts, and a snippet links the customer to the listed person. The snippet adds risk to an identity that one decisive identifier already supports. For hard-case alerts, the supporting evidence key names the items that show the customer is the listed person.
 
 Correct action: ESCALATE
 
@@ -68,10 +68,13 @@ A person who holds a prominent public function is a current PEP. A person who ha
 - The 12 months are counted from the date of leaving office to the record's `as_of_date`.
 - Within 12 months of leaving office, the person is treated as a current PEP.
 - More than 12 months out of office, with identity confirmed under the TRUE_MATCH identifier rule: the alert is TRUE_MATCH if a snippet shows continuing risk, and otherwise AMBIGUOUS_BY_DESIGN. It is never CLEAR_FALSE_POSITIVE, because identity is confirmed.
+- Months are counted as calendar months from the leaving date. A former PEP is inside 12 months when the as-of date is on or before the 12-month anniversary of the leaving date, and beyond 12 months when the as-of date is later. If the anniversary date does not exist (29 February), the anniversary is 28 February. If a former PEP has no leaving date, the 12-month status cannot be determined. If identity is confirmed, the alert is AMBIGUOUS_BY_DESIGN. If a hard conflict on a decisive identifier rules out identity, the close conditions decide.
+
+A snippet shows continuing risk when it says the person still holds influence, control or a formal role linked to state functions after leaving office.
 
 ## Relatives and close associates
 
-Relatives and close associates of a PEP are treated like PEPs. The relationship comes from a watchlist relationship field or from a snippet. Identity must still meet the TRUE_MATCH identifier rule, so a relationship alone never makes an alert TRUE_MATCH.
+Relatives and close associates of a PEP are treated like PEPs. The relationship comes from a watchlist relationship field or from a snippet. Identity must still meet the TRUE_MATCH identifier rule, so a relationship alone never makes an alert TRUE_MATCH. For a relative or close associate, the office dates of the PEP decide whether the relationship is in scope.
 
 ## Contradictory evidence
 
@@ -117,3 +120,5 @@ Control twins are generated in addition to these and are outside the 600.
 ## Changelog
 
 1.1: a former PEP more than 12 months out of office is decided by the PEP section, not by the clean pattern.
+
+1.2: states the hard-case TRUE_MATCH rule, defines name matching, month counting, continuing risk and relative scope.

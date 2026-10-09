@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-08T08:16:49.542Z"
+    "updated_at": "2026-10-09T06:07:35.404Z"
   },
   "policy": {
     "ponytail": "full",
@@ -228,6 +228,18 @@
       "status": "accepted",
       "source": "owner decision in chat, 2026-10-08",
       "recorded_at": "2026-10-08T08:16:49.525Z",
+      "paths": [],
+      "tags": [
+        "rubric"
+      ]
+    },
+    {
+      "id": "DEC-RUBRIC-HARDCASE-RULE",
+      "title": "State the hard-case TRUE_MATCH rule in the rubric",
+      "text": "Independent review showed six true matches rely on a hard-case exception the rubric never spelled out. I chose to write the rule down in rubric version 1.2: exactly one agreeing decisive identifier, no decisive conflict, and a snippet linking the customer to the listed person is a TRUE_MATCH. A snippet adds risk here and never lowers it. I also clarified four label-affecting points so two readers cannot apply them differently.",
+      "status": "accepted",
+      "source": "owner decision in chat, 2026-10-09, after Codex review round 1",
+      "recorded_at": "2026-10-09T06:07:35.390Z",
       "paths": [],
       "tags": [
         "rubric"
