@@ -4,11 +4,11 @@
 
 - objective: Triage sanctions/PEP name-match alerts from a frozen synthetic world: recommend close or escalate with cited evidence, human-approved, measured on zero missed planted true matches.
 - phase/status: build/active
-- active task: T02-world — Build the deterministic world generator and matcher: 600 labelled alerts (30 TRUE_MATCH, 30 AMBIGUOUS_BY_DESIGN, 540 CLEAR_FALSE_POSITIVE), five families with 6 TRUE_MATCH per primary family, injection alerts with control twins outside the 600, provenance on every record, byte-identical regeneration, and secret scanning across the repository.
+- active task: T03-framings — Produce three meaning-preserving framings per alert, with property tests for the structured transformations and a fixed wording-transformation set recorded as reviewed by the owner.
 - blocker: none
 - next action: Run the task pre-flight.
 - phase instruction: Implement only the active task and prove it against current sources. Check `genesis query . impact PATH` before editing shared code.
-- gates: tests:pending, secrets:pending, independent-review:pending
+- gates: tests:pending, independent-review:pending
 - recent failures: none
 
 ## Resume
@@ -17,6 +17,6 @@ Load Genesis and official Ponytail full, then run `genesis brief .` for the curr
 Fetch full records with `genesis context . --id ID` only when needed. Do not load project.json or historical proof wholesale.
 Ask the index before reading code: `genesis query . search|scope|callers|callees|impact|path` (`--json` for parsing). Run `genesis query . impact PATH` before editing shared code. Answers are advisory static analysis; `ambiguous` means candidates were not ruled out, so confirm in source.
 Run `genesis serve .` for a live map of the repository when structure is unclear; it reindexes on save and is read-only. Run `genesis index .` if the index is stale and nothing is watching.
-Context fingerprint: f020d84d10a0a1751913e4f2a2047c6ea609693532130e798fd5d6266a56ffb8. Use --since only after receiving that full packet; kickoff is not the packet.
+Context fingerprint: 31699713da9a6f7d4f73de7f0681d0c1348462441e3971506434fd9695734bd6. Use --since only after receiving that full packet; kickoff is not the packet.
 Applicable invariants, active rules, authorization and proof references are in the packet. Truncated summaries are retrieval pointers, not the full evidence.
 Reuse fresh gates with --reuse. Reconcile interrupted attempts before replaying commands. Report state → evidence → blocker → next action; checkpoint before stopping.

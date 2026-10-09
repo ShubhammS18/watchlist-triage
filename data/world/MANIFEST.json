@@ -1,0 +1,20 @@
+{
+  "as_of_date": "2026-09-30",
+  "files": {
+    "README.md": "136d55f9d86ba31f9d6650ff425901897c9e84bfa00f3cf298566c751e5e63c8",
+    "agent/alerts.jsonl": "df244081c254e316cc9c05c819e4d2a97d437930ad59dce3dba00137fb789887",
+    "agent/customers.jsonl": "4f0b728f955be5d25d7f44ffe20e9475a39506f8b114004da1dc940a4ace268b",
+    "agent/evidence.jsonl": "6d7559df460e58905e4bd1d07b630f2fa39a4469977214f6760afcfdc2da547e",
+    "agent/twin_alerts.jsonl": "996cd2a19e7a49580c26da3f6a3d265e75c555a7273af2887f66a81981fbd9b2",
+    "agent/watchlist.jsonl": "8405ccaa6e583ff17c3658da3c20b2a292ed1366727bbee936da171069255864",
+    "hidden/labels.jsonl": "8894ff443517e8482b2b2c21b5dfff9b7a91c18ef2246e7300621f512d43749a",
+    "hidden/snippet_tags.jsonl": "732631d5e6be47e5e8b0f4327b415c3f2364c88461f84371e68670561df58d12",
+    "hidden/supporting_evidence.jsonl": "804a11e3d75ab1a3682950b568314609fedfe10c2be8633de00a23b8ac8f9ffb",
+    "hidden/twin_links.jsonl": "8819ea2d016c7d6516d5590440efefde3592d921c1c2e6ecb0cec8942be005a9"
+  },
+  "generator_version": "1",
+  "header_comment": "world_hash is the SHA-256 (hex) of the UTF-8 text made from the lines 'relative_path:file_sha256', one line for every file in this folder except MANIFEST.json itself, sorted in ascending order, joined with a newline character and ending with one newline character. relative_path uses forward slashes and is relative to this folder; file_sha256 is the SHA-256 (hex) of the file's bytes.",
+  "rubric_version": "1.2",
+  "seed": 20260930,
+  "world_hash": "b77a6804a52b1d41650e250a31ff64a701b1d315a674a1f1242d93cb6b15c9b0"
+}

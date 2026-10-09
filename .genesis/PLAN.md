@@ -18,15 +18,15 @@
 
 ### T02-world — Build the deterministic world generator and matcher: 600 labelled alerts (30 TRUE_MATCH, 30 AMBIGUOUS_BY_DESIGN, 540 CLEAR_FALSE_POSITIVE), five families with 6 TRUE_MATCH per primary family, injection alerts with control twins outside the 600, provenance on every record, byte-identical regeneration, and secret scanning across the repository.
 
-- state/risk: active / medium
+- state/risk: done / medium
 - requirements: FR-1, FR-2, FR-3, FR-4, NFR-2, NFR-4, AC-10, AC-17
 - scope: not bounded
-- gates: tests: .venv/bin/python -m pytest tests/t02_world -q -p no:cacheprovider, secrets: pre-commit run gitleaks --all-files, independent-review: pending
+- gates: tests: .venv/bin/python -m pytest tests/t02_world -q -p no:cacheprovider, secrets: pre-commit run gitleaks --all-files, independent-review: pass
 - next: Run the task pre-flight.
 
 ### T03-framings — Produce three meaning-preserving framings per alert, with property tests for the structured transformations and a fixed wording-transformation set recorded as reviewed by the owner.
 
-- state/risk: queued / medium
+- state/risk: active / medium
 - requirements: FR-21, AC-23
 - scope: not bounded
 - gates: tests: .venv/bin/python -m pytest tests/t03_framings -q -p no:cacheprovider, independent-review: pending

@@ -1,0 +1,39 @@
+{
+  "as_of_date": "2026-09-30",
+  "counts": {
+    "alerts": 600,
+    "ambiguous_per_family": 6,
+    "background_customers": 200,
+    "background_watchlist_entries": 200,
+    "clear_false_positive_hard_families": [
+      "name_variants",
+      "common_name_collisions",
+      "thin_identifiers",
+      "pep_status"
+    ],
+    "clear_false_positive_hard_per_family": 30,
+    "clear_false_positive_plain": 420,
+    "families": [
+      "name_variants",
+      "common_name_collisions",
+      "thin_identifiers",
+      "pep_status",
+      "contradictory_evidence"
+    ],
+    "injection_per_label": 5,
+    "labels": {
+      "AMBIGUOUS_BY_DESIGN": 30,
+      "CLEAR_FALSE_POSITIVE": 540,
+      "TRUE_MATCH": 30
+    },
+    "secondary_family_true_matches_per_primary_family": 2,
+    "true_match_per_primary_family": 6
+  },
+  "dob_year_max": 2000,
+  "dob_year_min": 1950,
+  "id_prefix": "SYN-",
+  "pep_offset_days": [0, 90, 180, 335, 364, 365, 366, 380, 540, 730, 1095, 1460],
+  "seed": 20260930,
+  "source": "worldgen",
+  "version": "1"
+}
