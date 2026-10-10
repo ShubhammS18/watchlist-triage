@@ -1,0 +1,13 @@
+{
+  "task": "T03-framings",
+  "gate": "independent-review",
+  "kind": "review",
+  "attempt": "484f99c0-b044-4c4a-817d-9cdde66b561c",
+  "human": "Shubham Suradkar",
+  "reason": "Two independent Codex rounds ended in APPROVE after fixes. I reviewed the 50 fixed alternate wordings and the design decisions myself. The tests keep dates, identifiers and names across the three framings. I know the wording checks are keyword-based and do not prove equal agent behaviour, which T07 will measure.",
+  "observed_at": "2026-10-10T06:58:35.240Z",
+  "source_hash": "ca63572fb2d246ae77915a985aab6bf769b62b5d5a173331417a06106a505850",
+  "config_hash": "47ca886be56abb414a50afc00a4dd75cc21b014757d5d7e8b76b8d9d6b6936d8",
+  "reviewed_proofs": "8b0b7971a39fc15a73bde85d601c045913de720b9e6e2a4926365ba98ea8e0c1",
+  "hash": "546f71ee654069fb3e565cf14fd9bb6419c2c91ebc7e0921ebc99252d287cc3b"
+}

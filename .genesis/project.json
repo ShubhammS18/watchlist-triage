@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-09T07:48:56.350Z"
+    "updated_at": "2026-10-10T06:59:02.079Z"
   },
   "policy": {
     "ponytail": "full",
@@ -25,7 +25,7 @@
   "lifecycle": {
     "phase": "build",
     "status": "active",
-    "active_task": "T03-framings",
+    "active_task": "T04-model-interface",
     "blocker": null,
     "next_action": "Run the task pre-flight."
   },
@@ -280,6 +280,114 @@
       "tags": [
         "t02"
       ]
+    },
+    {
+      "id": "DEC-CI-DRIFT-WAVE2",
+      "title": "CI drift check deferred to wave 2",
+      "text": "Anchor artifact A.13.2 (CI check that the frozen world is byte-identical on every commit) is not covered by any wave-1 task and no CI workflow exists. Owner chose to add it as a small task at the wave-2 reopen, not before T03. The world hash is frozen at b77a6804a52b1d41650e250a31ff64a701b1d315a674a1f1242d93cb6b15c9b0, so drift in the meantime is covered by the existing determinism tests run locally. Overturn if the world files change before wave 2.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-09",
+      "recorded_at": "2026-10-09T12:52:42.774Z",
+      "paths": [],
+      "tags": [
+        "wave2"
+      ]
+    },
+    {
+      "id": "DEC-T03-FRAMINGS-DESIGN",
+      "title": "T03 framing design (D1-D7)",
+      "text": "Owner decisions for T03 framings, 2026-10-09. D1: Framing 1 is the alert exactly as in the world (identity). Framings 2 and 3 are each transformed in all three ways (field order, name format, snippet wording) and the three must differ from each other. D2: Snippet wording is changed by a fixed, hand-written table with no model calls; the owner reviews the whole set once and the review is recorded later. D3: Framings are produced by a pure function in a new package at the repo root (framings/, stdlib only, same style as worldgen/); nothing is written into data/world/ and the world hash must not change. D4: The five injected attack texts are byte-identical in every framing. D5: Alternate wordings are per note type (tag): 5 tags x 2 alternates (one for framing 2, one for framing 3) = 10 lines; tags are neutral, identity_link, continuing_risk, relationship, contradicts. D6: Names are reordered and re-punctuated only, by position, never guessing given or family name; titles and accents stay as written. Framing 2 is 'TITLE LAST, rest': last non-title token upper-cased, comma, remaining non-title tokens in original order, title stays first and gets a trailing dot if it has none. Framing 3: last non-title token moved to the front, no comma, no upper-casing, title stays first and loses its trailing dot if it has one. Aliases use the same format. If upper-casing would change the normalised letters of any name, stop and report instead of working around it. D7: Field order is fixed per framing; blocks are the three kinds customer_field, watchlist_field, snippet. Framing 2: watchlist block, customer block, then notes, fields inside each block keep their order. Framing 3: notes first, then the customer block in reverse field order, then the watchlist block in reverse field order. Rules: evidence IDs never change. The same function applies to the twin alerts, read only via worldgen.harness_twins. The framing code never reads hidden/; it finds a snippet's note type by rendering the templates in worldgen.snippets with the alert's own names and comparing text; a snippet matching no template is left unchanged and must be one of the five injected texts, otherwise an error is raised; a snippet matching more than one template raises an error. Names inside rewritten notes use the same name format as that framing's name fields. Deterministic: no randomness, no clock, no environment lookups. Injected texts, dates, ID numbers, nationalities, addresses, pep_status, office, relationship fields and every date field are byte-identical across framings.",
+      "status": "accepted",
+      "source": "owner decisions 2026-10-09",
+      "recorded_at": "2026-10-09T13:36:35.752Z",
+      "paths": [],
+      "tags": [
+        "t03"
+      ]
+    },
+    {
+      "id": "DEC-T03-NEUTRAL-WORDING",
+      "title": "Neutral alternates must be content-free",
+      "text": "Owner chose option A (2026-10-09): the two neutral alternates carry no identity, risk, relationship or all-clear content; they are administrative notes in the style of the five original neutral wordings. The other eight alternates are approved as drafted.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-09",
+      "recorded_at": "2026-10-09T13:55:16.171Z",
+      "paths": [],
+      "tags": [
+        "t03"
+      ]
+    },
+    {
+      "id": "DEC-T03-NEUTRAL-REVERSED",
+      "title": "Neutral alternates keep the originals' reassurance level",
+      "text": "Supersedes DEC-T03-NEUTRAL-WORDING. Owner chose option B (2026-10-09): the five original neutral wordings already carry mild reassurance, so the two neutral alternates restore that level to keep framings meaning-equal. The reassurance cue is a property of the T02 world and is measured by the planned neutral-note ablation, not hidden in T03.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-09",
+      "recorded_at": "2026-10-09T14:05:42.390Z",
+      "paths": [],
+      "tags": [
+        "t03"
+      ]
+    },
+    {
+      "id": "DEC-T03-WORDING-REVIEW",
+      "title": "Owner review of the T03 wording-transformation set (AC-23)",
+      "text": "I read all ten alternate wordings in docs/framings/wording-set.md against the five originals of each note type. Each alternate keeps what the rubric needs for its type. I accept that specifics such as spouse versus sibling, or the kind of conflict in a contradicting note, are generalised in framings 2 and 3, so a verdict change there could partly come from lost detail; I will state this as a limit. The neutral alternates keep the same mild reassurance as the originals (decision DEC-T03-NEUTRAL-REVERSED), so the three framings carry equal meaning. The five injected texts are not reworded in any framing.",
+      "status": "accepted",
+      "source": "owner review 2026-10-09, docs/framings/wording-set.md",
+      "recorded_at": "2026-10-09T14:23:43.791Z",
+      "paths": [],
+      "tags": [
+        "t03"
+      ]
+    },
+    {
+      "id": "DEC-T03-NOSNIPPET",
+      "title": "Wording differences apply only where a note exists (D10)",
+      "text": "D10 = A: wording differences apply only where a note exists. Every alert must differ across the three framings in field order and name format; every alert that has at least one note must also differ in wording. 280 of 615 alerts and twins have no note; this is a stated limit, not a gap. AC-23 asks only for property tests and the owner's review.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-09; Codex round 1 findings",
+      "recorded_at": "2026-10-09T14:50:08.404Z",
+      "paths": [],
+      "tags": [
+        "t03"
+      ]
+    },
+    {
+      "id": "DEC-T03-PERWORDING",
+      "title": "Alternates are written per original wording (D11)",
+      "text": "D11 = B: alternates are written per original wording, not per note type: 25 originals x 2 = 50 alternates (one for framing 2, one for framing 3). This supersedes D5 (per-type), DEC-T03-NEUTRAL-WORDING, DEC-T03-NEUTRAL-REVERSED and the earlier DEC-T03-WORDING-REVIEW, which now needs a fresh owner review. Reason: Codex round 1 showed one line per type changes facts (neutral note gained a check and a follow-up outcome; a passport nationality difference became a generic different-individual note).",
+      "status": "accepted",
+      "source": "owner decision 2026-10-09; Codex round 1 findings",
+      "recorded_at": "2026-10-09T14:50:08.806Z",
+      "paths": [],
+      "tags": [
+        "t03"
+      ]
+    },
+    {
+      "id": "DEC-T03-WORDING-REVIEW-2",
+      "title": "Owner review of the per-original wording set (AC-23)",
+      "text": "Supersedes DEC-T03-WORDING-REVIEW. I read all fifty alternate wordings in docs/framings/wording-set.md against their 25 originals. Each alternate keeps the facts of its original: the source, the document or relationship, and the specifics such as passport nationality or the kind of family tie. Each keeps the original’s direction and its level of reassurance, and adds no new check, outcome or instruction. Each also carries its original’s key-fact words. I accept the limits: the checks are keyword-based and cannot prove meaning is identical, 8 of the 25 originals do not occur in the frozen world, and 280 of 615 alerts have no note to reword. The five injected texts are not reworded in any framing.",
+      "status": "accepted",
+      "source": "owner review 2026-10-09, docs/framings/wording-set.md",
+      "recorded_at": "2026-10-09T15:07:14.886Z",
+      "paths": [],
+      "tags": [
+        "t03"
+      ]
+    },
+    {
+      "id": "DEC-T03-FR21-AMENDS-D1",
+      "title": "FR-21 reading: wording differs only where a note exists (amends D1)",
+      "text": "Owner decision 12, amends D1 (DEC-T03-FRAMINGS-DESIGN). D1 said framings 2 and 3 are each transformed \"in all three ways\" (field order, name format, snippet wording). Per D10 (DEC-T03-NOSNIPPET), wording differs only where a note exists: 335 of the 615 bundles (600 alerts and 15 twins) carry a note and 280 have none. So framings 2 and 3 always differ from the original and from each other in field order and name format, and in wording wherever a note exists. This is the owner's reading of FR-21. SPEC.md is not changed. A spec clarification is carried as an open item to the wave-2 reopen.",
+      "status": "accepted",
+      "source": "owner decision 12; Codex round 2 findings, docs/reviews/t03-review-round-2.md",
+      "recorded_at": "2026-10-10T06:41:49.831Z",
+      "paths": [],
+      "tags": [
+        "t03"
+      ]
     }
   ],
   "knowledge": [],
@@ -462,7 +570,7 @@
     {
       "id": "T03-framings",
       "outcome": "Produce three meaning-preserving framings per alert, with property tests for the structured transformations and a fixed wording-transformation set recorded as reviewed by the owner.",
-      "state": "active",
+      "state": "done",
       "risk": "medium",
       "owner": "claude-code",
       "scope": [],
@@ -482,16 +590,28 @@
           "kind": "command",
           "command": ".venv/bin/python -m pytest tests/t03_framings -q -p no:cacheprovider",
           "mandatory": true,
-          "status": "pending",
-          "evidence": null
+          "status": "pass",
+          "evidence": {
+            "path": ".genesis/evidence/T03-framings-tests-90900860-efc4-433a-9887-9621d85e834a.json",
+            "hash": "5d41c36c9a149a2502e3a345d85c7102b5bb6cc49ae0a4912f3ea530bbf52bba",
+            "source_hash": "ca63572fb2d246ae77915a985aab6bf769b62b5d5a173331417a06106a505850",
+            "config_hash": "47ca886be56abb414a50afc00a4dd75cc21b014757d5d7e8b76b8d9d6b6936d8",
+            "observed_at": "2026-10-10T06:55:25.173Z"
+          }
         },
         {
           "id": "independent-review",
           "kind": "review",
           "command": "",
           "mandatory": true,
-          "status": "pending",
-          "evidence": null
+          "status": "pass",
+          "evidence": {
+            "path": ".genesis/evidence/T03-framings-independent-review-484f99c0-b044-4c4a-817d-9cdde66b561c.json",
+            "hash": "546f71ee654069fb3e565cf14fd9bb6419c2c91ebc7e0921ebc99252d287cc3b",
+            "source_hash": "ca63572fb2d246ae77915a985aab6bf769b62b5d5a173331417a06106a505850",
+            "config_hash": "47ca886be56abb414a50afc00a4dd75cc21b014757d5d7e8b76b8d9d6b6936d8",
+            "observed_at": "2026-10-10T06:58:35.240Z"
+          }
         }
       ],
       "next_action": "Run the task pre-flight.",
@@ -500,7 +620,7 @@
       "failures": [],
       "limitations": [],
       "created_at": "2026-10-07T13:41:16.880Z",
-      "updated_at": "2026-10-07T13:41:16.880Z",
+      "updated_at": "2026-10-10T06:59:02.065Z",
       "base_manifest": {
         ".gitignore": "05272076c15c79ba32ab1d10bbad87ff61436dfd0a365d60c0e0b550edb2e4db",
         ".pre-commit-config.yaml": "a4f5b7a2d670240a85022e3080fba11c904157f0a26bd4ed864502bcbe832dc9",
@@ -576,7 +696,7 @@
     {
       "id": "T04-model-interface",
       "outcome": "Provide one model-agnostic interface with a stub model selected only by configuration, and enforce that the agent process can reach nothing except the model interface. Covers the network part of AC-11 and the stub-model part of AC-14.",
-      "state": "queued",
+      "state": "active",
       "risk": "medium",
       "owner": "claude-code",
       "scope": [],
@@ -616,7 +736,91 @@
       "failures": [],
       "limitations": [],
       "created_at": "2026-10-07T13:41:16.975Z",
-      "updated_at": "2026-10-07T13:41:16.975Z"
+      "updated_at": "2026-10-07T13:41:16.975Z",
+      "base_manifest": {
+        ".gitignore": "05272076c15c79ba32ab1d10bbad87ff61436dfd0a365d60c0e0b550edb2e4db",
+        ".pre-commit-config.yaml": "a4f5b7a2d670240a85022e3080fba11c904157f0a26bd4ed864502bcbe832dc9",
+        "CLAUDE.md": "005ed5c58b524ee06153c8facd4bd1f2216f81c5d98497abc1d09554932f3621",
+        "LICENSE": "e37947574b26d42dec642954a8a6fbd2de2252c8c98385a3ca2e0bf4ed948b0c",
+        "README.md": "f69536d234f3cc301d06bd601675ec6d96a9ca9fd5c45a7ef1fe912e80bbcc6f",
+        "SPEC.md": "90275b1a9cb076894f9a23a8a871d1dec9692671c17741ce62092d75b7eb5e7b",
+        "data/world/MANIFEST.json": "ff550cb3eb9d6ee190fa01fb07e31fc208723a4d891321b8e9608663639822e0",
+        "data/world/README.md": "c1ad93d906f2ea975463aa209cc46c705101388d6d3ddce15029f353d5c4bcda",
+        "data/world/agent/alerts.jsonl": "e8c8dbd405ad7345f6e00d1a8b3d4eea624a28ead836b8a1742f415db10755d9",
+        "data/world/agent/customers.jsonl": "1d907f93109650079b2415761d709fab87d54c7923593cf7018c77b1301b3a36",
+        "data/world/agent/evidence.jsonl": "cd4986922c4095ff59897f2af83053c4d30a4828831706b528f799fd1aaba9e6",
+        "data/world/agent/twin_alerts.jsonl": "f28e178cd14e5e1db8d2869811b254183347b575f537d883746957c19932c406",
+        "data/world/agent/watchlist.jsonl": "2fb2d60ffc56800c040b6a18276b9958afcb01141457703ea19663c304d3690d",
+        "data/world/hidden/labels.jsonl": "b470ed9bdc52740c577f732bcd4d66f84f577a628ab4702866bc1f1b6dc2a7ee",
+        "data/world/hidden/snippet_tags.jsonl": "a264989cb5c511e868a839fb1012239bd643e9c91781906ec5f3faee4918e589",
+        "data/world/hidden/supporting_evidence.jsonl": "27f9e0b8ff4475f9ccebe1b28cddc5a126d5b4ba220ee03f68338ea7539539c6",
+        "data/world/hidden/twin_links.jsonl": "98c3751b00d77bcec517071d67f19092f1cc683e64c25578ab09ecac3b98dd50",
+        "docs/framings-design.md": "7eeb4085731e04d8442269918bd0d4e8f47f8aaef11c84ce6ebf6cc2cf620af1",
+        "docs/framings/wording-set.md": "4c032b45085c447711301e7f1efe2c0397607a0174e68d57a0f61657820ae426",
+        "docs/reviews/spec-review-round-1.md": "77f2f786179a1a0707475e248cdd816cbc765221792905bfd12a60141a1b5dee",
+        "docs/reviews/spec-review-round-2.md": "2149bcd8993aa36998e70df480a9a73a8ba075a73b15f49b1283ea1618088744",
+        "docs/reviews/spec-review-round-3-closure.md": "06a0b7c26d7fe24c4aa1a678089b826d3eeb5e75bab2aa84cc608063e4b00dfe",
+        "docs/reviews/spec-review-round-3.md": "ff97d6ac2683ac3b0078bc416549a6451e9b0640fdb960525f838c63d169fb94",
+        "docs/reviews/t02-review-round-1.md": "644c4204d60fc60c81820e012d75d495d049f7e917b906f4cc825a4de3af31b3",
+        "docs/reviews/t02-review-round-2.md": "ed73ba3ed7ba7f2ee3546dbebe31c48a473de293148220daae542a6f53709dc7",
+        "docs/reviews/t02-review-round-3.md": "c8b5cd1bdbe38bc6968544a9699e045c5d365a866672c1a8b54030325ebb974f",
+        "docs/reviews/t03-review-round-1.md": "f4700596ff72bd5743eee6428ac9fe1e8f1f633ab3c9ab862c33974c06f4e612",
+        "docs/reviews/t03-review-round-2.md": "caaa9bf542a7b50f8695e3c4837fb5cb64895649171dcae30799050697b1f2a4",
+        "docs/reviews/t03-review-round-3.md": "10ad54ba9ced98be5604021e37921aac9cdbd82561a3a1e4f538562f48141e52",
+        "docs/rubric.md": "d7b8e9f1b0d4e59c9cbf2ceac3de22141947173a5fad432620dd06c7d15a059d",
+        "docs/world-design.md": "ccaa1f102011dd35d463b09437ffeb630d6a9fe1f5b60895f387ace6c93b6a7b",
+        "framings/__init__.py": "29230362e3e05b53f141b2b7a79ec6152ef288c40ace005cab2be331fc18a65d",
+        "framings/names.py": "b3c09193050f5ce0c3db13b01db83cbf51876dc48f6485a9611e0b1883c03718",
+        "framings/order.py": "ef1b2d88728d160ea87e13a1be2e6206492709846877189d353a1d44514e9557",
+        "framings/recognise.py": "0278b53317d4db31ebb3103a6c712b43a9b00622e35b6b1f1cec0e2f9ca570da",
+        "framings/wording.py": "34ef95bb0312e899df8e95c99c9f2d4ffa005c3a73313b051a777df144179821",
+        "requirements-dev.txt": "d1ac357aa5e967f33262a73eb43d974e7749cf8ceb73ede5c459c9c8e5e72658",
+        "tests/t01_rubric/test_rubric_structure.py": "b4157c4ba91e6723349c653c7fe5aedd3ff58d3f22ed22ddbf46073aedc7d020",
+        "tests/t02_world/checks.py": "8aa7db60984ea59980fbf76bce0d299403281c8d25979d756f7610bddc983cc9",
+        "tests/t02_world/conftest.py": "5449ce4839fc8cda02f09db4b327dd65983f8a6f5be1459a067e27bc233f6dae",
+        "tests/t02_world/leak_tables.py": "d47b29a028d6edd0f826309e1bc975c8bd6a9cc3211fb53e43bc28e3a4ffd64c",
+        "tests/t02_world/test_consistency.py": "447c29cf1395fe56fe1c3d7678b9ea05667c8045b1e0590f4dabde771160efec",
+        "tests/t02_world/test_determinism.py": "34570ef1ceeea6f55c3cf95dbb7f77f55724d5a74f681c8c5d339a09a8ac62b8",
+        "tests/t02_world/test_injection.py": "45443fc4e0d606278e47fb3bcc28657b3d05cd4fb85545878e967905a523cb9a",
+        "tests/t02_world/test_leaks.py": "1d129ee5a8ffe70080ebe3d9a60fb158ec41c7f75e0f0f1f40cf8e2bca3776dd",
+        "tests/t02_world/test_loader.py": "9deeafd3ea90d4c7a26c2465f0cde16d2fc07e65eb8804023c5da649e245e82c",
+        "tests/t02_world/test_matcher.py": "3c76168f84acd5d2e3db2219fad2adc712996dc9ad689aa5810817d9192b6373",
+        "tests/t02_world/test_names.py": "ff8652d77a82c0ab75bed389cf06ed76bf888ade8efbc0be660f70cdc237fe67",
+        "tests/t02_world/test_pepdates.py": "bb8631a3352d5d1e1736058fa90e239371d65560054dc4079fbd39ce8bb2c037",
+        "tests/t02_world/test_rng.py": "2c553971211eb6e89fe8695100b7887bc4e588ff31cc60e526fb7830b6864a5e",
+        "tests/t02_world/test_rubric_check.py": "5fa9bec55b48fa85aace0b1ecc2dce3c03ae848c14d9f911223d8ddef2307045",
+        "tests/t02_world/test_seed_sweep.py": "76f84dba79849b7dbfa8b8631566a5d38f95009fed834884e730979813787e07",
+        "tests/t02_world/test_static.py": "5d2f9b2e6e6b82e6b6f27521bcff12ae791f266917dd89c8b1a13d5fec332fa8",
+        "tests/t02_world/test_text_support.py": "53226f9ccc220e0c1b24bd0a128448c2a900df39f081c73b68188690b369815c",
+        "tests/t02_world/test_validate.py": "11f3234a1001b1f34e02527c662bd5c97651a531d23657883e9f7893738228db",
+        "tests/t02_world/test_world.py": "79f17dce6e38b10109095d1780bdac7563e12d12f7b6fbc8552cdfc9227d86d9",
+        "tests/t02_world/text_adjudicator.py": "cedfd0f8746870dc63f9de1ae81940936c2c63bac675356c271578411059db0a",
+        "tests/t03_framings/framing_checks.py": "3803f1d3f290326d87ada8ea439bda5c3593ccff70e4c6ce167c423cde1ea9ba",
+        "tests/t03_framings/test_framings.py": "22b61791328df5361c69fe583fa6bf523c56da80e1c4cdc8238fe6fb59731b5e",
+        "tests/t03_framings/test_framings_mutation.py": "1c03ec280b6fa0c5c8f0787e9c5a1d90bcbca138c25f1575bc76f5bcc8819f96",
+        "worldgen/__init__.py": "99d0d3fece6dbacc2a6e7e2dee55fd9f27aa66db0e4b36fa70084c264d0b59d3",
+        "worldgen/__main__.py": "e0d831e913667cabca66481cd94753f614a16eda943297542d0762d2e35c798b",
+        "worldgen/build.py": "4d217dd2338df97fba417d081df44346c7aa5e4fa6b0100e9a8786dec336303a",
+        "worldgen/config.json": "9474848e32a3c1c1a9716a0bfb6ad85d5a7367d877510f749af41c42ca44fcdc",
+        "worldgen/harness_twins.py": "bb5d304d5939086aa9f332d7c0528b0a8a2fa54a28fcbe5ac3ead02d2167581e",
+        "worldgen/loader.py": "6e50d3649c2b75914acc403aedca35c80629eaf12ba6eba918f8bc95b98e2aee",
+        "worldgen/matcher.py": "3f8054b06307918939ccdafd53cc2744d775409f77efda9c0b9977b136056b87",
+        "worldgen/names/README.md": "976c5ddfbbc550e120ad5056ea2db2f887effeac86fe0dd77578e6d0069c4d40",
+        "worldgen/names/common_family.txt": "18d44027c07e2f27aba5a7ff3c5cad5f30be620870e62b45f95a1ef9b9269288",
+        "worldgen/names/common_given.txt": "d34064d71bbcff5ac5b692457147bd5f3fb59a1c70cc5365cefb55fb48be88a4",
+        "worldgen/names/family.txt": "821574ac6177d7921208dde555189cbc6bfa278eb8a5078a337dcf41f3c73706",
+        "worldgen/names/given.txt": "911f9962930b3e988c2b9fa15c1e5ca58127d39181d47af4f65392447f26f45d",
+        "worldgen/names/titles.txt": "a7738427048751623f2dfe3837d95bb0fe92623647c546eb168caf7150cbf4e6",
+        "worldgen/pepdates.py": "4957e95b5a114e044da375d39229008e986c08826caac741d476ec2f0edd002d",
+        "worldgen/plan.py": "554d05c9b2fe9b419afcd90ed80aa9a561913c630de94ae104a6ae881072984d",
+        "worldgen/rng.py": "f74c528bb5ee9aecb3ea18e50c73bb2d4c22dc6c991fe287e528ec8f74657bc8",
+        "worldgen/rubric_check.py": "477e2c1b8b077c5c77c6e7f2ac3fd2b41f13e5f96612446c199aa59b42d2e26d",
+        "worldgen/schema/world.schema.json": "a2ebbd51d1c7b04bb776295aa7de17b9775c39003398200a7dfe50570001c5f9",
+        "worldgen/snippets.py": "e8a073b2c4a4342aa15b4214880ece2923a970fa8f3df45deb00ab1dc6a4d563",
+        "worldgen/textutil.py": "646747eccdb50ce694373fc5363d526ce7632fda809d2925899fc0e013cbbc77",
+        "worldgen/truth.py": "8e58e65a814fecfcc3d68e5b282037071c176c14a388230f54ade8f368b09e23",
+        "worldgen/validate.py": "9007e47254ea998aff37c96269daaeefa99a74b2322445512b8246fcbddf3318"
+      }
     },
     {
       "id": "T05-baseline-agent",
@@ -833,6 +1037,15 @@
       "human": "Shubham Suradkar",
       "reason": "Three independent Codex rounds. Rounds 1 and 2 found real problems (injection wording, hard-case labels, loader paths) and I had them fixed. Round 3 returned APPROVE using its own classifier on three new seeds. I accept the remaining limits (neutral-note cue, injection cue, loader-only isolation) because they are written in the design note and will be measured later.",
       "revision": null
+    },
+    {
+      "id": "484f99c0-b044-4c4a-817d-9cdde66b561c",
+      "at": "2026-10-10T06:58:35.240Z",
+      "action": "approve",
+      "task": "T03-framings",
+      "human": "Shubham Suradkar",
+      "reason": "Two independent Codex rounds ended in APPROVE after fixes. I reviewed the 50 fixed alternate wordings and the design decisions myself. The tests keep dates, identifiers and names across the three framings. I know the wording checks are keyword-based and do not prove equal agent behaviour, which T07 will measure.",
+      "revision": null
     }
   ],
   "attempts": [
@@ -907,6 +1120,30 @@
       "cost": null,
       "stop_reason": null,
       "ended_at": "2026-10-09T07:46:04.766Z"
+    },
+    {
+      "id": "90900860-efc4-433a-9887-9621d85e834a",
+      "task": "T03-framings",
+      "kind": "gate",
+      "command": ".venv/bin/python -m pytest tests/t03_framings -q -p no:cacheprovider",
+      "timeout": 120000,
+      "authorization": null,
+      "pid": 20202,
+      "child_pid": 20218,
+      "started_at": "2026-10-10T06:55:24.009Z",
+      "status": "passed",
+      "before_hash": "ca63572fb2d246ae77915a985aab6bf769b62b5d5a173331417a06106a505850",
+      "config_hash": "47ca886be56abb414a50afc00a4dd75cc21b014757d5d7e8b76b8d9d6b6936d8",
+      "environment": {
+        "node": "v24.21.0",
+        "platform": "linux",
+        "arch": "x64",
+        "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+        "variables": {}
+      },
+      "cost": null,
+      "stop_reason": null,
+      "ended_at": "2026-10-10T06:55:25.173Z"
     }
   ],
   "authorizations": [],

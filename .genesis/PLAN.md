@@ -26,15 +26,15 @@
 
 ### T03-framings — Produce three meaning-preserving framings per alert, with property tests for the structured transformations and a fixed wording-transformation set recorded as reviewed by the owner.
 
-- state/risk: active / medium
+- state/risk: done / medium
 - requirements: FR-21, AC-23
 - scope: not bounded
-- gates: tests: .venv/bin/python -m pytest tests/t03_framings -q -p no:cacheprovider, independent-review: pending
+- gates: tests: .venv/bin/python -m pytest tests/t03_framings -q -p no:cacheprovider, independent-review: pass
 - next: Run the task pre-flight.
 
 ### T04-model-interface — Provide one model-agnostic interface with a stub model selected only by configuration, and enforce that the agent process can reach nothing except the model interface. Covers the network part of AC-11 and the stub-model part of AC-14.
 
-- state/risk: queued / medium
+- state/risk: active / medium
 - requirements: FR-9, FR-16, AC-11, AC-14
 - scope: not bounded
 - gates: tests: .venv/bin/python -m pytest tests/t04_model_interface -q -p no:cacheprovider, independent-review: pending

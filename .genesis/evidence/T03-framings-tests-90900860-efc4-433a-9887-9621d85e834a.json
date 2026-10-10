@@ -1,0 +1,30 @@
+{
+  "task": "T03-framings",
+  "gate": "tests",
+  "kind": "command",
+  "attempt": "90900860-efc4-433a-9887-9621d85e834a",
+  "command": ".venv/bin/python -m pytest tests/t03_framings -q -p no:cacheprovider",
+  "started_at": "2026-10-10T06:55:24.009Z",
+  "observed_at": "2026-10-10T06:55:25.173Z",
+  "exit_code": 0,
+  "signal": null,
+  "stdout": "........................................................................ [ 41%]\n........................................................................ [ 82%]\n..............................                                           [100%]\n174 passed in 0.75s\n",
+  "stderr": "",
+  "failure": null,
+  "receipt": null,
+  "revision": {
+    "commit": "2f623944e0de8bdf1bfba4e1a208aaa9126c1e7a",
+    "dirty": true
+  },
+  "source_hash": "ca63572fb2d246ae77915a985aab6bf769b62b5d5a173331417a06106a505850",
+  "before_hash": "ca63572fb2d246ae77915a985aab6bf769b62b5d5a173331417a06106a505850",
+  "config_hash": "47ca886be56abb414a50afc00a4dd75cc21b014757d5d7e8b76b8d9d6b6936d8",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "arch": "x64",
+    "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+    "variables": {}
+  },
+  "hash": "5d41c36c9a149a2502e3a345d85c7102b5bb6cc49ae0a4912f3ea530bbf52bba"
+}
