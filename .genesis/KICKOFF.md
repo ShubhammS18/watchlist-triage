@@ -4,7 +4,7 @@
 
 - objective: Triage sanctions/PEP name-match alerts from a frozen synthetic world: recommend close or escalate with cited evidence, human-approved, measured on zero missed planted true matches.
 - phase/status: build/active
-- active task: T04-model-interface — Provide one model-agnostic interface with a stub model selected only by configuration, and enforce that the agent process can reach nothing except the model interface. Covers the network part of AC-11 and the stub-model part of AC-14.
+- active task: T05-baseline-agent — Build the naive baseline agent: CLOSE or ESCALATE with a written reason and cited evidence IDs, rejection of results without them, escalation on unclear evidence, model and output faults failing closed to ESCALATE with SYSTEM_FAILURE, label isolation, and snippets treated as data. Covers the model-fault part of FR-8 and AC-13.
 - blocker: none
 - next action: Run the task pre-flight.
 - phase instruction: Implement only the active task and prove it against current sources. Check `genesis query . impact PATH` before editing shared code.
@@ -17,6 +17,6 @@ Load Genesis and official Ponytail full, then run `genesis brief .` for the curr
 Fetch full records with `genesis context . --id ID` only when needed. Do not load project.json or historical proof wholesale.
 Ask the index before reading code: `genesis query . search|scope|callers|callees|impact|path` (`--json` for parsing). Run `genesis query . impact PATH` before editing shared code. Answers are advisory static analysis; `ambiguous` means candidates were not ruled out, so confirm in source.
 Run `genesis serve .` for a live map of the repository when structure is unclear; it reindexes on save and is read-only. Run `genesis index .` if the index is stale and nothing is watching.
-Context fingerprint: 07995919d53ab471c54389e2f4576e5f83307aa69b5e92f951b86de86e10f923. Use --since only after receiving that full packet; kickoff is not the packet.
+Context fingerprint: c07cfdc8e16cc48d507fe98a2fcaa01d5618c4beb6aa6f586374f02ecfcda246. Use --since only after receiving that full packet; kickoff is not the packet.
 Applicable invariants, active rules, authorization and proof references are in the packet. Truncated summaries are retrieval pointers, not the full evidence.
 Reuse fresh gates with --reuse. Reconcile interrupted attempts before replaying commands. Report state → evidence → blocker → next action; checkpoint before stopping.

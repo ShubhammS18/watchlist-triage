@@ -34,15 +34,15 @@
 
 ### T04-model-interface — Provide one model-agnostic interface with a stub model selected only by configuration, and enforce that the agent process can reach nothing except the model interface. Covers the network part of AC-11 and the stub-model part of AC-14.
 
-- state/risk: active / medium
+- state/risk: done / medium
 - requirements: FR-9, FR-16, AC-11, AC-14
 - scope: not bounded
-- gates: tests: .venv/bin/python -m pytest tests/t04_model_interface -q -p no:cacheprovider, independent-review: pending
+- gates: tests: .venv/bin/python -m pytest tests/t04_model_interface -q -p no:cacheprovider, independent-review: pass
 - next: Run the task pre-flight.
 
 ### T05-baseline-agent — Build the naive baseline agent: CLOSE or ESCALATE with a written reason and cited evidence IDs, rejection of results without them, escalation on unclear evidence, model and output faults failing closed to ESCALATE with SYSTEM_FAILURE, label isolation, and snippets treated as data. Covers the model-fault part of FR-8 and AC-13.
 
-- state/risk: queued / high
+- state/risk: active / high
 - requirements: FR-6, FR-7, FR-8, NFR-5, AC-2, AC-13, AC-21
 - scope: not bounded
 - gates: tests: .venv/bin/python -m pytest tests/t05_agent -q -p no:cacheprovider, independent-review: pending

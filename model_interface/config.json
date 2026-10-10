@@ -1,0 +1,7 @@
+{
+  "provider": "stub",
+  "model": "stub-1",
+  "temperature": 0,
+  "max_tokens": 512,
+  "timeout_s": 30
+}

@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-10T06:59:02.079Z"
+    "updated_at": "2026-10-10T14:45:16.763Z"
   },
   "policy": {
     "ponytail": "full",
@@ -25,7 +25,7 @@
   "lifecycle": {
     "phase": "build",
     "status": "active",
-    "active_task": "T04-model-interface",
+    "active_task": "T05-baseline-agent",
     "blocker": null,
     "next_action": "Run the task pre-flight."
   },
@@ -388,6 +388,138 @@
       "tags": [
         "t03"
       ]
+    },
+    {
+      "id": "DEC-T04-INTERFACE",
+      "title": "T04 model interface shape",
+      "text": "One synchronous interface. Request = messages [{role, content}] + settings (model, temperature, max_tokens, timeout_s). Result = text, provider-reported model_id, input_tokens/output_tokens (None if unknown), latency_s. No tools or function-calling (FR-9).",
+      "status": "accepted",
+      "source": "owner decision 2026-10-10",
+      "recorded_at": "2026-10-10T13:22:18.326Z",
+      "paths": [],
+      "tags": [
+        "t04"
+      ]
+    },
+    {
+      "id": "DEC-T04-STUB",
+      "title": "T04 stub model",
+      "text": "Scripted deterministic stub, no network, no randomness: default reply, optional reply sequence, chosen failure modes (timeout, empty reply, provider error). Never decides alerts.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-10",
+      "recorded_at": "2026-10-10T13:22:26.591Z",
+      "paths": [],
+      "tags": [
+        "t04"
+      ]
+    },
+    {
+      "id": "DEC-T04-CONFIG",
+      "title": "T04 model configuration",
+      "text": "One JSON config (provider, model, decoding settings), default provider stub, no secrets; unknown provider = clear error; env vars only later for real keys.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-10",
+      "recorded_at": "2026-10-10T13:22:26.969Z",
+      "paths": [],
+      "tags": [
+        "t04"
+      ]
+    },
+    {
+      "id": "DEC-T04-ISOLATION",
+      "title": "T04 agent process isolation",
+      "text": "\"Agent process\" = child Python process (-I) talking to the parent over a pipe; parent owns the model interface; child has network blocked at Python level (connect, create_connection, DNS) before agent code runs. Limit: stops accidental and prompt-injected network use, not deliberately hostile code. OS-level sandbox deferred to the wave-2 reopen \"if needed\" (open item). T04 covers only the network part of AC-11 and stub part of AC-14; the rest stays in WAVE2-RESERVED.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-10",
+      "recorded_at": "2026-10-10T13:22:27.296Z",
+      "paths": [],
+      "tags": [
+        "t04"
+      ]
+    },
+    {
+      "id": "DEC-T04-NO-ADAPTER",
+      "title": "T04 ships no real provider adapter",
+      "text": "No real provider adapter, SDK or keys in T04; leave a registration slot.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-10",
+      "recorded_at": "2026-10-10T13:22:27.591Z",
+      "paths": [],
+      "tags": [
+        "t04"
+      ]
+    },
+    {
+      "id": "DEC-T04-ERRORS",
+      "title": "T04 model errors and retries",
+      "text": "Named errors (ModelError base; timeout, bad reply, provider error); interface never retries; retry limits and timeout handling belong to T05.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-10",
+      "recorded_at": "2026-10-10T13:22:27.891Z",
+      "paths": [],
+      "tags": [
+        "t04"
+      ]
+    },
+    {
+      "id": "DEC-T04-NO-PROGRAMS",
+      "title": "T04 child may not start other programs",
+      "text": "In the child, the audit-hook block also refuses starting other programs (subprocess, os.system, os.exec*/spawn*, fork/posix_spawn) and ctypes library loading, if the audit hook can see those events. Still a Python-level guard, not an OS sandbox; OS sandbox stays a wave-2 open item.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-10",
+      "recorded_at": "2026-10-10T13:33:18.030Z",
+      "paths": [],
+      "tags": [
+        "t04"
+      ]
+    },
+    {
+      "id": "DEC-T04-WALLCLOCK",
+      "title": "T04 run_child wall-clock cap",
+      "text": "run_child has a parent-side wall-clock cap (default 60 s); on expiry the child is killed and a named error is raised. It is a safety net only; the AC-13 timeout policy stays in T05.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-10",
+      "recorded_at": "2026-10-10T13:33:18.384Z",
+      "paths": [],
+      "tags": [
+        "t04"
+      ]
+    },
+    {
+      "id": "DEC-T04-AC11-SCOPE",
+      "title": "T04 AC-11 network scope of the Python-level guard",
+      "text": "Amends DEC-T04-ISOLATION. The Python-level guard is proven against ordinary, accidental and prompt-injected routes. Deliberately hostile code inside the agent is out of scope until an OS-level sandbox exists (wave-2 open item). SPEC.md is not changed; a spec clarification of AC-11's network part is carried to the wave-2 reopen.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-10; Codex round 1",
+      "recorded_at": "2026-10-10T14:05:50.847Z",
+      "paths": [],
+      "tags": [
+        "t04"
+      ]
+    },
+    {
+      "id": "DEC-T04-WALLCLOCK-THREAD",
+      "title": "T04 run_child model calls run in a worker thread within the cap",
+      "text": "Amends DEC-T04-WALLCLOCK. The parent runs each model call in a worker thread and waits within the cap; on expiry it kills the child and raises ChildTimeout on time. The abandoned thread may linger until its call returns.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-10; Codex round 1",
+      "recorded_at": "2026-10-10T14:05:51.194Z",
+      "paths": [],
+      "tags": [
+        "t04"
+      ]
+    },
+    {
+      "id": "DEC-T04-PLAN-WORDING",
+      "title": "T04 plan wording is original; DEC-T04-AC11-SCOPE governs",
+      "text": "The approved plan/KICKOFF task text for T04 (\"can reach nothing except the model interface\") is the original wording; DEC-T04-AC11-SCOPE governs (ordinary, accidental and prompt-injected routes; hostile in-process code out of scope until a wave-2 OS sandbox). The wave-2 reopen aligns the T04 task text and AC-11. Plan text is not hand-edited.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-10; Codex round 2",
+      "recorded_at": "2026-10-10T14:36:49.264Z",
+      "paths": [],
+      "tags": [
+        "t04"
+      ]
     }
   ],
   "knowledge": [],
@@ -696,7 +828,7 @@
     {
       "id": "T04-model-interface",
       "outcome": "Provide one model-agnostic interface with a stub model selected only by configuration, and enforce that the agent process can reach nothing except the model interface. Covers the network part of AC-11 and the stub-model part of AC-14.",
-      "state": "active",
+      "state": "done",
       "risk": "medium",
       "owner": "claude-code",
       "scope": [],
@@ -718,16 +850,28 @@
           "kind": "command",
           "command": ".venv/bin/python -m pytest tests/t04_model_interface -q -p no:cacheprovider",
           "mandatory": true,
-          "status": "pending",
-          "evidence": null
+          "status": "pass",
+          "evidence": {
+            "path": ".genesis/evidence/T04-model-interface-tests-0fa72906-71d3-4748-bd06-87f17d5ae64e.json",
+            "hash": "9c2dbcf09018921de4cba8bbf7b7dab4e31f54888194ca81e2fec66164a40125",
+            "source_hash": "3a200f86ed4f194753b44b55849b6d8e4f79397ab8931ab8b2ac03f88a09f66e",
+            "config_hash": "5f59809661f3b34bf0079dfeb2ea766b6350f296df75edf1af25eede36c6a140",
+            "observed_at": "2026-10-10T14:42:55.218Z"
+          }
         },
         {
           "id": "independent-review",
           "kind": "review",
           "command": "",
           "mandatory": true,
-          "status": "pending",
-          "evidence": null
+          "status": "pass",
+          "evidence": {
+            "path": ".genesis/evidence/T04-model-interface-independent-review-bebbe501-bf78-42eb-a97d-da97dfcafad0.json",
+            "hash": "7b5f4a09e258fdfff5461b5041ecf3b704a2c79c23c09b4b9cfa96d9878dcfe2",
+            "source_hash": "3a200f86ed4f194753b44b55849b6d8e4f79397ab8931ab8b2ac03f88a09f66e",
+            "config_hash": "5f59809661f3b34bf0079dfeb2ea766b6350f296df75edf1af25eede36c6a140",
+            "observed_at": "2026-10-10T14:44:48.390Z"
+          }
         }
       ],
       "next_action": "Run the task pre-flight.",
@@ -736,7 +880,7 @@
       "failures": [],
       "limitations": [],
       "created_at": "2026-10-07T13:41:16.975Z",
-      "updated_at": "2026-10-07T13:41:16.975Z",
+      "updated_at": "2026-10-10T14:45:16.733Z",
       "base_manifest": {
         ".gitignore": "05272076c15c79ba32ab1d10bbad87ff61436dfd0a365d60c0e0b550edb2e4db",
         ".pre-commit-config.yaml": "a4f5b7a2d670240a85022e3080fba11c904157f0a26bd4ed864502bcbe832dc9",
@@ -825,7 +969,7 @@
     {
       "id": "T05-baseline-agent",
       "outcome": "Build the naive baseline agent: CLOSE or ESCALATE with a written reason and cited evidence IDs, rejection of results without them, escalation on unclear evidence, model and output faults failing closed to ESCALATE with SYSTEM_FAILURE, label isolation, and snippets treated as data. Covers the model-fault part of FR-8 and AC-13.",
-      "state": "queued",
+      "state": "active",
       "risk": "high",
       "owner": "claude-code",
       "scope": [],
@@ -868,7 +1012,105 @@
       "failures": [],
       "limitations": [],
       "created_at": "2026-10-07T13:41:17.063Z",
-      "updated_at": "2026-10-07T13:41:17.064Z"
+      "updated_at": "2026-10-07T13:41:17.064Z",
+      "base_manifest": {
+        ".gitignore": "05272076c15c79ba32ab1d10bbad87ff61436dfd0a365d60c0e0b550edb2e4db",
+        ".pre-commit-config.yaml": "a4f5b7a2d670240a85022e3080fba11c904157f0a26bd4ed864502bcbe832dc9",
+        "CLAUDE.md": "005ed5c58b524ee06153c8facd4bd1f2216f81c5d98497abc1d09554932f3621",
+        "LICENSE": "e37947574b26d42dec642954a8a6fbd2de2252c8c98385a3ca2e0bf4ed948b0c",
+        "README.md": "f69536d234f3cc301d06bd601675ec6d96a9ca9fd5c45a7ef1fe912e80bbcc6f",
+        "SPEC.md": "90275b1a9cb076894f9a23a8a871d1dec9692671c17741ce62092d75b7eb5e7b",
+        "data/world/MANIFEST.json": "ff550cb3eb9d6ee190fa01fb07e31fc208723a4d891321b8e9608663639822e0",
+        "data/world/README.md": "c1ad93d906f2ea975463aa209cc46c705101388d6d3ddce15029f353d5c4bcda",
+        "data/world/agent/alerts.jsonl": "e8c8dbd405ad7345f6e00d1a8b3d4eea624a28ead836b8a1742f415db10755d9",
+        "data/world/agent/customers.jsonl": "1d907f93109650079b2415761d709fab87d54c7923593cf7018c77b1301b3a36",
+        "data/world/agent/evidence.jsonl": "cd4986922c4095ff59897f2af83053c4d30a4828831706b528f799fd1aaba9e6",
+        "data/world/agent/twin_alerts.jsonl": "f28e178cd14e5e1db8d2869811b254183347b575f537d883746957c19932c406",
+        "data/world/agent/watchlist.jsonl": "2fb2d60ffc56800c040b6a18276b9958afcb01141457703ea19663c304d3690d",
+        "data/world/hidden/labels.jsonl": "b470ed9bdc52740c577f732bcd4d66f84f577a628ab4702866bc1f1b6dc2a7ee",
+        "data/world/hidden/snippet_tags.jsonl": "a264989cb5c511e868a839fb1012239bd643e9c91781906ec5f3faee4918e589",
+        "data/world/hidden/supporting_evidence.jsonl": "27f9e0b8ff4475f9ccebe1b28cddc5a126d5b4ba220ee03f68338ea7539539c6",
+        "data/world/hidden/twin_links.jsonl": "98c3751b00d77bcec517071d67f19092f1cc683e64c25578ab09ecac3b98dd50",
+        "docs/framings-design.md": "7eeb4085731e04d8442269918bd0d4e8f47f8aaef11c84ce6ebf6cc2cf620af1",
+        "docs/framings/wording-set.md": "4c032b45085c447711301e7f1efe2c0397607a0174e68d57a0f61657820ae426",
+        "docs/model-interface-design.md": "820a6a6a3a201954349f4dd558b284f725013e0e384204048ca3c3b3193e636e",
+        "docs/reviews/spec-review-round-1.md": "77f2f786179a1a0707475e248cdd816cbc765221792905bfd12a60141a1b5dee",
+        "docs/reviews/spec-review-round-2.md": "2149bcd8993aa36998e70df480a9a73a8ba075a73b15f49b1283ea1618088744",
+        "docs/reviews/spec-review-round-3-closure.md": "06a0b7c26d7fe24c4aa1a678089b826d3eeb5e75bab2aa84cc608063e4b00dfe",
+        "docs/reviews/spec-review-round-3.md": "ff97d6ac2683ac3b0078bc416549a6451e9b0640fdb960525f838c63d169fb94",
+        "docs/reviews/t02-review-round-1.md": "644c4204d60fc60c81820e012d75d495d049f7e917b906f4cc825a4de3af31b3",
+        "docs/reviews/t02-review-round-2.md": "ed73ba3ed7ba7f2ee3546dbebe31c48a473de293148220daae542a6f53709dc7",
+        "docs/reviews/t02-review-round-3.md": "c8b5cd1bdbe38bc6968544a9699e045c5d365a866672c1a8b54030325ebb974f",
+        "docs/reviews/t03-review-round-1.md": "f4700596ff72bd5743eee6428ac9fe1e8f1f633ab3c9ab862c33974c06f4e612",
+        "docs/reviews/t03-review-round-2.md": "caaa9bf542a7b50f8695e3c4837fb5cb64895649171dcae30799050697b1f2a4",
+        "docs/reviews/t03-review-round-3.md": "10ad54ba9ced98be5604021e37921aac9cdbd82561a3a1e4f538562f48141e52",
+        "docs/reviews/t04-review-round-1.md": "2cfb822efe48f8cc71d4e2c2ef390fc8146ffa68c31a193daf82fd81334a6abd",
+        "docs/reviews/t04-review-round-2.md": "b78cd0cfd43fc4cfbfbbb8ebbf25459169dd15bdb322d62450901a6e3ad04f26",
+        "docs/rubric.md": "d7b8e9f1b0d4e59c9cbf2ceac3de22141947173a5fad432620dd06c7d15a059d",
+        "docs/world-design.md": "ccaa1f102011dd35d463b09437ffeb630d6a9fe1f5b60895f387ace6c93b6a7b",
+        "framings/__init__.py": "29230362e3e05b53f141b2b7a79ec6152ef288c40ace005cab2be331fc18a65d",
+        "framings/names.py": "b3c09193050f5ce0c3db13b01db83cbf51876dc48f6485a9611e0b1883c03718",
+        "framings/order.py": "ef1b2d88728d160ea87e13a1be2e6206492709846877189d353a1d44514e9557",
+        "framings/recognise.py": "0278b53317d4db31ebb3103a6c712b43a9b00622e35b6b1f1cec0e2f9ca570da",
+        "framings/wording.py": "34ef95bb0312e899df8e95c99c9f2d4ffa005c3a73313b051a777df144179821",
+        "model_interface/__init__.py": "cccd6bfa53e6facacc5bfadc6ffed24c8a2e104b00c195d2fc14d53bdc5193cb",
+        "model_interface/child.py": "651d03ea7274d75864c75697e8b73827cfb2a75eccf72361bbdfa76b7bcc846e",
+        "model_interface/config.json": "99afe69f6cbc5d7cda68277c9d23e6639f6808559242bd870ecb2ad29956a612",
+        "model_interface/probe_child.py": "9e7180fee42fa9da84b53f385f5bbe75b81e6f0a4a12c20f0a5e5cebf4e1057e",
+        "model_interface/providers.py": "b1e3a25027f49831c4f394f0dc26ec4b4fd711172e39d629228d250283d62a38",
+        "model_interface/runner.py": "d49ef8dda1bfa573082cca710e7f783a44f56956be11589d9b23b316b414a99f",
+        "model_interface/stub.py": "d8570892435a4e41a3944e8453e20c6c9aa35dde03ae4f771eb6018ab2aa2591",
+        "requirements-dev.txt": "d1ac357aa5e967f33262a73eb43d974e7749cf8ceb73ede5c459c9c8e5e72658",
+        "tests/t01_rubric/test_rubric_structure.py": "b4157c4ba91e6723349c653c7fe5aedd3ff58d3f22ed22ddbf46073aedc7d020",
+        "tests/t02_world/checks.py": "8aa7db60984ea59980fbf76bce0d299403281c8d25979d756f7610bddc983cc9",
+        "tests/t02_world/conftest.py": "5449ce4839fc8cda02f09db4b327dd65983f8a6f5be1459a067e27bc233f6dae",
+        "tests/t02_world/leak_tables.py": "d47b29a028d6edd0f826309e1bc975c8bd6a9cc3211fb53e43bc28e3a4ffd64c",
+        "tests/t02_world/test_consistency.py": "447c29cf1395fe56fe1c3d7678b9ea05667c8045b1e0590f4dabde771160efec",
+        "tests/t02_world/test_determinism.py": "34570ef1ceeea6f55c3cf95dbb7f77f55724d5a74f681c8c5d339a09a8ac62b8",
+        "tests/t02_world/test_injection.py": "45443fc4e0d606278e47fb3bcc28657b3d05cd4fb85545878e967905a523cb9a",
+        "tests/t02_world/test_leaks.py": "1d129ee5a8ffe70080ebe3d9a60fb158ec41c7f75e0f0f1f40cf8e2bca3776dd",
+        "tests/t02_world/test_loader.py": "9deeafd3ea90d4c7a26c2465f0cde16d2fc07e65eb8804023c5da649e245e82c",
+        "tests/t02_world/test_matcher.py": "3c76168f84acd5d2e3db2219fad2adc712996dc9ad689aa5810817d9192b6373",
+        "tests/t02_world/test_names.py": "ff8652d77a82c0ab75bed389cf06ed76bf888ade8efbc0be660f70cdc237fe67",
+        "tests/t02_world/test_pepdates.py": "bb8631a3352d5d1e1736058fa90e239371d65560054dc4079fbd39ce8bb2c037",
+        "tests/t02_world/test_rng.py": "2c553971211eb6e89fe8695100b7887bc4e588ff31cc60e526fb7830b6864a5e",
+        "tests/t02_world/test_rubric_check.py": "5fa9bec55b48fa85aace0b1ecc2dce3c03ae848c14d9f911223d8ddef2307045",
+        "tests/t02_world/test_seed_sweep.py": "76f84dba79849b7dbfa8b8631566a5d38f95009fed834884e730979813787e07",
+        "tests/t02_world/test_static.py": "5d2f9b2e6e6b82e6b6f27521bcff12ae791f266917dd89c8b1a13d5fec332fa8",
+        "tests/t02_world/test_text_support.py": "53226f9ccc220e0c1b24bd0a128448c2a900df39f081c73b68188690b369815c",
+        "tests/t02_world/test_validate.py": "11f3234a1001b1f34e02527c662bd5c97651a531d23657883e9f7893738228db",
+        "tests/t02_world/test_world.py": "79f17dce6e38b10109095d1780bdac7563e12d12f7b6fbc8552cdfc9227d86d9",
+        "tests/t02_world/text_adjudicator.py": "cedfd0f8746870dc63f9de1ae81940936c2c63bac675356c271578411059db0a",
+        "tests/t03_framings/framing_checks.py": "3803f1d3f290326d87ada8ea439bda5c3593ccff70e4c6ce167c423cde1ea9ba",
+        "tests/t03_framings/test_framings.py": "22b61791328df5361c69fe583fa6bf523c56da80e1c4cdc8238fe6fb59731b5e",
+        "tests/t03_framings/test_framings_mutation.py": "1c03ec280b6fa0c5c8f0787e9c5a1d90bcbca138c25f1575bc76f5bcc8819f96",
+        "tests/t04_model_interface/t04_probes.py": "0e5475b4995809f99e85aa59f47a36146cd3613f295e3405fc5f90a12ad948df",
+        "tests/t04_model_interface/test_interface.py": "48a3cdb2d0820b10efde6e70e0186de7eb4647fbb4c35e6852f7d258af02f987",
+        "tests/t04_model_interface/test_isolation.py": "f8faab7df61e085a57c254afbf90d9b5a55ab2f392cff917b540d8294754977b",
+        "tests/t04_model_interface/test_mutation.py": "9f5a02c71d1801e502bacc367f4093f5ded8b353b5242292745d4603913ca8c8",
+        "worldgen/__init__.py": "99d0d3fece6dbacc2a6e7e2dee55fd9f27aa66db0e4b36fa70084c264d0b59d3",
+        "worldgen/__main__.py": "e0d831e913667cabca66481cd94753f614a16eda943297542d0762d2e35c798b",
+        "worldgen/build.py": "4d217dd2338df97fba417d081df44346c7aa5e4fa6b0100e9a8786dec336303a",
+        "worldgen/config.json": "9474848e32a3c1c1a9716a0bfb6ad85d5a7367d877510f749af41c42ca44fcdc",
+        "worldgen/harness_twins.py": "bb5d304d5939086aa9f332d7c0528b0a8a2fa54a28fcbe5ac3ead02d2167581e",
+        "worldgen/loader.py": "6e50d3649c2b75914acc403aedca35c80629eaf12ba6eba918f8bc95b98e2aee",
+        "worldgen/matcher.py": "3f8054b06307918939ccdafd53cc2744d775409f77efda9c0b9977b136056b87",
+        "worldgen/names/README.md": "976c5ddfbbc550e120ad5056ea2db2f887effeac86fe0dd77578e6d0069c4d40",
+        "worldgen/names/common_family.txt": "18d44027c07e2f27aba5a7ff3c5cad5f30be620870e62b45f95a1ef9b9269288",
+        "worldgen/names/common_given.txt": "d34064d71bbcff5ac5b692457147bd5f3fb59a1c70cc5365cefb55fb48be88a4",
+        "worldgen/names/family.txt": "821574ac6177d7921208dde555189cbc6bfa278eb8a5078a337dcf41f3c73706",
+        "worldgen/names/given.txt": "911f9962930b3e988c2b9fa15c1e5ca58127d39181d47af4f65392447f26f45d",
+        "worldgen/names/titles.txt": "a7738427048751623f2dfe3837d95bb0fe92623647c546eb168caf7150cbf4e6",
+        "worldgen/pepdates.py": "4957e95b5a114e044da375d39229008e986c08826caac741d476ec2f0edd002d",
+        "worldgen/plan.py": "554d05c9b2fe9b419afcd90ed80aa9a561913c630de94ae104a6ae881072984d",
+        "worldgen/rng.py": "f74c528bb5ee9aecb3ea18e50c73bb2d4c22dc6c991fe287e528ec8f74657bc8",
+        "worldgen/rubric_check.py": "477e2c1b8b077c5c77c6e7f2ac3fd2b41f13e5f96612446c199aa59b42d2e26d",
+        "worldgen/schema/world.schema.json": "a2ebbd51d1c7b04bb776295aa7de17b9775c39003398200a7dfe50570001c5f9",
+        "worldgen/snippets.py": "e8a073b2c4a4342aa15b4214880ece2923a970fa8f3df45deb00ab1dc6a4d563",
+        "worldgen/textutil.py": "646747eccdb50ce694373fc5363d526ce7632fda809d2925899fc0e013cbbc77",
+        "worldgen/truth.py": "8e58e65a814fecfcc3d68e5b282037071c176c14a388230f54ade8f368b09e23",
+        "worldgen/validate.py": "9007e47254ea998aff37c96269daaeefa99a74b2322445512b8246fcbddf3318"
+      }
     },
     {
       "id": "T06-harness",
@@ -1046,6 +1288,15 @@
       "human": "Shubham Suradkar",
       "reason": "Two independent Codex rounds ended in APPROVE after fixes. I reviewed the 50 fixed alternate wordings and the design decisions myself. The tests keep dates, identifiers and names across the three framings. I know the wording checks are keyword-based and do not prove equal agent behaviour, which T07 will measure.",
       "revision": null
+    },
+    {
+      "id": "bebbe501-bf78-42eb-a97d-da97dfcafad0",
+      "at": "2026-10-10T14:44:48.390Z",
+      "action": "approve",
+      "task": "T04-model-interface",
+      "human": "Shubham Suradkar",
+      "reason": "Codex round 1 was DO NOT APPROVE; I fixed the findings and accepted a narrower AC-11 scope (DEC-T04-AC11-SCOPE). Round 2 was APPROVE WITH FIXES, and I applied its two wording fixes, checked as comment-only. The guard stops ordinary and injected routes, not deliberately hostile code inside the agent; an OS sandbox is a wave-2 open item. No third review round was run, by my decision.",
+      "revision": null
     }
   ],
   "attempts": [
@@ -1144,6 +1395,30 @@
       "cost": null,
       "stop_reason": null,
       "ended_at": "2026-10-10T06:55:25.173Z"
+    },
+    {
+      "id": "0fa72906-71d3-4748-bd06-87f17d5ae64e",
+      "task": "T04-model-interface",
+      "kind": "gate",
+      "command": ".venv/bin/python -m pytest tests/t04_model_interface -q -p no:cacheprovider",
+      "timeout": 120000,
+      "authorization": null,
+      "pid": 36470,
+      "child_pid": 36488,
+      "started_at": "2026-10-10T14:42:01.999Z",
+      "status": "passed",
+      "before_hash": "3a200f86ed4f194753b44b55849b6d8e4f79397ab8931ab8b2ac03f88a09f66e",
+      "config_hash": "5f59809661f3b34bf0079dfeb2ea766b6350f296df75edf1af25eede36c6a140",
+      "environment": {
+        "node": "v24.21.0",
+        "platform": "linux",
+        "arch": "x64",
+        "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+        "variables": {}
+      },
+      "cost": null,
+      "stop_reason": null,
+      "ended_at": "2026-10-10T14:42:55.218Z"
     }
   ],
   "authorizations": [],

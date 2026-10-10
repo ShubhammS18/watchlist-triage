@@ -1,0 +1,13 @@
+{
+  "task": "T04-model-interface",
+  "gate": "independent-review",
+  "kind": "review",
+  "attempt": "bebbe501-bf78-42eb-a97d-da97dfcafad0",
+  "human": "Shubham Suradkar",
+  "reason": "Codex round 1 was DO NOT APPROVE; I fixed the findings and accepted a narrower AC-11 scope (DEC-T04-AC11-SCOPE). Round 2 was APPROVE WITH FIXES, and I applied its two wording fixes, checked as comment-only. The guard stops ordinary and injected routes, not deliberately hostile code inside the agent; an OS sandbox is a wave-2 open item. No third review round was run, by my decision.",
+  "observed_at": "2026-10-10T14:44:48.390Z",
+  "source_hash": "3a200f86ed4f194753b44b55849b6d8e4f79397ab8931ab8b2ac03f88a09f66e",
+  "config_hash": "5f59809661f3b34bf0079dfeb2ea766b6350f296df75edf1af25eede36c6a140",
+  "reviewed_proofs": "5575b6ea8576b56ba5fe10f85361d908a41b1a7e2e814e02a921721a9f42f227",
+  "hash": "7b5f4a09e258fdfff5461b5041ecf3b704a2c79c23c09b4b9cfa96d9878dcfe2"
+}
