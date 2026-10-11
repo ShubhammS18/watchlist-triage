@@ -26,7 +26,14 @@ agent process "can reach nothing except the model interface", and AC-11 in `SPEC
 "cannot reach any destination except the model interface". Both are the original wording and neither is edited
 here. `DEC-T04-AC11-SCOPE` governs what T04 claims (`DEC-T04-PLAN-WORDING`); the wave-2 reopen aligns the two.
 
-T04 ships a scripted stub and no real model. There is no agent here either: the baseline agent is task T05.
+T04 ships a scripted stub and no real model. There is no agent here either: the baseline agent is task T05,
+described in `docs/baseline-agent-design.md`.
+
+**Added by T05.** There are now four named errors under `ModelError`, not three: T05 added `ModelRefusal`, for
+a model that answers that it will not do the task. The stub has a matching fourth failure step, `"refusal"`.
+The edit is additive: it touches `model_interface/__init__.py` and `model_interface/stub.py` only, changes no
+existing behaviour, and the T04 tests pass unchanged. Like the other errors, `ModelRefusal` crosses the pipe by
+name and is raised again in the child. What the agent does with it is in `docs/baseline-agent-design.md`.
 
 ## The decisions
 
@@ -51,11 +58,11 @@ T04 ships a scripted stub and no real model. There is no agent here either: the 
 | Record | Status | Read together with |
 |---|---|---|
 | `DEC-T04-INTERFACE` | active | |
-| `DEC-T04-STUB` | active | |
+| `DEC-T04-STUB` | extended | `DEC-T05-FAULTS`: T05 added a fourth failure step, `"refusal"` |
 | `DEC-T04-CONFIG` | active | |
 | `DEC-T04-ISOLATION` | amended | `DEC-T04-AC11-SCOPE`, which narrows what the guard is claimed to stop |
 | `DEC-T04-NO-ADAPTER` | active | |
-| `DEC-T04-ERRORS` | active | |
+| `DEC-T04-ERRORS` | extended | `DEC-T05-FAULTS`: T05 added a fourth named error, `ModelRefusal`. The interface still never retries; the retry policy is `DEC-T05-RETRIES` |
 | `DEC-T04-NO-PROGRAMS` | active | |
 | `DEC-T04-WALLCLOCK` | amended | `DEC-T04-WALLCLOCK-THREAD`, which makes the limit hold during a model call |
 | `DEC-T04-AC11-SCOPE` | active | |

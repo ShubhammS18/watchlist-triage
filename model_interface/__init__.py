@@ -26,7 +26,11 @@ class ProviderError(ModelError):
     """The provider refused or failed the call."""
 
 
-ERRORS = {error.__name__: error for error in (ModelError, ModelTimeout, BadReply, ProviderError)}
+class ModelRefusal(ModelError):
+    """The model answered, and the answer is that it will not do the task."""
+
+
+ERRORS = {error.__name__: error for error in (ModelError, ModelTimeout, BadReply, ProviderError, ModelRefusal)}
 
 
 @dataclass(frozen=True)

@@ -2,16 +2,17 @@
 
 It never looks at the request to decide anything about an alert. It only plays back what it was given.
 """
-from . import BadReply, ModelTimeout, ProviderError, Request, Result
+from . import BadReply, ModelRefusal, ModelTimeout, ProviderError, Request, Result
 
 MODEL_ID = "stub-1"
-FAILURES = {"timeout": ModelTimeout, "empty": BadReply, "provider_error": ProviderError}
+FAILURES = {"timeout": ModelTimeout, "empty": BadReply, "provider_error": ProviderError, "refusal": ModelRefusal}
 
 
 class Stub:
     """Plays `replies` in order, one per call, then `default` for every call after that.
 
-    A step is either the reply text or {"fail": name}, where name is "timeout", "empty" or "provider_error".
+    A step is either the reply text or {"fail": name}, where name is "timeout", "empty", "provider_error" or
+    "refusal".
     A failing step raises the matching error at once instead of returning.
     """
 

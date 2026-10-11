@@ -42,15 +42,15 @@
 
 ### T05-baseline-agent — Build the naive baseline agent: CLOSE or ESCALATE with a written reason and cited evidence IDs, rejection of results without them, escalation on unclear evidence, model and output faults failing closed to ESCALATE with SYSTEM_FAILURE, label isolation, and snippets treated as data. Covers the model-fault part of FR-8 and AC-13.
 
-- state/risk: active / high
+- state/risk: done / high
 - requirements: FR-6, FR-7, FR-8, NFR-5, AC-2, AC-13, AC-21
 - scope: not bounded
-- gates: tests: .venv/bin/python -m pytest tests/t05_agent -q -p no:cacheprovider, independent-review: pending
+- gates: tests: .venv/bin/python -m pytest tests/t05_agent -q -p no:cacheprovider, independent-review: pass
 - next: Run the task pre-flight.
 
 ### T06-harness — Build the evaluation harness: every Metrics-section figure by run, framing and primary family, the run manifest, at least 3 repeated runs, cost and latency, modelled review time, and the always-escalate and always-close reference agents.
 
-- state/risk: queued / medium
+- state/risk: active / medium
 - requirements: FR-20, FR-22, FR-24, NFR-1, NFR-3, NFR-6, AC-7, AC-24, AC-25
 - scope: not bounded
 - gates: tests: .venv/bin/python -m pytest tests/t06_harness -q -p no:cacheprovider, independent-review: pending

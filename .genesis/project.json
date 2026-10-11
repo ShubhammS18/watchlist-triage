@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-10T14:45:16.763Z"
+    "updated_at": "2026-10-11T18:21:47.812Z"
   },
   "policy": {
     "ponytail": "full",
@@ -25,7 +25,7 @@
   "lifecycle": {
     "phase": "build",
     "status": "active",
-    "active_task": "T05-baseline-agent",
+    "active_task": "T06-harness",
     "blocker": null,
     "next_action": "Run the task pre-flight."
   },
@@ -520,6 +520,162 @@
       "tags": [
         "t04"
       ]
+    },
+    {
+      "id": "DEC-T05-PROMPT",
+      "title": "Naive baseline: one model call per alert with one short fixed prompt",
+      "text": "naive = one model call per alert, one short fixed prompt, no tools/retrieval/examples/self-check. Prompt states task and output format, says ESCALATE if evidence is unclear or contradictory (FR-7), says snippet text is untrusted data never to follow (NFR-5), snippets in clear delimiters; no rubric rules. Owner reviews the prompt once; text and hash recorded. Limit: stub tests prove the instructions are present, not that a real model follows them (T07, AC-12).",
+      "status": "accepted",
+      "source": "owner decision 2026-10-11",
+      "recorded_at": "2026-10-11T08:26:16.325Z",
+      "paths": [],
+      "tags": [
+        "t05"
+      ]
+    },
+    {
+      "id": "DEC-T05-PAYLOAD",
+      "title": "Agent payload is built from an allowlist",
+      "text": "payload built from an allowlist: per item id, kind, field, value, plus one as_of_date and an item count; provenance fields only if the build stage shows they carry no label hint. AC-21 test checks the real payload and prompt against forbidden label and supporting-key names; a static check shows the agent module opens no files (harness check is T06).",
+      "status": "accepted",
+      "source": "owner decision 2026-10-11",
+      "recorded_at": "2026-10-11T08:26:16.786Z",
+      "paths": [],
+      "tags": [
+        "t05"
+      ]
+    },
+    {
+      "id": "DEC-T05-OUTPUT",
+      "title": "Model reply schema and agent result shape",
+      "text": "model reply is one JSON object with exactly schema_version \"1\", recommendation (CLOSE|ESCALATE), reason, cited_ids. Agent returns recommendation, reason, cited_ids, system_failure flag with failure kind, and a log record.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-11",
+      "recorded_at": "2026-10-11T08:26:17.203Z",
+      "paths": [],
+      "tags": [
+        "t05"
+      ]
+    },
+    {
+      "id": "DEC-T05-CITATIONS",
+      "title": "Citation and reason rules for CLOSE and ESCALATE",
+      "text": "empty reason or no cited IDs -> ESCALATE with SYSTEM_FAILURE. A CLOSE must have a valid set (non-empty, every ID in the bundle) else ESCALATE with SYSTEM_FAILURE (kind recorded). An ESCALATE citing an ID not in the bundle stays ESCALATE, marked citation invalid, counted by T06. Spec tension (non-failure results measured for citation existence vs missing citations as a failure) carried to the wave-2 reopen.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-11",
+      "recorded_at": "2026-10-11T08:26:17.649Z",
+      "paths": [],
+      "tags": [
+        "t05"
+      ]
+    },
+    {
+      "id": "DEC-T05-FAULTS",
+      "title": "Definitions of the seven model and output faults",
+      "text": "malformed output = not one JSON object with exact keys; missing citations = no reason or empty cited_ids; truncated evidence = payload item count mismatch; unknown schema version = version not \"1\" in payload or reply; timeout/provider error = existing named errors plus ChildTimeout; model refusal = new named error ModelRefusal with a \"refusal\" stub mode (small additive edit to model_interface, with its own tests).",
+      "status": "accepted",
+      "source": "owner decision 2026-10-11",
+      "recorded_at": "2026-10-11T08:26:17.989Z",
+      "paths": [],
+      "tags": [
+        "t05"
+      ]
+    },
+    {
+      "id": "DEC-T05-FAILCLOSED",
+      "title": "Fail closed in the child and in a parent wrapper, with a log record per result",
+      "text": "one entry function catches model errors and bad output in the child; a parent wrapper catches ChildError/ChildTimeout; both return the same result shape, always ESCALATE+SYSTEM_FAILURE on fault. Each result carries a log record (failure kind, error name, attempts, time) sent to a pluggable sink (default in-memory list). Real log is wave 2.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-11",
+      "recorded_at": "2026-10-11T08:26:18.326Z",
+      "paths": [],
+      "tags": [
+        "t05"
+      ]
+    },
+    {
+      "id": "DEC-T05-RETRIES",
+      "title": "Bounded retries for transient faults only",
+      "text": "retry only transient faults (timeout, provider error), up to 2 retries (3 attempts), no backoff yet; bad output and refusal are not retried; each attempt logged; per-call timeout from Settings.timeout_s; run_child limit_s set above attempts x timeout_s plus a margin.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-11",
+      "recorded_at": "2026-10-11T08:26:18.652Z",
+      "paths": [],
+      "tags": [
+        "t05"
+      ]
+    },
+    {
+      "id": "DEC-T05-ADAPTER-LATER",
+      "title": "T05 is stub-only; real provider adapter decided later",
+      "text": "T05 is stub-only; the real provider adapter, provider choice and key handling are settled at the T06/T07 pre-flight (the plan may need an added task; not confirmed).",
+      "status": "accepted",
+      "source": "owner decision 2026-10-11",
+      "recorded_at": "2026-10-11T08:26:18.979Z",
+      "paths": [],
+      "tags": [
+        "t05"
+      ]
+    },
+    {
+      "id": "DEC-T05-PROMPT-REVIEW",
+      "title": "Owner review of the baseline prompt",
+      "text": "I read the system message and the user template. It states the task and output format, tells the model to escalate when unclear, and marks snippets as untrusted. It has no rubric rules and no hints about labels or injections.",
+      "status": "accepted",
+      "source": "owner review 2026-10-11",
+      "recorded_at": "2026-10-11T08:49:07.340Z",
+      "paths": [],
+      "tags": [
+        "t05"
+      ]
+    },
+    {
+      "id": "DEC-T05-LOG-FIXES",
+      "title": "Log per attempt, correlation id, no global sink",
+      "text": "Owner decision 10 (2026-10-11): the log record carries a per-attempt list [{error_name, latency_s}]; recommend() accepts an optional opaque correlation_id attached to the log in the parent only, never sent to the child or model; no module-level default sink list.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-11",
+      "recorded_at": "2026-10-11T09:05:56.324Z",
+      "paths": [],
+      "tags": [
+        "t05"
+      ]
+    },
+    {
+      "id": "DEC-T05-EXTRA-FAULTS",
+      "title": "Three added failure kinds",
+      "text": "model_error, internal_error and child_crash (incl. BadResult) were added during the build. Each fails closed to ESCALATE + SYSTEM_FAILURE, is never retried, and uses the same result shape. Source: owner approved the build in the T05 pre-flight (\"all as recommended\"); these kinds were reported at the time.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-11",
+      "recorded_at": "2026-10-11T09:36:15.514Z",
+      "paths": [],
+      "tags": [
+        "t05"
+      ]
+    },
+    {
+      "id": "DEC-T05-PARENT-VALIDATION",
+      "title": "Parent re-validates the full child result",
+      "text": "The parent re-validates the full child result: exact key set, types, recommendation, failure kind, the failure and non-failure rules, citations against the payload's item ids, and the log record. An inconsistent result fails closed as ESCALATE + SYSTEM_FAILURE child_crash, in the same result shape. Follows finding 1 of docs/reviews/t05-review-round-1.md.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-11",
+      "recorded_at": "2026-10-11T10:05:17.307Z",
+      "paths": [],
+      "tags": [
+        "t05"
+      ]
+    },
+    {
+      "id": "DEC-T05-LOG-INVARIANTS",
+      "title": "Parent enforces all log-to-result relationships",
+      "text": "The parent enforces all relationships between the log record and the result, for success and failure: kind vs failure_kind; attempts equal to the number of attempt entries and at most 1 + retries; a success has at least one attempt, a null error_name and a final attempt with no error; earlier attempts are only retryable errors (ModelTimeout, ProviderError); a failure's error_name is consistent with its failure_kind; latency fields are finite and >= 0; model_id is a string when the last call returned a reply. Any violation fails closed as ESCALATE + SYSTEM_FAILURE child_crash. The sink gets an independent deep copy of the log record. Drift between the child's failure kinds and the parent's list is tested. Follows docs/reviews/t05-review-round-2.md.",
+      "status": "accepted",
+      "source": "owner decision 2026-10-11",
+      "recorded_at": "2026-10-11T16:34:55.221Z",
+      "paths": [],
+      "tags": [
+        "t05"
+      ]
     }
   ],
   "knowledge": [],
@@ -969,7 +1125,7 @@
     {
       "id": "T05-baseline-agent",
       "outcome": "Build the naive baseline agent: CLOSE or ESCALATE with a written reason and cited evidence IDs, rejection of results without them, escalation on unclear evidence, model and output faults failing closed to ESCALATE with SYSTEM_FAILURE, label isolation, and snippets treated as data. Covers the model-fault part of FR-8 and AC-13.",
-      "state": "active",
+      "state": "done",
       "risk": "high",
       "owner": "claude-code",
       "scope": [],
@@ -994,16 +1150,28 @@
           "kind": "command",
           "command": ".venv/bin/python -m pytest tests/t05_agent -q -p no:cacheprovider",
           "mandatory": true,
-          "status": "pending",
-          "evidence": null
+          "status": "pass",
+          "evidence": {
+            "path": ".genesis/evidence/T05-baseline-agent-tests-50681734-b486-4e84-97c7-0db9ee038a63.json",
+            "hash": "4b50d592281dc93e9ad2dd9b8c33240328c775cfedecb17ba1b8063863aed1ab",
+            "source_hash": "1cc4dca981fdd30072ae2ab701e37ec0fb0008af15eadddf5f8833256c5ec508",
+            "config_hash": "d4b24d4d63ce1ac263b728ca93b71c700d23ef0f8b6308e8283892002f8658b4",
+            "observed_at": "2026-10-11T18:15:39.612Z"
+          }
         },
         {
           "id": "independent-review",
           "kind": "review",
           "command": "",
           "mandatory": true,
-          "status": "pending",
-          "evidence": null
+          "status": "pass",
+          "evidence": {
+            "path": ".genesis/evidence/T05-baseline-agent-independent-review-6b854505-053c-47dc-ad4c-e3ce0b1f18f3.json",
+            "hash": "7ed2fea47f3ee9543ab531b1eef4f1b169aa3637be76a60086a53c8fa32252df",
+            "source_hash": "1cc4dca981fdd30072ae2ab701e37ec0fb0008af15eadddf5f8833256c5ec508",
+            "config_hash": "d4b24d4d63ce1ac263b728ca93b71c700d23ef0f8b6308e8283892002f8658b4",
+            "observed_at": "2026-10-11T18:20:22.485Z"
+          }
         }
       ],
       "next_action": "Run the task pre-flight.",
@@ -1012,7 +1180,7 @@
       "failures": [],
       "limitations": [],
       "created_at": "2026-10-07T13:41:17.063Z",
-      "updated_at": "2026-10-07T13:41:17.064Z",
+      "updated_at": "2026-10-11T18:21:47.795Z",
       "base_manifest": {
         ".gitignore": "05272076c15c79ba32ab1d10bbad87ff61436dfd0a365d60c0e0b550edb2e4db",
         ".pre-commit-config.yaml": "a4f5b7a2d670240a85022e3080fba11c904157f0a26bd4ed864502bcbe832dc9",
@@ -1115,7 +1283,7 @@
     {
       "id": "T06-harness",
       "outcome": "Build the evaluation harness: every Metrics-section figure by run, framing and primary family, the run manifest, at least 3 repeated runs, cost and latency, modelled review time, and the always-escalate and always-close reference agents.",
-      "state": "queued",
+      "state": "active",
       "risk": "medium",
       "owner": "claude-code",
       "scope": [],
@@ -1160,7 +1328,125 @@
       "failures": [],
       "limitations": [],
       "created_at": "2026-10-07T13:41:17.152Z",
-      "updated_at": "2026-10-07T13:41:17.153Z"
+      "updated_at": "2026-10-07T13:41:17.153Z",
+      "base_manifest": {
+        ".gitignore": "05272076c15c79ba32ab1d10bbad87ff61436dfd0a365d60c0e0b550edb2e4db",
+        ".pre-commit-config.yaml": "a4f5b7a2d670240a85022e3080fba11c904157f0a26bd4ed864502bcbe832dc9",
+        "CLAUDE.md": "005ed5c58b524ee06153c8facd4bd1f2216f81c5d98497abc1d09554932f3621",
+        "LICENSE": "e37947574b26d42dec642954a8a6fbd2de2252c8c98385a3ca2e0bf4ed948b0c",
+        "README.md": "f69536d234f3cc301d06bd601675ec6d96a9ca9fd5c45a7ef1fe912e80bbcc6f",
+        "SPEC.md": "90275b1a9cb076894f9a23a8a871d1dec9692671c17741ce62092d75b7eb5e7b",
+        "baseline_agent/__init__.py": "056b601f3bdd6d6ef310773b6b18613f4f7314fd4f5ab1d727504e2baef662ae",
+        "baseline_agent/agent.py": "299a0e1961b1210a0a3b23cedaf0a41d4e68f30c6c1bb714519a61455de9e0f4",
+        "baseline_agent/payload.py": "f983226db2d4d43656ea4e17b0ea0d462fdb285740c0e3555dc4e17d276dcb5e",
+        "baseline_agent/prompt.py": "5b6d90078a6578d760981cf79a957b990c362ade2e2cfbf5aa17efae2228a0d2",
+        "baseline_agent/recommend.py": "5ca93a31886358bc6e0638834608594f130c27afe3e34c2af96a6c00872321fa",
+        "baseline_agent/reply.py": "12abe41212684d9bb725fce853c18a17a05491ee02d0f5e77575d20192ed09bc",
+        "data/world/MANIFEST.json": "ff550cb3eb9d6ee190fa01fb07e31fc208723a4d891321b8e9608663639822e0",
+        "data/world/README.md": "c1ad93d906f2ea975463aa209cc46c705101388d6d3ddce15029f353d5c4bcda",
+        "data/world/agent/alerts.jsonl": "e8c8dbd405ad7345f6e00d1a8b3d4eea624a28ead836b8a1742f415db10755d9",
+        "data/world/agent/customers.jsonl": "1d907f93109650079b2415761d709fab87d54c7923593cf7018c77b1301b3a36",
+        "data/world/agent/evidence.jsonl": "cd4986922c4095ff59897f2af83053c4d30a4828831706b528f799fd1aaba9e6",
+        "data/world/agent/twin_alerts.jsonl": "f28e178cd14e5e1db8d2869811b254183347b575f537d883746957c19932c406",
+        "data/world/agent/watchlist.jsonl": "2fb2d60ffc56800c040b6a18276b9958afcb01141457703ea19663c304d3690d",
+        "data/world/hidden/labels.jsonl": "b470ed9bdc52740c577f732bcd4d66f84f577a628ab4702866bc1f1b6dc2a7ee",
+        "data/world/hidden/snippet_tags.jsonl": "a264989cb5c511e868a839fb1012239bd643e9c91781906ec5f3faee4918e589",
+        "data/world/hidden/supporting_evidence.jsonl": "27f9e0b8ff4475f9ccebe1b28cddc5a126d5b4ba220ee03f68338ea7539539c6",
+        "data/world/hidden/twin_links.jsonl": "98c3751b00d77bcec517071d67f19092f1cc683e64c25578ab09ecac3b98dd50",
+        "docs/baseline-agent-design.md": "e3fc38a57ecaf7cc1bc64b2a4d9cd81a8b630a3c37adbbd4554084bfba72b7f2",
+        "docs/framings-design.md": "7eeb4085731e04d8442269918bd0d4e8f47f8aaef11c84ce6ebf6cc2cf620af1",
+        "docs/framings/wording-set.md": "4c032b45085c447711301e7f1efe2c0397607a0174e68d57a0f61657820ae426",
+        "docs/model-interface-design.md": "a972549638d1a57f74aaffaf5e0b507d2c6d47a7e33bdacf9c07a697e16b71c7",
+        "docs/reviews/spec-review-round-1.md": "77f2f786179a1a0707475e248cdd816cbc765221792905bfd12a60141a1b5dee",
+        "docs/reviews/spec-review-round-2.md": "2149bcd8993aa36998e70df480a9a73a8ba075a73b15f49b1283ea1618088744",
+        "docs/reviews/spec-review-round-3-closure.md": "06a0b7c26d7fe24c4aa1a678089b826d3eeb5e75bab2aa84cc608063e4b00dfe",
+        "docs/reviews/spec-review-round-3.md": "ff97d6ac2683ac3b0078bc416549a6451e9b0640fdb960525f838c63d169fb94",
+        "docs/reviews/t02-review-round-1.md": "644c4204d60fc60c81820e012d75d495d049f7e917b906f4cc825a4de3af31b3",
+        "docs/reviews/t02-review-round-2.md": "ed73ba3ed7ba7f2ee3546dbebe31c48a473de293148220daae542a6f53709dc7",
+        "docs/reviews/t02-review-round-3.md": "c8b5cd1bdbe38bc6968544a9699e045c5d365a866672c1a8b54030325ebb974f",
+        "docs/reviews/t03-review-round-1.md": "f4700596ff72bd5743eee6428ac9fe1e8f1f633ab3c9ab862c33974c06f4e612",
+        "docs/reviews/t03-review-round-2.md": "caaa9bf542a7b50f8695e3c4837fb5cb64895649171dcae30799050697b1f2a4",
+        "docs/reviews/t03-review-round-3.md": "10ad54ba9ced98be5604021e37921aac9cdbd82561a3a1e4f538562f48141e52",
+        "docs/reviews/t04-review-round-1.md": "2cfb822efe48f8cc71d4e2c2ef390fc8146ffa68c31a193daf82fd81334a6abd",
+        "docs/reviews/t04-review-round-2.md": "b78cd0cfd43fc4cfbfbbb8ebbf25459169dd15bdb322d62450901a6e3ad04f26",
+        "docs/reviews/t05-review-round-1.md": "9d083944c584121dd962e29881201e5aa72f36e39dfeb49df23bebdce0ca356a",
+        "docs/reviews/t05-review-round-2.md": "eb26125b5b0e7590c4021f0b7447bc465b9c6109bb390c0fe3bb25c50804e9a8",
+        "docs/reviews/t05-review-round-3.md": "154970351585345d257c807205faecd2e019ae7ba4b831405a71b975e6174bc4",
+        "docs/reviews/t05-review-round-4.md": "d0b192a951a9651d504d208cb13246db84a87404c376e5a25a7048cdf1daa1e1",
+        "docs/reviews/t05-review-round-5.md": "926f05f91f09c3adff1bb30d776cf0a7f742df17a0f549f50b8bf6724be0be3e",
+        "docs/rubric.md": "d7b8e9f1b0d4e59c9cbf2ceac3de22141947173a5fad432620dd06c7d15a059d",
+        "docs/world-design.md": "ccaa1f102011dd35d463b09437ffeb630d6a9fe1f5b60895f387ace6c93b6a7b",
+        "framings/__init__.py": "29230362e3e05b53f141b2b7a79ec6152ef288c40ace005cab2be331fc18a65d",
+        "framings/names.py": "b3c09193050f5ce0c3db13b01db83cbf51876dc48f6485a9611e0b1883c03718",
+        "framings/order.py": "ef1b2d88728d160ea87e13a1be2e6206492709846877189d353a1d44514e9557",
+        "framings/recognise.py": "0278b53317d4db31ebb3103a6c712b43a9b00622e35b6b1f1cec0e2f9ca570da",
+        "framings/wording.py": "34ef95bb0312e899df8e95c99c9f2d4ffa005c3a73313b051a777df144179821",
+        "model_interface/__init__.py": "e28394e99090b9b64243a18c0cad55ab006e993be955c2f7ec528fb5c1682909",
+        "model_interface/child.py": "651d03ea7274d75864c75697e8b73827cfb2a75eccf72361bbdfa76b7bcc846e",
+        "model_interface/config.json": "99afe69f6cbc5d7cda68277c9d23e6639f6808559242bd870ecb2ad29956a612",
+        "model_interface/probe_child.py": "9e7180fee42fa9da84b53f385f5bbe75b81e6f0a4a12c20f0a5e5cebf4e1057e",
+        "model_interface/providers.py": "b1e3a25027f49831c4f394f0dc26ec4b4fd711172e39d629228d250283d62a38",
+        "model_interface/runner.py": "d49ef8dda1bfa573082cca710e7f783a44f56956be11589d9b23b316b414a99f",
+        "model_interface/stub.py": "acbc8a8b197c8a42914a4cc694e17b9ee395136c4017c16001628a2430034bd7",
+        "requirements-dev.txt": "d1ac357aa5e967f33262a73eb43d974e7749cf8ceb73ede5c459c9c8e5e72658",
+        "tests/t01_rubric/test_rubric_structure.py": "b4157c4ba91e6723349c653c7fe5aedd3ff58d3f22ed22ddbf46073aedc7d020",
+        "tests/t02_world/checks.py": "8aa7db60984ea59980fbf76bce0d299403281c8d25979d756f7610bddc983cc9",
+        "tests/t02_world/conftest.py": "5449ce4839fc8cda02f09db4b327dd65983f8a6f5be1459a067e27bc233f6dae",
+        "tests/t02_world/leak_tables.py": "d47b29a028d6edd0f826309e1bc975c8bd6a9cc3211fb53e43bc28e3a4ffd64c",
+        "tests/t02_world/test_consistency.py": "447c29cf1395fe56fe1c3d7678b9ea05667c8045b1e0590f4dabde771160efec",
+        "tests/t02_world/test_determinism.py": "34570ef1ceeea6f55c3cf95dbb7f77f55724d5a74f681c8c5d339a09a8ac62b8",
+        "tests/t02_world/test_injection.py": "45443fc4e0d606278e47fb3bcc28657b3d05cd4fb85545878e967905a523cb9a",
+        "tests/t02_world/test_leaks.py": "1d129ee5a8ffe70080ebe3d9a60fb158ec41c7f75e0f0f1f40cf8e2bca3776dd",
+        "tests/t02_world/test_loader.py": "9deeafd3ea90d4c7a26c2465f0cde16d2fc07e65eb8804023c5da649e245e82c",
+        "tests/t02_world/test_matcher.py": "3c76168f84acd5d2e3db2219fad2adc712996dc9ad689aa5810817d9192b6373",
+        "tests/t02_world/test_names.py": "ff8652d77a82c0ab75bed389cf06ed76bf888ade8efbc0be660f70cdc237fe67",
+        "tests/t02_world/test_pepdates.py": "bb8631a3352d5d1e1736058fa90e239371d65560054dc4079fbd39ce8bb2c037",
+        "tests/t02_world/test_rng.py": "2c553971211eb6e89fe8695100b7887bc4e588ff31cc60e526fb7830b6864a5e",
+        "tests/t02_world/test_rubric_check.py": "5fa9bec55b48fa85aace0b1ecc2dce3c03ae848c14d9f911223d8ddef2307045",
+        "tests/t02_world/test_seed_sweep.py": "76f84dba79849b7dbfa8b8631566a5d38f95009fed834884e730979813787e07",
+        "tests/t02_world/test_static.py": "5d2f9b2e6e6b82e6b6f27521bcff12ae791f266917dd89c8b1a13d5fec332fa8",
+        "tests/t02_world/test_text_support.py": "53226f9ccc220e0c1b24bd0a128448c2a900df39f081c73b68188690b369815c",
+        "tests/t02_world/test_validate.py": "11f3234a1001b1f34e02527c662bd5c97651a531d23657883e9f7893738228db",
+        "tests/t02_world/test_world.py": "79f17dce6e38b10109095d1780bdac7563e12d12f7b6fbc8552cdfc9227d86d9",
+        "tests/t02_world/text_adjudicator.py": "cedfd0f8746870dc63f9de1ae81940936c2c63bac675356c271578411059db0a",
+        "tests/t03_framings/framing_checks.py": "3803f1d3f290326d87ada8ea439bda5c3593ccff70e4c6ce167c423cde1ea9ba",
+        "tests/t03_framings/test_framings.py": "22b61791328df5361c69fe583fa6bf523c56da80e1c4cdc8238fe6fb59731b5e",
+        "tests/t03_framings/test_framings_mutation.py": "1c03ec280b6fa0c5c8f0787e9c5a1d90bcbca138c25f1575bc76f5bcc8819f96",
+        "tests/t04_model_interface/t04_probes.py": "0e5475b4995809f99e85aa59f47a36146cd3613f295e3405fc5f90a12ad948df",
+        "tests/t04_model_interface/test_interface.py": "48a3cdb2d0820b10efde6e70e0186de7eb4647fbb4c35e6852f7d258af02f987",
+        "tests/t04_model_interface/test_isolation.py": "f8faab7df61e085a57c254afbf90d9b5a55ab2f392cff917b540d8294754977b",
+        "tests/t04_model_interface/test_mutation.py": "9f5a02c71d1801e502bacc367f4093f5ded8b353b5242292745d4603913ca8c8",
+        "tests/t05_agent/test_agent.py": "3cc1113c00e91f9380248cb0c028bcbb45290f8c776c4281b1ffaa6fbd526739",
+        "tests/t05_agent/test_agent_static.py": "974424bb02515acc3babf54beb33557afd321f81bc7b6c4a81144ea036efcd49",
+        "tests/t05_agent/test_kinds.py": "88b8b09fa028d56660a67d6be069332c9af41ac28d3e28f84a8382967f3f169a",
+        "tests/t05_agent/test_log.py": "c9bf9e83516d509c037c5bfb5d03338832581fb5b4e966322cff1e7e70996361",
+        "tests/t05_agent/test_parent_validation.py": "27ea6f079d264698d353ebfe525d5875b9d8983e3131eb4c0d72388bc1ff8e2d",
+        "tests/t05_agent/test_payload_prompt.py": "dd8202420274da208856bf0b3973456581ff30477459e69edc836e1c335b1284",
+        "tests/t05_agent/test_refusal.py": "cca73fe71b948ec2981e263a74d91fc2138e33956d90164dead5c9c678c59136",
+        "tests/t05_agent/test_t05_mutation.py": "4d7604be3827870fdd3b3b2920f7b1258087b1a8f856a3cb9659a32a1ce921f9",
+        "worldgen/__init__.py": "99d0d3fece6dbacc2a6e7e2dee55fd9f27aa66db0e4b36fa70084c264d0b59d3",
+        "worldgen/__main__.py": "e0d831e913667cabca66481cd94753f614a16eda943297542d0762d2e35c798b",
+        "worldgen/build.py": "4d217dd2338df97fba417d081df44346c7aa5e4fa6b0100e9a8786dec336303a",
+        "worldgen/config.json": "9474848e32a3c1c1a9716a0bfb6ad85d5a7367d877510f749af41c42ca44fcdc",
+        "worldgen/harness_twins.py": "bb5d304d5939086aa9f332d7c0528b0a8a2fa54a28fcbe5ac3ead02d2167581e",
+        "worldgen/loader.py": "6e50d3649c2b75914acc403aedca35c80629eaf12ba6eba918f8bc95b98e2aee",
+        "worldgen/matcher.py": "3f8054b06307918939ccdafd53cc2744d775409f77efda9c0b9977b136056b87",
+        "worldgen/names/README.md": "976c5ddfbbc550e120ad5056ea2db2f887effeac86fe0dd77578e6d0069c4d40",
+        "worldgen/names/common_family.txt": "18d44027c07e2f27aba5a7ff3c5cad5f30be620870e62b45f95a1ef9b9269288",
+        "worldgen/names/common_given.txt": "d34064d71bbcff5ac5b692457147bd5f3fb59a1c70cc5365cefb55fb48be88a4",
+        "worldgen/names/family.txt": "821574ac6177d7921208dde555189cbc6bfa278eb8a5078a337dcf41f3c73706",
+        "worldgen/names/given.txt": "911f9962930b3e988c2b9fa15c1e5ca58127d39181d47af4f65392447f26f45d",
+        "worldgen/names/titles.txt": "a7738427048751623f2dfe3837d95bb0fe92623647c546eb168caf7150cbf4e6",
+        "worldgen/pepdates.py": "4957e95b5a114e044da375d39229008e986c08826caac741d476ec2f0edd002d",
+        "worldgen/plan.py": "554d05c9b2fe9b419afcd90ed80aa9a561913c630de94ae104a6ae881072984d",
+        "worldgen/rng.py": "f74c528bb5ee9aecb3ea18e50c73bb2d4c22dc6c991fe287e528ec8f74657bc8",
+        "worldgen/rubric_check.py": "477e2c1b8b077c5c77c6e7f2ac3fd2b41f13e5f96612446c199aa59b42d2e26d",
+        "worldgen/schema/world.schema.json": "a2ebbd51d1c7b04bb776295aa7de17b9775c39003398200a7dfe50570001c5f9",
+        "worldgen/snippets.py": "e8a073b2c4a4342aa15b4214880ece2923a970fa8f3df45deb00ab1dc6a4d563",
+        "worldgen/textutil.py": "646747eccdb50ce694373fc5363d526ce7632fda809d2925899fc0e013cbbc77",
+        "worldgen/truth.py": "8e58e65a814fecfcc3d68e5b282037071c176c14a388230f54ade8f368b09e23",
+        "worldgen/validate.py": "9007e47254ea998aff37c96269daaeefa99a74b2322445512b8246fcbddf3318"
+      }
     },
     {
       "id": "T07-baseline-run",
@@ -1297,6 +1583,15 @@
       "human": "Shubham Suradkar",
       "reason": "Codex round 1 was DO NOT APPROVE; I fixed the findings and accepted a narrower AC-11 scope (DEC-T04-AC11-SCOPE). Round 2 was APPROVE WITH FIXES, and I applied its two wording fixes, checked as comment-only. The guard stops ordinary and injected routes, not deliberately hostile code inside the agent; an OS sandbox is a wave-2 open item. No third review round was run, by my decision.",
       "revision": null
+    },
+    {
+      "id": "6b854505-053c-47dc-ad4c-e3ce0b1f18f3",
+      "at": "2026-10-11T18:20:22.485Z",
+      "action": "approve",
+      "task": "T05-baseline-agent",
+      "human": "Shubham Suradkar",
+      "reason": "T05 baseline agent reviewed by independent Codex sessions over five rounds. Rounds 1-3 were DO NOT APPROVE (forged child results could leave as CLOSE; log contradictions; sink aliasing), each fixed and tested. Round 4 was APPROVE WITH FIXES (doc-only, applied). The gate then timed out at 120s, so the mutation harness was narrowed (306s to about 65s); round 5 reviewed only that change and approved. Tests pass 291 of 291. Only the stub model has run; no real model baseline yet. Limits are listed in docs/baseline-agent-design.md.",
+      "revision": null
     }
   ],
   "attempts": [
@@ -1419,6 +1714,54 @@
       "cost": null,
       "stop_reason": null,
       "ended_at": "2026-10-10T14:42:55.218Z"
+    },
+    {
+      "id": "62a301ad-7446-44ee-b587-36eee9cca44e",
+      "task": "T05-baseline-agent",
+      "kind": "gate",
+      "command": ".venv/bin/python -m pytest tests/t05_agent -q -p no:cacheprovider",
+      "timeout": 120000,
+      "authorization": null,
+      "pid": 203859,
+      "child_pid": 203879,
+      "started_at": "2026-10-11T17:33:22.455Z",
+      "status": "failed",
+      "before_hash": "c3a0e0804320aac2e292859e2036e802c58b3eb162da6fa4e94efecfd06d9ab9",
+      "config_hash": "d4b24d4d63ce1ac263b728ca93b71c700d23ef0f8b6308e8283892002f8658b4",
+      "environment": {
+        "node": "v24.21.0",
+        "platform": "linux",
+        "arch": "x64",
+        "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+        "variables": {}
+      },
+      "cost": null,
+      "stop_reason": "timeout",
+      "ended_at": "2026-10-11T17:35:22.717Z"
+    },
+    {
+      "id": "50681734-b486-4e84-97c7-0db9ee038a63",
+      "task": "T05-baseline-agent",
+      "kind": "gate",
+      "command": ".venv/bin/python -m pytest tests/t05_agent -q -p no:cacheprovider",
+      "timeout": 120000,
+      "authorization": null,
+      "pid": 316855,
+      "child_pid": 316875,
+      "started_at": "2026-10-11T18:14:33.701Z",
+      "status": "passed",
+      "before_hash": "1cc4dca981fdd30072ae2ab701e37ec0fb0008af15eadddf5f8833256c5ec508",
+      "config_hash": "d4b24d4d63ce1ac263b728ca93b71c700d23ef0f8b6308e8283892002f8658b4",
+      "environment": {
+        "node": "v24.21.0",
+        "platform": "linux",
+        "arch": "x64",
+        "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+        "variables": {}
+      },
+      "cost": null,
+      "stop_reason": null,
+      "ended_at": "2026-10-11T18:15:39.612Z"
     }
   ],
   "authorizations": [],

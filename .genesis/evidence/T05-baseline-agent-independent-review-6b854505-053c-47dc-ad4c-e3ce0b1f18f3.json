@@ -1,0 +1,13 @@
+{
+  "task": "T05-baseline-agent",
+  "gate": "independent-review",
+  "kind": "review",
+  "attempt": "6b854505-053c-47dc-ad4c-e3ce0b1f18f3",
+  "human": "Shubham Suradkar",
+  "reason": "T05 baseline agent reviewed by independent Codex sessions over five rounds. Rounds 1-3 were DO NOT APPROVE (forged child results could leave as CLOSE; log contradictions; sink aliasing), each fixed and tested. Round 4 was APPROVE WITH FIXES (doc-only, applied). The gate then timed out at 120s, so the mutation harness was narrowed (306s to about 65s); round 5 reviewed only that change and approved. Tests pass 291 of 291. Only the stub model has run; no real model baseline yet. Limits are listed in docs/baseline-agent-design.md.",
+  "observed_at": "2026-10-11T18:20:22.485Z",
+  "source_hash": "1cc4dca981fdd30072ae2ab701e37ec0fb0008af15eadddf5f8833256c5ec508",
+  "config_hash": "d4b24d4d63ce1ac263b728ca93b71c700d23ef0f8b6308e8283892002f8658b4",
+  "reviewed_proofs": "ea705ee32d7a0b0874f921284fa64bdc01a4c07b1ded928b316328c39f890a62",
+  "hash": "7ed2fea47f3ee9543ab531b1eef4f1b169aa3637be76a60086a53c8fa32252df"
+}

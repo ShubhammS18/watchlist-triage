@@ -1,0 +1,30 @@
+{
+  "task": "T05-baseline-agent",
+  "gate": "tests",
+  "kind": "command",
+  "attempt": "50681734-b486-4e84-97c7-0db9ee038a63",
+  "command": ".venv/bin/python -m pytest tests/t05_agent -q -p no:cacheprovider",
+  "started_at": "2026-10-11T18:14:33.701Z",
+  "observed_at": "2026-10-11T18:15:39.612Z",
+  "exit_code": 0,
+  "signal": null,
+  "stdout": "........................................................................ [ 24%]\n........................................................................ [ 49%]\n........................................................................ [ 74%]\n........................................................................ [ 98%]\n...                                                                      [100%]\n291 passed in 65.41s (0:01:05)\n",
+  "stderr": "",
+  "failure": null,
+  "receipt": null,
+  "revision": {
+    "commit": "92a013faaf68f9d62dcfec6de587b41b49d9302d",
+    "dirty": true
+  },
+  "source_hash": "1cc4dca981fdd30072ae2ab701e37ec0fb0008af15eadddf5f8833256c5ec508",
+  "before_hash": "1cc4dca981fdd30072ae2ab701e37ec0fb0008af15eadddf5f8833256c5ec508",
+  "config_hash": "d4b24d4d63ce1ac263b728ca93b71c700d23ef0f8b6308e8283892002f8658b4",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "arch": "x64",
+    "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+    "variables": {}
+  },
+  "hash": "4b50d592281dc93e9ad2dd9b8c33240328c775cfedecb17ba1b8063863aed1ab"
+}
