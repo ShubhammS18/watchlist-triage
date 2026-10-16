@@ -1,0 +1,10 @@
+{
+  "agent": "baseline",
+  "world": "../../../data/world",
+  "model_config": "model_fake.json",
+  "workers": 1,
+  "pacer_per_minute": null,
+  "infra_invalid_threshold": "0.05",
+  "price_table": "prices.json",
+  "modelled_time": "modelled_time.json"
+}

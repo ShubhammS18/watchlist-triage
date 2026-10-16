@@ -1,0 +1,10 @@
+{
+  "kind": "fixture",
+  "note": "Test fixture. Not the baseline's parameters; those are committed in T07.",
+  "unit": "minutes",
+  "sets": {
+    "LOW": {"manual_clearing": "3", "proposal_review": "1", "l2": "10", "second_review": "1"},
+    "BASE": {"manual_clearing": "5", "proposal_review": "2", "l2": "15", "second_review": "2"},
+    "HIGH": {"manual_clearing": "8", "proposal_review": "3", "l2": "20", "second_review": "3"}
+  }
+}
