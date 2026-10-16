@@ -4,7 +4,7 @@
 
 - objective: Triage sanctions/PEP name-match alerts from a frozen synthetic world: recommend close or escalate with cited evidence, human-approved, measured on zero missed planted true matches.
 - phase/status: build/active
-- active task: T06-harness — Build the evaluation harness: every Metrics-section figure by run, framing and primary family, the run manifest, at least 3 repeated runs, cost and latency, modelled review time, and the always-escalate and always-close reference agents.
+- active task: T07-baseline-run — Commit the modelled-time parameters, run the baseline on the frozen world, publish the report, and commit the targets decision record required by AC-16. The gate checks the committed artifacts and does not call the model.
 - blocker: none
 - next action: Run the task pre-flight.
 - phase instruction: Implement only the active task and prove it against current sources. Check `genesis query . impact PATH` before editing shared code.
@@ -17,6 +17,6 @@ Load Genesis and official Ponytail full, then run `genesis brief .` for the curr
 Fetch full records with `genesis context . --id ID` only when needed. Do not load project.json or historical proof wholesale.
 Ask the index before reading code: `genesis query . search|scope|callers|callees|impact|path` (`--json` for parsing). Run `genesis query . impact PATH` before editing shared code. Answers are advisory static analysis; `ambiguous` means candidates were not ruled out, so confirm in source.
 Run `genesis serve .` for a live map of the repository when structure is unclear; it reindexes on save and is read-only. Run `genesis index .` if the index is stale and nothing is watching.
-Context fingerprint: 249c1837a93c200d87512d270cb5730a73ceef4529a9d81fef107d0715d31e2d. Use --since only after receiving that full packet; kickoff is not the packet.
+Context fingerprint: d3ba88b64202541d4702e749186382edbc2f17d1d38ce621f0254178d6427339. Use --since only after receiving that full packet; kickoff is not the packet.
 Applicable invariants, active rules, authorization and proof references are in the packet. Truncated summaries are retrieval pointers, not the full evidence.
 Reuse fresh gates with --reuse. Reconcile interrupted attempts before replaying commands. Report state → evidence → blocker → next action; checkpoint before stopping.

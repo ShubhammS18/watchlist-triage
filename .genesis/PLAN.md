@@ -50,15 +50,15 @@
 
 ### T06-harness — Build the evaluation harness: every Metrics-section figure by run, framing and primary family, the run manifest, at least 3 repeated runs, cost and latency, modelled review time, and the always-escalate and always-close reference agents.
 
-- state/risk: active / medium
+- state/risk: done / medium
 - requirements: FR-20, FR-22, FR-24, NFR-1, NFR-3, NFR-6, AC-7, AC-24, AC-25
 - scope: not bounded
-- gates: tests: .venv/bin/python -m pytest tests/t06_harness -q -p no:cacheprovider, independent-review: pending
+- gates: tests: .venv/bin/python -m pytest tests/t06_harness -q -p no:cacheprovider, independent-review: pass
 - next: Run the task pre-flight.
 
 ### T07-baseline-run — Commit the modelled-time parameters, run the baseline on the frozen world, publish the report, and commit the targets decision record required by AC-16. The gate checks the committed artifacts and does not call the model.
 
-- state/risk: queued / medium
+- state/risk: active / medium
 - requirements: AC-16, AC-25
 - scope: not bounded
 - gates: tests: .venv/bin/python -m pytest tests/t07_baseline -q -p no:cacheprovider, independent-review: pending
