@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-19T12:46:01.600Z"
+    "updated_at": "2026-10-19T13:06:59.107Z"
   },
   "policy": {
     "ponytail": "full",
@@ -1347,13 +1347,14 @@
       "id": "DEC-T07-PROVIDER",
       "title": "Claude Haiku 5.5 for the baseline",
       "text": "The baseline uses Claude Haiku 5.5, the cheapest tier, because L1 triage is a volume job and the honest starting point is the cheapest model that might be good enough. Thinking is off and the batch API is not used. Before any counted run it must pass fixed checks: strict JSON on the trial alerts, a reported model ID that matches the price table, temperature 0 accepted, the spend cap in place, and rate limits with room to spare. If a check fails, I make a new decision and build a GPT-5.6 Luna adapter with its own tests and price table before any run. I will not switch models because I dislike the results.",
-      "status": "accepted",
+      "status": "superseded",
       "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026",
       "recorded_at": "2026-10-19T12:45:58.637Z",
       "paths": [],
       "tags": [
         "t07"
-      ]
+      ],
+      "superseded_by": "DEC-T07-PROVIDER-2"
     },
     {
       "id": "DEC-T07-BUDGET",
@@ -1407,13 +1408,14 @@
       "id": "DEC-T07-RUN-SETTINGS",
       "title": "Run settings fixed before the first run",
       "text": "Every run uses 4 workers, a pacer of 120 hand-offs per minute, an infra-invalid threshold of 2% (a run is invalid only above 2%), a call timeout of 30 seconds, max_tokens of 512, temperature 0 and a memory-guard time limit of 7,200 seconds. Two rules are fixed now: if the trial's 99th-percentile latency is over 10 seconds I revisit the timeout, and if any trial answer hits the cap or the largest is over 256 output tokens I raise max_tokens to 1,024. Any such change is a superseding record made before the run commit.",
-      "status": "accepted",
+      "status": "superseded",
       "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026",
       "recorded_at": "2026-10-19T12:46:00.246Z",
       "paths": [],
       "tags": [
         "t07"
-      ]
+      ],
+      "superseded_by": "DEC-T07-RUN-SETTINGS-2"
     },
     {
       "id": "DEC-T07-TRIAL",
@@ -1458,6 +1460,44 @@
       "status": "accepted",
       "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026",
       "recorded_at": "2026-10-19T12:46:01.600Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ]
+    },
+    {
+      "id": "DEC-T07-PROVIDER-2",
+      "title": "Claude Haiku 5.5 for the baseline, temperature fixed at 1 by the provider",
+      "text": "The baseline still uses Claude Haiku 5.5, the cheapest tier. The pre-run doc check found that Haiku 5.5 only accepts temperature 1 and rejects any other value, so my \"temperature 0 accepted\" check failed. I decided before any run and without seeing any results to keep Haiku and use temperature 1, because the point of temperature 0 was cleaner measurement, not capability; the three-run spread now shows how much the model varies on its own, and the report says the provider fixes temperature at 1. Thinking is switched off explicitly and the batch API is not used. The remaining checks still apply before any counted run: strict JSON on the trial alerts, a reported model ID that matches the price table, the spend cap in place, rate limits with room to spare, and the refusal checkpoints. If one of those fails, I make a new decision and build a GPT-5.6 Luna adapter with its own tests and price table before any run. I will not switch models because I dislike the results.",
+      "status": "accepted",
+      "source": "Owner decision after S3 doc check, 19 Oct 2026",
+      "recorded_at": "2026-10-19T13:06:55.969Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ],
+      "supersedes": "DEC-T07-PROVIDER"
+    },
+    {
+      "id": "DEC-T07-RUN-SETTINGS-2",
+      "title": "Run settings fixed before the first run (temperature 1)",
+      "text": "Every run uses 4 workers, a pacer of 120 hand-offs per minute, an infra-invalid threshold of 2% (a run is invalid only above 2%), a call timeout of 30 seconds, max_tokens of 512, temperature 1 sent explicitly and recorded as 1, thinking switched off explicitly, and a memory-guard time limit of 7,200 seconds. Two rules are fixed now: if the trial's 99th-percentile latency is over 10 seconds I revisit the timeout, and if any trial answer hits the cap or the largest is over 256 output tokens I raise max_tokens to 1,024. Any such change is a superseding record made before the run commit.",
+      "status": "accepted",
+      "source": "Owner decision after S3 doc check, 19 Oct 2026",
+      "recorded_at": "2026-10-19T13:06:58.766Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ],
+      "supersedes": "DEC-T07-RUN-SETTINGS"
+    },
+    {
+      "id": "DEC-T07-REFUSALS",
+      "title": "Refusal checkpoints in the trial and run 1",
+      "text": "Anthropic's docs warn that a reason-style field in JSON output can trigger a refusal, and my agent's answer has a reason field. A refusal is scored as an escalation and does not count toward the 2% infrastructure rule, so it could quietly shape the baseline. I set two checkpoints now: if any trial alert is refused, I stop and decide before the run commit; and if more than 2% of run 1's items are refused, I stop and decide before runs 2 and 3. At or below 2%, refusals stay in the baseline as real behaviour and are reported separately.",
+      "status": "accepted",
+      "source": "Owner decision after S3 doc check, 19 Oct 2026",
+      "recorded_at": "2026-10-19T13:06:59.106Z",
       "paths": [],
       "tags": [
         "t07"
