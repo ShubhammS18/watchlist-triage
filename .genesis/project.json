@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-16T13:09:43.664Z"
+    "updated_at": "2026-10-19T12:46:01.600Z"
   },
   "policy": {
     "ponytail": "full",
@@ -1293,6 +1293,174 @@
       "paths": [],
       "tags": [
         "t06"
+      ]
+    },
+    {
+      "id": "DEC-T07-ADAPTER",
+      "title": "Real Anthropic adapter, standard library only",
+      "text": "The baseline calls Claude through a small adapter written with Python's standard library and added as one new entry in the provider list, without touching providers.py line 44. With it, the model can really be swapped through configuration, which the earlier harness work left for this task. The adapter returns the model ID as text, leaves token counts empty when they are unknown, keeps one overall deadline for the call timeout, does no retries of its own (a rate-limit reply is raised straight away as a provider error), raises a refusal error when the model refuses, reads the API key only from an environment variable and masks it in errors (checked by a canary test), is safe to call from several threads, and runs with thinking off. I update the old \"only the stub is registered\" test and rerun the earlier model-interface and agent test suites by hand.",
+      "status": "accepted",
+      "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026; links: FR-16 (real half), NFR-3, NFR-4, NFR-6; follows DEC-T06-NO-ADAPTER",
+      "recorded_at": "2026-10-19T12:45:57.257Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ]
+    },
+    {
+      "id": "DEC-T07-BASELINE-DIR",
+      "title": "Baseline output copied into baseline/, T06 untouched",
+      "text": "The runs and the scoring happen outside the repo, all at one clean commit. Afterwards the results are copied byte for byte into baseline/ together with a SHA-256 list of every copied file, and baseline/ holds nothing else. This replaces the plan in docs/harness-design.md to write runs into a runs/ folder. I chose this so that no T06 code, test, doc or decision record has to change.",
+      "status": "accepted",
+      "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026",
+      "recorded_at": "2026-10-19T12:45:57.658Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ]
+    },
+    {
+      "id": "DEC-T07-WRAPPER",
+      "title": "Pre-run checks in a T07 wrapper",
+      "text": "Every paid run starts through a T07 wrapper. It refuses to start unless the working tree is fully clean (untracked files included), the run inputs are ones the scoring step will accept (no blank re-run reason, no model name made only of spaces, no number that is not finite), and a written re-run reason is given whenever one is needed. It also prints the run's expected cost and stops if my credit is below 1.5 times that amount, which I confirm by eye in the Console. These are checks the earlier harness work left for this task, and they sit outside the T06 code.",
+      "status": "accepted",
+      "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026; links: DEC-T06-FAULTS-2; harness known issue 3",
+      "recorded_at": "2026-10-19T12:45:57.986Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ]
+    },
+    {
+      "id": "DEC-T07-DOCS-LEFT",
+      "title": "Earlier task docs stay as they were",
+      "text": "The T04, T05 and T06 design docs stay exactly as they were when their tasks closed, even where a line is now out of date. Readers are pointed to the current state by a new docs/README.md index, a short \"Which docs are current\" pointer in the root README.md (its only commit, 9724e3b, came before the project's task tracking, so it is not a T06 file), and a \"Supersedes\" table at the top of the T07 doc. The out-of-date lines are model-interface-design.md:46 and 174-175, baseline-agent-design.md:12-14 and 300, and harness-design.md:30-31, 134-135, 635 and 681-682. Someone who opens an old doc directly will miss the index; I accept that gap.",
+      "status": "accepted",
+      "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026",
+      "recorded_at": "2026-10-19T12:45:58.323Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ]
+    },
+    {
+      "id": "DEC-T07-PROVIDER",
+      "title": "Claude Haiku 5.5 for the baseline",
+      "text": "The baseline uses Claude Haiku 5.5, the cheapest tier, because L1 triage is a volume job and the honest starting point is the cheapest model that might be good enough. Thinking is off and the batch API is not used. Before any counted run it must pass fixed checks: strict JSON on the trial alerts, a reported model ID that matches the price table, temperature 0 accepted, the spend cap in place, and rate limits with room to spare. If a check fails, I make a new decision and build a GPT-5.6 Luna adapter with its own tests and price table before any run. I will not switch models because I dislike the results.",
+      "status": "accepted",
+      "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026",
+      "recorded_at": "2026-10-19T12:45:58.637Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ]
+    },
+    {
+      "id": "DEC-T07-BUDGET",
+      "title": "$15 ceiling on prepaid credit",
+      "text": "All of T07, trials and runs together, must stay under $15. I use prepaid credit with auto-reload off and separate API keys for the trial and the runs, and I hold at least 1.5 times a run's expected cost in credit before starting it.",
+      "status": "accepted",
+      "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026",
+      "recorded_at": "2026-10-19T12:45:58.967Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ]
+    },
+    {
+      "id": "DEC-T07-MODELLED-TIME",
+      "title": "Modelled time from public sources, fixed before any paid call",
+      "text": "The review times come from public sources only, mostly vendor claims, and two of them have no public source and rest on stated reasoning. In minutes for LOW/BASE/HIGH: manual clearing 3/8/30, proposal review 0.5/2/5, L2 review 40/120/480 and second review 1/2/5. I picked BASE on the side that makes the agent's savings harder to show. The file is committed on its own before any paid call, trials included, so the history shows the assumptions were fixed before the first run, and I will not change it because of results. No analyst interviews were possible, and the report says so.",
+      "status": "accepted",
+      "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026; links: AC-25, FR-22",
+      "recorded_at": "2026-10-19T12:45:59.286Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ]
+    },
+    {
+      "id": "DEC-T07-BREAK-EVEN",
+      "title": "Report the break-even escalation share",
+      "text": "The T07 report adds a derived break-even figure for each parameter set and review policy: the highest escalation share at which assisted review is still faster than manual review. It is labelled as derived from the modelled-time assumptions.",
+      "status": "accepted",
+      "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026",
+      "recorded_at": "2026-10-19T12:45:59.605Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ]
+    },
+    {
+      "id": "DEC-T07-PRICES",
+      "title": "Price table keyed by the reported model ID, checked against the bill",
+      "text": "The price table uses the model ID that Anthropic actually reports back, which I will see in the trial. It is written after the trial and committed together with the run config, so every run uses the same table. After the runs I compare the harness cost with the Anthropic bill. If they differ by more than 5% after taking out the trial spend, I find out why and explain it before publishing.",
+      "status": "accepted",
+      "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026",
+      "recorded_at": "2026-10-19T12:45:59.924Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ]
+    },
+    {
+      "id": "DEC-T07-RUN-SETTINGS",
+      "title": "Run settings fixed before the first run",
+      "text": "Every run uses 4 workers, a pacer of 120 hand-offs per minute, an infra-invalid threshold of 2% (a run is invalid only above 2%), a call timeout of 30 seconds, max_tokens of 512, temperature 0 and a memory-guard time limit of 7,200 seconds. Two rules are fixed now: if the trial's 99th-percentile latency is over 10 seconds I revisit the timeout, and if any trial answer hits the cap or the largest is over 256 output tokens I raise max_tokens to 1,024. Any such change is a superseding record made before the run commit.",
+      "status": "accepted",
+      "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026",
+      "recorded_at": "2026-10-19T12:46:00.246Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ]
+    },
+    {
+      "id": "DEC-T07-TRIAL",
+      "title": "Trial on hand-written alerts only",
+      "text": "Before any counted run I try the setup on about 20 fresh hand-written alerts shaped like the world's alerts, none taken from the frozen world, so no setting is tuned on the data I am scored on. A small T07 script calls the agent with the real adapter using the trial key, and its output is scanned with gitleaks.",
+      "status": "accepted",
+      "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026",
+      "recorded_at": "2026-10-19T12:46:00.595Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ]
+    },
+    {
+      "id": "DEC-T07-RUN-SET",
+      "title": "Step order and stopping rule",
+      "text": "All runs happen at the single run commit. I stop at the first 3 valid runs, with at most 5 attempts, and invalid or aborted runs count as attempts. If 5 attempts do not give 3 valid runs, I stop, investigate and make a new decision. Run 1's full output is scanned with gitleaks before runs 2 and 3; if anything is flagged I stop, and I do not add an allowlist or edit run output.",
+      "status": "accepted",
+      "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026",
+      "recorded_at": "2026-10-19T12:46:00.928Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ]
+    },
+    {
+      "id": "DEC-T07-TARGET-RULES",
+      "title": "Release target rules, fixed before the baseline",
+      "text": "I fix the rules now, before the baseline exists, so the release targets cannot be fitted to the results. The baseline value is the pooled value over the valid runs. Over-escalation target: the lower of the baseline and 3.9%, because above about 3.95% of clear false positives escalated the agent stops saving time at BASE. Verdict consistency target: the baseline. Citation accuracy target: the higher of the baseline and 95%, or 95% if the baseline is not applicable. Cost target: $0.20 per alert-framing item, which is 5% of a $4.00 analyst cost per alert ($30 an hour, the low end of a press figure, times 8 minutes). Exact fractions are stored, and any decimal shown is rounded in the strict direction. The numbers go into targets/release-targets.json, committed after the baseline report, and its hash goes into the DEC-T07-TARGETS record. T07 gate tests check the numbers, the direction rules, the commit order, that the time assumptions were committed before the runs, and the file hash.",
+      "status": "accepted",
+      "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026; links: AC-16, AC-25",
+      "recorded_at": "2026-10-19T12:46:01.271Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ]
+    },
+    {
+      "id": "DEC-T07-REVIEW",
+      "title": "Review budget fixed before round 1",
+      "text": "T07 is reviewed by GPT-6 Sol at medium effort in a fresh read-only Codex session, the same as T06. The prompt is structured: a fixed scope, the settled decisions, a stated threat model and a severity scale, and before round 1 the T07 claims are checked for over-promising words. Round 1 is a full review and later rounds only check the fixes. There are at most 4 rounds. If a blocker is still open after round 4, there is no fifth round and no approval; I decide what to do instead.",
+      "status": "accepted",
+      "source": "Owner decision, T07 pre-flight, 17-19 Oct 2026",
+      "recorded_at": "2026-10-19T12:46:01.600Z",
+      "paths": [],
+      "tags": [
+        "t07"
       ]
     }
   ],
