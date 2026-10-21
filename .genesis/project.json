@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-19T13:06:59.107Z"
+    "updated_at": "2026-10-21T05:57:45.766Z"
   },
   "policy": {
     "ponytail": "full",
@@ -1502,6 +1502,44 @@
       "tags": [
         "t07"
       ]
+    },
+    {
+      "id": "DEC-T07-ADAPTER-ERRORS",
+      "title": "Other refused requests are provider errors",
+      "text": "When the API answers with any status the adapter has no specific rule for, such as a 400, 401, 403, 404 or another 4xx, or a status it does not expect at all, the adapter raises a provider error that names the status and the error type and nothing else. It never treats such a reply as a model answer or a refusal, so a broken key, a wrong model name or a malformed request makes the run fail as an infrastructure problem instead of being scored as the model's behaviour. The spend-limit, rate-limit, overload and server-error replies keep their own named provider errors.",
+      "status": "superseded",
+      "source": "Owner decision during S4, 19 Oct 2026",
+      "recorded_at": "2026-10-20T07:30:17.062Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ],
+      "superseded_by": "DEC-T07-ADAPTER-ERRORS-2"
+    },
+    {
+      "id": "DEC-T07-ADAPTER-ERRORS-2",
+      "title": "Other refused requests are provider errors",
+      "text": "When the API answers with any status the adapter has no specific rule for, such as a 400, 401, 403, 404 or another 4xx, or a status it does not expect at all, the adapter raises a provider error that names the status and the error type and nothing else, never a model answer or a refusal. The agent treats it like a timeout: it retries, then escalates the alert as a failure, and the alert counts toward the 2% infrastructure rule. So a broken key, a wrong model name or a malformed request, which fails every call, makes the run infrastructure-invalid instead of being scored as the model's behaviour, while a single stray error stays in the run as a counted failure. The spend-limit, rate-limit, overload and server-error replies keep their own named provider errors.",
+      "status": "accepted",
+      "source": "Owner decision during S4, 19 Oct 2026",
+      "recorded_at": "2026-10-20T07:30:47.999Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ],
+      "supersedes": "DEC-T07-ADAPTER-ERRORS"
+    },
+    {
+      "id": "DEC-T07-WRAPPER-CHECKS",
+      "title": "Key check and expected cost in the run wrapper",
+      "text": "Before a paid run, the wrapper checks the API key with one request to the token-counting endpoint. Anthropic's docs say token counting is free, while the docs for listing models say nothing about cost. The request names the model in the run config, so it also shows the key can reach that model. The expected run cost the wrapper prints is a deliberate upper bound, so it needs no guessed ratio of characters to tokens. Every byte of every prompt counts as one input token, every answer counts as if it used the full 512-token cap, and each alert-framing item counts as one call. The wrapper works out the prompt bytes again from the world each time, without calling the model. I hold at least 1.5 times this upper bound in credit before starting a run. Retries are not counted in this bound, so a run with many retries can cost more; the 1.5 times margin covers ordinary retries, and my credit is far above it.",
+      "status": "accepted",
+      "source": "Owner decision during S5, 20 Oct 2026",
+      "recorded_at": "2026-10-21T05:57:45.730Z",
+      "paths": [],
+      "tags": [
+        "t07"
+      ]
     }
   ],
   "knowledge": [],
@@ -2806,6 +2844,15 @@
   "experiments": [],
   "incidents": [],
   "discovery": null,
-  "checkpoint": null,
+  "checkpoint": {
+    "at": "2026-10-20T07:34:38.856Z",
+    "revision": {
+      "commit": "3913e3ee4d3cd6c6f3ea492daccfe3f7bd3ca736",
+      "dirty": true,
+      "source_hash": "65474632cf3e14d40efa74336eaab083d55774829567c4af7e6145317334ade4"
+    },
+    "active_task": "T07-baseline-run",
+    "next_action": "Run the task pre-flight."
+  },
   "legacy": null
 }
