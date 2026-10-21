@@ -10,6 +10,7 @@ from model_interface import (ERRORS, BadReply, Message, ModelError, ModelTimeout
 from model_interface.providers import DEFAULT_CONFIG, PROVIDERS, ConfigError, load
 from model_interface.runner import ChildError, run_child
 from model_interface.stub import Stub
+from model_interface.anthropic_api import Anthropic
 
 SETTINGS = Settings(model="stub-1", temperature=0, max_tokens=64, timeout_s=5)
 MESSAGES = [{"role": "user", "content": "ping"}]
@@ -274,8 +275,8 @@ def test_a_new_provider_is_one_registry_entry_and_no_change_to_the_calling_code(
     assert ask(path) == Result("hello: m-7", "other-1", 1, 2, 0.0)
 
 
-def test_only_the_stub_is_registered():
-    assert PROVIDERS == {"stub": Stub}
+def test_the_stub_and_the_anthropic_adapter_are_registered():
+    assert PROVIDERS == {"stub": Stub, "anthropic": Anthropic}
 
 
 def test_an_unknown_provider_fails_clearly(tmp_path):

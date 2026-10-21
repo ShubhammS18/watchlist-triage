@@ -7,12 +7,12 @@ from pathlib import Path
 
 from . import Settings
 from .stub import Stub
+from .anthropic_api import Anthropic
 
 DEFAULT_CONFIG = Path(__file__).with_name("config.json")
 
 # Provider name -> a function that takes that provider's options and returns a model.
-# A real adapter is added here. Task T04 ships none, so there is no SDK and no key.
-PROVIDERS = {"stub": Stub}
+PROVIDERS = {"stub": Stub, "anthropic": Anthropic}
 
 REQUIRED = ("provider", "model", "temperature", "max_tokens", "timeout_s")
 OPTIONAL = ("options",)
