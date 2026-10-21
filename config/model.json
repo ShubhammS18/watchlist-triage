@@ -1,0 +1,8 @@
+{
+  "provider": "anthropic",
+  "model": "claude-haiku-5-5",
+  "temperature": 1,
+  "max_tokens": 512,
+  "timeout_s": 30,
+  "options": {"thinking": "disabled"}
+}

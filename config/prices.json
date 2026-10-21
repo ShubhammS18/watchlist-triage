@@ -1,0 +1,17 @@
+{
+  "kind": "sourced",
+  "source": "Anthropic pricing page, https://platform.claude.com/docs/en/about-claude/pricing, read 2026-10-19: Claude Haiku 5.5, prompts up to 100,000 tokens.",
+  "date": "2026-10-19",
+  "currency": "USD",
+  "unit": "per million tokens",
+  "models": {
+    "claude-haiku-5-5": {"input": "0.10", "output": "0.50"}
+  },
+  "sources": {
+    "claude-haiku-5-5": {
+      "input": "Claude Haiku 5.5 base input tokens, USD 0.10 per million tokens for prompts up to 100,000 tokens. https://platform.claude.com/docs/en/about-claude/pricing (read 2026-10-19)",
+      "output": "Claude Haiku 5.5 output tokens, USD 0.50 per million tokens for prompts up to 100,000 tokens. https://platform.claude.com/docs/en/about-claude/pricing (read 2026-10-19)"
+    }
+  },
+  "note": "The price band for prompts over 100,000 tokens does not apply: prompts are about 2,000 characters. inference_geo is left at the default."
+}
