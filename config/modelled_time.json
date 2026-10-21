@@ -1,0 +1,45 @@
+{
+  "kind": "sourced",
+  "note": "Public sources only, mostly vendor claims; proposal review (BASE, HIGH) and second review rest on stated assumptions. No analyst interviews were possible. BASE was chosen on the side that makes the agent's time saving harder to show. Committed before any paid call, trials included, and not to be changed because of results.",
+  "unit": "minutes",
+  "sets": {
+    "LOW": {
+      "manual_clearing": "3",
+      "proposal_review": "0.5",
+      "l2": "40",
+      "second_review": "1"
+    },
+    "BASE": {
+      "manual_clearing": "8",
+      "proposal_review": "2",
+      "l2": "120",
+      "second_review": "2"
+    },
+    "HIGH": {
+      "manual_clearing": "30",
+      "proposal_review": "5",
+      "l2": "480",
+      "second_review": "5"
+    }
+  },
+  "sources": {
+    "LOW": {
+      "manual_clearing": "Vendor claim: WorkFusion, 3-5 minutes per alert review; LOW takes the low end. https://www.workfusion.com/blog/the-best-way-to-automate-sanctions-screening/ (read 17 Oct 2026)",
+      "proposal_review": "Vendor claims: Castellum.AI, \"thirty seconds or less\" (https://www.castellum.ai/insights/the-end-of-the-manual-alert-review-era); Sardine, \"under a minute\" (https://www.sardine.ai/blog/rules-to-reduce-false-positives-in-sanctions-screening). Both read 17 Oct 2026.",
+      "l2": "Vendor claim: SymphonyAI (general AML alert investigation, not specific to screening escalations), about 17 minutes of analysis plus about 25 minutes for the report, 42 minutes in all, taken as 40. https://www.symphonyai.com/resources/blog/financial-services/how-ai-agents-reduce-aml-investigation-time/ (read 17 Oct 2026)",
+      "second_review": "Assumption, no public source for the time. The four-eyes check is defined by SQA Consulting (https://sqa-consulting.com/alert-screening-the-importance-of-conducting-a-four-eyes-check/); Zampa Partners warns that a second review can become rubber-stamping (https://zampapartners.com/insights/the-four-eyes-principle-in-sanctions-monitoring). Both read 17 Oct 2026."
+    },
+    "BASE": {
+      "manual_clearing": "Vendor claims: Alessa, about 8 minutes per PEP alert (https://alessa.com/pep-scoring/); Sanction Scanner, L1 review 5-10 minutes per alert (https://www.sanctionscanner.com/blog/aml-alert-investigation-workflow-from-alert-to-sar-decision-1376). Both read 17 Oct 2026.",
+      "proposal_review": "Assumption, no public source: reviewing a proposal that cites its evidence takes less time than clearing the alert from scratch (BASE manual clearing, 8 minutes).",
+      "l2": "Vendor claim: Sanction Scanner (general AML alert investigation, not specific to screening escalations), L2 review two to eight hours; BASE takes the low end, 2 hours. https://www.sanctionscanner.com/blog/aml-alert-investigation-workflow-from-alert-to-sar-decision-1376 (read 17 Oct 2026)",
+      "second_review": "Assumption, no public source for the time. The four-eyes check is defined by SQA Consulting (https://sqa-consulting.com/alert-screening-the-importance-of-conducting-a-four-eyes-check/); Zampa Partners warns that a second review can become rubber-stamping (https://zampapartners.com/insights/the-four-eyes-principle-in-sanctions-monitoring). Both read 17 Oct 2026."
+    },
+    "HIGH": {
+      "manual_clearing": "Vendor claim: Sigma360, 15-30 minutes per alert; HIGH takes the high end. https://www.sigma360.com/adverse-media-false-positive/ (read 17 Oct 2026)",
+      "proposal_review": "Assumption, no public source: HIGH equals the low end of manual clearing, 5 minutes (the low end of Sanction Scanner's L1 5-10 minutes): the reviewer redoes the check.",
+      "l2": "Vendor claim: Sanction Scanner (general AML alert investigation, not specific to screening escalations), L2 review two to eight hours; HIGH takes the high end, 8 hours. https://www.sanctionscanner.com/blog/aml-alert-investigation-workflow-from-alert-to-sar-decision-1376 (read 17 Oct 2026)",
+      "second_review": "Assumption, no public source for the time. The four-eyes check is defined by SQA Consulting (https://sqa-consulting.com/alert-screening-the-importance-of-conducting-a-four-eyes-check/); Zampa Partners warns that a second review can become rubber-stamping (https://zampapartners.com/insights/the-four-eyes-principle-in-sanctions-monitoring). Both read 17 Oct 2026. HIGH equals the low end of manual clearing, 5 minutes (the low end of Sanction Scanner's L1 5-10 minutes): the reviewer redoes the check."
+    }
+  }
+}
