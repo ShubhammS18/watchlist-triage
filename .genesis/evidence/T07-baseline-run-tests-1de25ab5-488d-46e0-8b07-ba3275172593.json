@@ -1,0 +1,30 @@
+{
+  "task": "T07-baseline-run",
+  "gate": "tests",
+  "kind": "command",
+  "attempt": "1de25ab5-488d-46e0-8b07-ba3275172593",
+  "command": ".venv/bin/python -m pytest tests/t07_baseline -q -p no:cacheprovider",
+  "started_at": "2026-10-22T07:45:39.460Z",
+  "observed_at": "2026-10-22T07:45:46.270Z",
+  "exit_code": 0,
+  "signal": null,
+  "stdout": "........................................................................ [ 62%]\n............................................                             [100%]\n116 passed in 5.60s\n",
+  "stderr": "",
+  "failure": null,
+  "receipt": null,
+  "revision": {
+    "commit": "3c032cd62f6ca07aca719c3665bc91d8e736fe09",
+    "dirty": true
+  },
+  "source_hash": "95630a0b970ec8e19e423669f7440704ee765328cb14ea708217ce36c8c12d95",
+  "before_hash": "95630a0b970ec8e19e423669f7440704ee765328cb14ea708217ce36c8c12d95",
+  "config_hash": "68688f61e7b9f1a5397d3a73a2ab0bdb2a071063d701b81e8bce206a868306d1",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "arch": "x64",
+    "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+    "variables": {}
+  },
+  "hash": "12c4d02464b70dfeeb8af203ce577507b14d7dd6b9d051d7293ade12ffbc1635"
+}

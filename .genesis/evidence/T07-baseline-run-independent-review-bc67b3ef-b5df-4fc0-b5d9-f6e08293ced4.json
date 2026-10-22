@@ -1,0 +1,13 @@
+{
+  "task": "T07-baseline-run",
+  "gate": "independent-review",
+  "kind": "review",
+  "attempt": "bc67b3ef-b5df-4fc0-b5d9-f6e08293ced4",
+  "human": "Shubham Suradkar",
+  "reason": "Reviewed by GPT-6 Sol (medium) in fresh read-only Codex sessions, Round 1 DO NOT APPROVE: the wrapper's key check could follow a redirect with the API key; fixed, tested, and both keys revoked. Round 2 APPROVE WITH FIXES: two wording minors, fixed. Round 3 APPROVE WITH FIXES: incomplete changed-files list, fixed. Round 4 APPROVE. Baseline: 3 valid Claude Haiku 5.5 runs; release targets recorded after the baseline report.",
+  "observed_at": "2026-10-22T07:48:34.460Z",
+  "source_hash": "95630a0b970ec8e19e423669f7440704ee765328cb14ea708217ce36c8c12d95",
+  "config_hash": "68688f61e7b9f1a5397d3a73a2ab0bdb2a071063d701b81e8bce206a868306d1",
+  "reviewed_proofs": "344c8f389f4ba22a8d1bcf522edd7edf0b2cecd30598bf7b33aa31e2f9cc7152",
+  "hash": "f924d0c96ed189caadebffcaf6c117abf98b88934d9e872740cdfe092b49f6fe"
+}

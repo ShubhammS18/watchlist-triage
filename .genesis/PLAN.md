@@ -58,15 +58,15 @@
 
 ### T07-baseline-run — Commit the modelled-time parameters, run the baseline on the frozen world, publish the report, and commit the targets decision record required by AC-16. The gate checks the committed artifacts and does not call the model.
 
-- state/risk: active / medium
+- state/risk: done / medium
 - requirements: AC-16, AC-25
 - scope: not bounded
-- gates: tests: .venv/bin/python -m pytest tests/t07_baseline -q -p no:cacheprovider, independent-review: pending
+- gates: tests: .venv/bin/python -m pytest tests/t07_baseline -q -p no:cacheprovider, independent-review: pass
 - next: Run the task pre-flight.
 
 ### WAVE2-RESERVED — Reserved for wave-2 planning. Upgrades, audit log, review policy, operational mode, release protocol and README are planned in detail after the baseline. This task is rejected at the wave-2 reopen and is not meant to be completed.
 
-- state/risk: queued / low
+- state/risk: active / low
 - requirements: FR-8, FR-10, FR-11, FR-12, FR-13, FR-14, FR-15, FR-17, FR-18, FR-19, FR-23, NFR-7, NFR-8, AC-1, AC-3, AC-4, AC-5, AC-6, AC-8, AC-9, AC-11, AC-12, AC-13, AC-14, AC-15, AC-18, AC-19, AC-20, AC-22
 - scope: not bounded
 - gates: reserved: false
