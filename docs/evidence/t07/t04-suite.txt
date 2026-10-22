@@ -1,0 +1,541 @@
+commit: 1f06342 (1f06342122d12a7c66ccbbbc4dc370e81245158a), tree clean: yes
+command: BENCH_MAX_S=0.82 tools/timed_run.sh .venv/bin/python -m pytest tests/t04_model_interface -q -p no:cacheprovider
+started: 2026-10-21T06:19:37+00:00
+Power: plugged in
+benchmark: 0.770 s (N=12000000, result 983797)
+........................................................................ [ 52%]
+........................................................EEEEEEEE         [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_a_deliberate_breakage_is_caught[remove the network block] _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7e86416c6e10>, _basetemp=PosixPath('/tmp/pytest-of-shubham/pytest-6'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def untouched_copy_passes(tmp_path_factory):
+        done = run_suite(copy_to(tmp_path_factory.mktemp("untouched")), SUITE)
+>       assert done.returncode == 0, done.stdout
+E       AssertionError: ........................................................................ [ 56%]
+E         ..................F.....................................                 [100%]
+E         =================================== FAILURES ===================================
+E         ________________________ test_a_name_lookup_is_refused _________________________
+E         
+E             def test_a_name_lookup_is_refused():
+E                 probes = ["getaddrinfo", "gethostbyname", "connect", "create_connection"]
+E         >       report = run_child(PROBE, {"probes": probes, "host": "example.com", "port": 443}, Stub(), limit_s=5)
+E                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         
+E         tests/t04_model_interface/test_isolation.py:141: 
+E         _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+E         
+E         module = 'tests.t04_model_interface.t04_probes'
+E         payload = {'probes': ['getaddrinfo', 'gethostbyname', 'connect', 'create_connection'], 'host': 'example.com', 'port': 443}
+E         model = <model_interface.stub.Stub object at 0x7b94ff0c5820>, limit_s = 5
+E         
+E             def run_child(module, payload, model, limit_s=60):
+E                 """Run `module.main(model, payload)` in a child process with the network guard, and return what it returns.
+E             
+E                 `payload` and the return value must be JSON values. The child gets an empty environment, so the parent's
+E                 environment variables are not passed to it. The guard stops ordinary, accidental and prompt-led network use,
+E                 not code written to defeat it.
+E             
+E                 The whole run, model calls included, may take `limit_s` seconds by the wall clock. After that the child is
+E                 killed and ChildTimeout is raised, even if a model call has not returned. This is a safety net against a run
+E                 that never ends, not a timeout policy.
+E                 """
+E                 process = subprocess.Popen(
+E                     [sys.executable, "-I", str(CHILD), module],
+E                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, env={}, text=True, encoding="utf-8")
+E                 expired = threading.Event()
+E                 inbox = queue.SimpleQueue()
+E             
+E                 def expire():
+E                     expired.set()
+E                     process.kill()  # the blocked read or write in _talk then ends at once
+E                     inbox.put((None, None))  # and so does a wait for a model call
+E             
+E                 timer = threading.Timer(limit_s, expire)
+E                 timer.start()
+E                 try:
+E                     return _talk(process, payload, model, inbox)
+E                 except (OSError, ValueError, ChildError) as error:
+E                     if expired.is_set():
+E         >               raise ChildTimeout(f"the agent process was killed after {limit_s} seconds") from None
+E         E               model_interface.runner.ChildTimeout: the agent process was killed after 5 seconds
+E         
+E         model_interface/runner.py:103: ChildTimeout
+E         =========================== short test summary info ============================
+E         FAILED tests/t04_model_interface/test_isolation.py::test_a_name_lookup_is_refused
+E         1 failed, 127 passed in 11.11s
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/shubham/projects/watchlist-triage/.venv/bin/python', '-m', 'pytest', 'tests/t04_model_in...sts/t04_model_interface/test_isolation.py::test_a_name_lookup_is_refused\n1 failed, 127 passed in 11.11s\n', stderr='').returncode
+
+tests/t04_model_interface/test_mutation.py:121: AssertionError
+_ ERROR at setup of test_a_deliberate_breakage_is_caught[remove the program block] _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7e86416c6e10>, _basetemp=PosixPath('/tmp/pytest-of-shubham/pytest-6'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def untouched_copy_passes(tmp_path_factory):
+        done = run_suite(copy_to(tmp_path_factory.mktemp("untouched")), SUITE)
+>       assert done.returncode == 0, done.stdout
+E       AssertionError: ........................................................................ [ 56%]
+E         ..................F.....................................                 [100%]
+E         =================================== FAILURES ===================================
+E         ________________________ test_a_name_lookup_is_refused _________________________
+E         
+E             def test_a_name_lookup_is_refused():
+E                 probes = ["getaddrinfo", "gethostbyname", "connect", "create_connection"]
+E         >       report = run_child(PROBE, {"probes": probes, "host": "example.com", "port": 443}, Stub(), limit_s=5)
+E                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         
+E         tests/t04_model_interface/test_isolation.py:141: 
+E         _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+E         
+E         module = 'tests.t04_model_interface.t04_probes'
+E         payload = {'probes': ['getaddrinfo', 'gethostbyname', 'connect', 'create_connection'], 'host': 'example.com', 'port': 443}
+E         model = <model_interface.stub.Stub object at 0x7b94ff0c5820>, limit_s = 5
+E         
+E             def run_child(module, payload, model, limit_s=60):
+E                 """Run `module.main(model, payload)` in a child process with the network guard, and return what it returns.
+E             
+E                 `payload` and the return value must be JSON values. The child gets an empty environment, so the parent's
+E                 environment variables are not passed to it. The guard stops ordinary, accidental and prompt-led network use,
+E                 not code written to defeat it.
+E             
+E                 The whole run, model calls included, may take `limit_s` seconds by the wall clock. After that the child is
+E                 killed and ChildTimeout is raised, even if a model call has not returned. This is a safety net against a run
+E                 that never ends, not a timeout policy.
+E                 """
+E                 process = subprocess.Popen(
+E                     [sys.executable, "-I", str(CHILD), module],
+E                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, env={}, text=True, encoding="utf-8")
+E                 expired = threading.Event()
+E                 inbox = queue.SimpleQueue()
+E             
+E                 def expire():
+E                     expired.set()
+E                     process.kill()  # the blocked read or write in _talk then ends at once
+E                     inbox.put((None, None))  # and so does a wait for a model call
+E             
+E                 timer = threading.Timer(limit_s, expire)
+E                 timer.start()
+E                 try:
+E                     return _talk(process, payload, model, inbox)
+E                 except (OSError, ValueError, ChildError) as error:
+E                     if expired.is_set():
+E         >               raise ChildTimeout(f"the agent process was killed after {limit_s} seconds") from None
+E         E               model_interface.runner.ChildTimeout: the agent process was killed after 5 seconds
+E         
+E         model_interface/runner.py:103: ChildTimeout
+E         =========================== short test summary info ============================
+E         FAILED tests/t04_model_interface/test_isolation.py::test_a_name_lookup_is_refused
+E         1 failed, 127 passed in 11.11s
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/shubham/projects/watchlist-triage/.venv/bin/python', '-m', 'pytest', 'tests/t04_model_in...sts/t04_model_interface/test_isolation.py::test_a_name_lookup_is_refused\n1 failed, 127 passed in 11.11s\n', stderr='').returncode
+
+tests/t04_model_interface/test_mutation.py:121: AssertionError
+_ ERROR at setup of test_a_deliberate_breakage_is_caught[remove the wall-clock cap] _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7e86416c6e10>, _basetemp=PosixPath('/tmp/pytest-of-shubham/pytest-6'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def untouched_copy_passes(tmp_path_factory):
+        done = run_suite(copy_to(tmp_path_factory.mktemp("untouched")), SUITE)
+>       assert done.returncode == 0, done.stdout
+E       AssertionError: ........................................................................ [ 56%]
+E         ..................F.....................................                 [100%]
+E         =================================== FAILURES ===================================
+E         ________________________ test_a_name_lookup_is_refused _________________________
+E         
+E             def test_a_name_lookup_is_refused():
+E                 probes = ["getaddrinfo", "gethostbyname", "connect", "create_connection"]
+E         >       report = run_child(PROBE, {"probes": probes, "host": "example.com", "port": 443}, Stub(), limit_s=5)
+E                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         
+E         tests/t04_model_interface/test_isolation.py:141: 
+E         _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+E         
+E         module = 'tests.t04_model_interface.t04_probes'
+E         payload = {'probes': ['getaddrinfo', 'gethostbyname', 'connect', 'create_connection'], 'host': 'example.com', 'port': 443}
+E         model = <model_interface.stub.Stub object at 0x7b94ff0c5820>, limit_s = 5
+E         
+E             def run_child(module, payload, model, limit_s=60):
+E                 """Run `module.main(model, payload)` in a child process with the network guard, and return what it returns.
+E             
+E                 `payload` and the return value must be JSON values. The child gets an empty environment, so the parent's
+E                 environment variables are not passed to it. The guard stops ordinary, accidental and prompt-led network use,
+E                 not code written to defeat it.
+E             
+E                 The whole run, model calls included, may take `limit_s` seconds by the wall clock. After that the child is
+E                 killed and ChildTimeout is raised, even if a model call has not returned. This is a safety net against a run
+E                 that never ends, not a timeout policy.
+E                 """
+E                 process = subprocess.Popen(
+E                     [sys.executable, "-I", str(CHILD), module],
+E                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, env={}, text=True, encoding="utf-8")
+E                 expired = threading.Event()
+E                 inbox = queue.SimpleQueue()
+E             
+E                 def expire():
+E                     expired.set()
+E                     process.kill()  # the blocked read or write in _talk then ends at once
+E                     inbox.put((None, None))  # and so does a wait for a model call
+E             
+E                 timer = threading.Timer(limit_s, expire)
+E                 timer.start()
+E                 try:
+E                     return _talk(process, payload, model, inbox)
+E                 except (OSError, ValueError, ChildError) as error:
+E                     if expired.is_set():
+E         >               raise ChildTimeout(f"the agent process was killed after {limit_s} seconds") from None
+E         E               model_interface.runner.ChildTimeout: the agent process was killed after 5 seconds
+E         
+E         model_interface/runner.py:103: ChildTimeout
+E         =========================== short test summary info ============================
+E         FAILED tests/t04_model_interface/test_isolation.py::test_a_name_lookup_is_refused
+E         1 failed, 127 passed in 11.11s
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/shubham/projects/watchlist-triage/.venv/bin/python', '-m', 'pytest', 'tests/t04_model_in...sts/t04_model_interface/test_isolation.py::test_a_name_lookup_is_refused\n1 failed, 127 passed in 11.11s\n', stderr='').returncode
+
+tests/t04_model_interface/test_mutation.py:121: AssertionError
+_ ERROR at setup of test_a_deliberate_breakage_is_caught[remove the model-call thread] _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7e86416c6e10>, _basetemp=PosixPath('/tmp/pytest-of-shubham/pytest-6'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def untouched_copy_passes(tmp_path_factory):
+        done = run_suite(copy_to(tmp_path_factory.mktemp("untouched")), SUITE)
+>       assert done.returncode == 0, done.stdout
+E       AssertionError: ........................................................................ [ 56%]
+E         ..................F.....................................                 [100%]
+E         =================================== FAILURES ===================================
+E         ________________________ test_a_name_lookup_is_refused _________________________
+E         
+E             def test_a_name_lookup_is_refused():
+E                 probes = ["getaddrinfo", "gethostbyname", "connect", "create_connection"]
+E         >       report = run_child(PROBE, {"probes": probes, "host": "example.com", "port": 443}, Stub(), limit_s=5)
+E                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         
+E         tests/t04_model_interface/test_isolation.py:141: 
+E         _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+E         
+E         module = 'tests.t04_model_interface.t04_probes'
+E         payload = {'probes': ['getaddrinfo', 'gethostbyname', 'connect', 'create_connection'], 'host': 'example.com', 'port': 443}
+E         model = <model_interface.stub.Stub object at 0x7b94ff0c5820>, limit_s = 5
+E         
+E             def run_child(module, payload, model, limit_s=60):
+E                 """Run `module.main(model, payload)` in a child process with the network guard, and return what it returns.
+E             
+E                 `payload` and the return value must be JSON values. The child gets an empty environment, so the parent's
+E                 environment variables are not passed to it. The guard stops ordinary, accidental and prompt-led network use,
+E                 not code written to defeat it.
+E             
+E                 The whole run, model calls included, may take `limit_s` seconds by the wall clock. After that the child is
+E                 killed and ChildTimeout is raised, even if a model call has not returned. This is a safety net against a run
+E                 that never ends, not a timeout policy.
+E                 """
+E                 process = subprocess.Popen(
+E                     [sys.executable, "-I", str(CHILD), module],
+E                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, env={}, text=True, encoding="utf-8")
+E                 expired = threading.Event()
+E                 inbox = queue.SimpleQueue()
+E             
+E                 def expire():
+E                     expired.set()
+E                     process.kill()  # the blocked read or write in _talk then ends at once
+E                     inbox.put((None, None))  # and so does a wait for a model call
+E             
+E                 timer = threading.Timer(limit_s, expire)
+E                 timer.start()
+E                 try:
+E                     return _talk(process, payload, model, inbox)
+E                 except (OSError, ValueError, ChildError) as error:
+E                     if expired.is_set():
+E         >               raise ChildTimeout(f"the agent process was killed after {limit_s} seconds") from None
+E         E               model_interface.runner.ChildTimeout: the agent process was killed after 5 seconds
+E         
+E         model_interface/runner.py:103: ChildTimeout
+E         =========================== short test summary info ============================
+E         FAILED tests/t04_model_interface/test_isolation.py::test_a_name_lookup_is_refused
+E         1 failed, 127 passed in 11.11s
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/shubham/projects/watchlist-triage/.venv/bin/python', '-m', 'pytest', 'tests/t04_model_in...sts/t04_model_interface/test_isolation.py::test_a_name_lookup_is_refused\n1 failed, 127 passed in 11.11s\n', stderr='').returncode
+
+tests/t04_model_interface/test_mutation.py:121: AssertionError
+_ ERROR at setup of test_a_deliberate_breakage_is_caught[accept unknown request keys] _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7e86416c6e10>, _basetemp=PosixPath('/tmp/pytest-of-shubham/pytest-6'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def untouched_copy_passes(tmp_path_factory):
+        done = run_suite(copy_to(tmp_path_factory.mktemp("untouched")), SUITE)
+>       assert done.returncode == 0, done.stdout
+E       AssertionError: ........................................................................ [ 56%]
+E         ..................F.....................................                 [100%]
+E         =================================== FAILURES ===================================
+E         ________________________ test_a_name_lookup_is_refused _________________________
+E         
+E             def test_a_name_lookup_is_refused():
+E                 probes = ["getaddrinfo", "gethostbyname", "connect", "create_connection"]
+E         >       report = run_child(PROBE, {"probes": probes, "host": "example.com", "port": 443}, Stub(), limit_s=5)
+E                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         
+E         tests/t04_model_interface/test_isolation.py:141: 
+E         _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+E         
+E         module = 'tests.t04_model_interface.t04_probes'
+E         payload = {'probes': ['getaddrinfo', 'gethostbyname', 'connect', 'create_connection'], 'host': 'example.com', 'port': 443}
+E         model = <model_interface.stub.Stub object at 0x7b94ff0c5820>, limit_s = 5
+E         
+E             def run_child(module, payload, model, limit_s=60):
+E                 """Run `module.main(model, payload)` in a child process with the network guard, and return what it returns.
+E             
+E                 `payload` and the return value must be JSON values. The child gets an empty environment, so the parent's
+E                 environment variables are not passed to it. The guard stops ordinary, accidental and prompt-led network use,
+E                 not code written to defeat it.
+E             
+E                 The whole run, model calls included, may take `limit_s` seconds by the wall clock. After that the child is
+E                 killed and ChildTimeout is raised, even if a model call has not returned. This is a safety net against a run
+E                 that never ends, not a timeout policy.
+E                 """
+E                 process = subprocess.Popen(
+E                     [sys.executable, "-I", str(CHILD), module],
+E                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, env={}, text=True, encoding="utf-8")
+E                 expired = threading.Event()
+E                 inbox = queue.SimpleQueue()
+E             
+E                 def expire():
+E                     expired.set()
+E                     process.kill()  # the blocked read or write in _talk then ends at once
+E                     inbox.put((None, None))  # and so does a wait for a model call
+E             
+E                 timer = threading.Timer(limit_s, expire)
+E                 timer.start()
+E                 try:
+E                     return _talk(process, payload, model, inbox)
+E                 except (OSError, ValueError, ChildError) as error:
+E                     if expired.is_set():
+E         >               raise ChildTimeout(f"the agent process was killed after {limit_s} seconds") from None
+E         E               model_interface.runner.ChildTimeout: the agent process was killed after 5 seconds
+E         
+E         model_interface/runner.py:103: ChildTimeout
+E         =========================== short test summary info ============================
+E         FAILED tests/t04_model_interface/test_isolation.py::test_a_name_lookup_is_refused
+E         1 failed, 127 passed in 11.11s
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/shubham/projects/watchlist-triage/.venv/bin/python', '-m', 'pytest', 'tests/t04_model_in...sts/t04_model_interface/test_isolation.py::test_a_name_lookup_is_refused\n1 failed, 127 passed in 11.11s\n', stderr='').returncode
+
+tests/t04_model_interface/test_mutation.py:121: AssertionError
+_ ERROR at setup of test_a_deliberate_breakage_is_caught[accept unknown settings keys] _
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7e86416c6e10>, _basetemp=PosixPath('/tmp/pytest-of-shubham/pytest-6'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def untouched_copy_passes(tmp_path_factory):
+        done = run_suite(copy_to(tmp_path_factory.mktemp("untouched")), SUITE)
+>       assert done.returncode == 0, done.stdout
+E       AssertionError: ........................................................................ [ 56%]
+E         ..................F.....................................                 [100%]
+E         =================================== FAILURES ===================================
+E         ________________________ test_a_name_lookup_is_refused _________________________
+E         
+E             def test_a_name_lookup_is_refused():
+E                 probes = ["getaddrinfo", "gethostbyname", "connect", "create_connection"]
+E         >       report = run_child(PROBE, {"probes": probes, "host": "example.com", "port": 443}, Stub(), limit_s=5)
+E                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         
+E         tests/t04_model_interface/test_isolation.py:141: 
+E         _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+E         
+E         module = 'tests.t04_model_interface.t04_probes'
+E         payload = {'probes': ['getaddrinfo', 'gethostbyname', 'connect', 'create_connection'], 'host': 'example.com', 'port': 443}
+E         model = <model_interface.stub.Stub object at 0x7b94ff0c5820>, limit_s = 5
+E         
+E             def run_child(module, payload, model, limit_s=60):
+E                 """Run `module.main(model, payload)` in a child process with the network guard, and return what it returns.
+E             
+E                 `payload` and the return value must be JSON values. The child gets an empty environment, so the parent's
+E                 environment variables are not passed to it. The guard stops ordinary, accidental and prompt-led network use,
+E                 not code written to defeat it.
+E             
+E                 The whole run, model calls included, may take `limit_s` seconds by the wall clock. After that the child is
+E                 killed and ChildTimeout is raised, even if a model call has not returned. This is a safety net against a run
+E                 that never ends, not a timeout policy.
+E                 """
+E                 process = subprocess.Popen(
+E                     [sys.executable, "-I", str(CHILD), module],
+E                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, env={}, text=True, encoding="utf-8")
+E                 expired = threading.Event()
+E                 inbox = queue.SimpleQueue()
+E             
+E                 def expire():
+E                     expired.set()
+E                     process.kill()  # the blocked read or write in _talk then ends at once
+E                     inbox.put((None, None))  # and so does a wait for a model call
+E             
+E                 timer = threading.Timer(limit_s, expire)
+E                 timer.start()
+E                 try:
+E                     return _talk(process, payload, model, inbox)
+E                 except (OSError, ValueError, ChildError) as error:
+E                     if expired.is_set():
+E         >               raise ChildTimeout(f"the agent process was killed after {limit_s} seconds") from None
+E         E               model_interface.runner.ChildTimeout: the agent process was killed after 5 seconds
+E         
+E         model_interface/runner.py:103: ChildTimeout
+E         =========================== short test summary info ============================
+E         FAILED tests/t04_model_interface/test_isolation.py::test_a_name_lookup_is_refused
+E         1 failed, 127 passed in 11.11s
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/shubham/projects/watchlist-triage/.venv/bin/python', '-m', 'pytest', 'tests/t04_model_in...sts/t04_model_interface/test_isolation.py::test_a_name_lookup_is_refused\n1 failed, 127 passed in 11.11s\n', stderr='').returncode
+
+tests/t04_model_interface/test_mutation.py:121: AssertionError
+_____ ERROR at setup of test_a_deliberate_breakage_is_caught[add a retry] ______
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7e86416c6e10>, _basetemp=PosixPath('/tmp/pytest-of-shubham/pytest-6'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def untouched_copy_passes(tmp_path_factory):
+        done = run_suite(copy_to(tmp_path_factory.mktemp("untouched")), SUITE)
+>       assert done.returncode == 0, done.stdout
+E       AssertionError: ........................................................................ [ 56%]
+E         ..................F.....................................                 [100%]
+E         =================================== FAILURES ===================================
+E         ________________________ test_a_name_lookup_is_refused _________________________
+E         
+E             def test_a_name_lookup_is_refused():
+E                 probes = ["getaddrinfo", "gethostbyname", "connect", "create_connection"]
+E         >       report = run_child(PROBE, {"probes": probes, "host": "example.com", "port": 443}, Stub(), limit_s=5)
+E                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         
+E         tests/t04_model_interface/test_isolation.py:141: 
+E         _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+E         
+E         module = 'tests.t04_model_interface.t04_probes'
+E         payload = {'probes': ['getaddrinfo', 'gethostbyname', 'connect', 'create_connection'], 'host': 'example.com', 'port': 443}
+E         model = <model_interface.stub.Stub object at 0x7b94ff0c5820>, limit_s = 5
+E         
+E             def run_child(module, payload, model, limit_s=60):
+E                 """Run `module.main(model, payload)` in a child process with the network guard, and return what it returns.
+E             
+E                 `payload` and the return value must be JSON values. The child gets an empty environment, so the parent's
+E                 environment variables are not passed to it. The guard stops ordinary, accidental and prompt-led network use,
+E                 not code written to defeat it.
+E             
+E                 The whole run, model calls included, may take `limit_s` seconds by the wall clock. After that the child is
+E                 killed and ChildTimeout is raised, even if a model call has not returned. This is a safety net against a run
+E                 that never ends, not a timeout policy.
+E                 """
+E                 process = subprocess.Popen(
+E                     [sys.executable, "-I", str(CHILD), module],
+E                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, env={}, text=True, encoding="utf-8")
+E                 expired = threading.Event()
+E                 inbox = queue.SimpleQueue()
+E             
+E                 def expire():
+E                     expired.set()
+E                     process.kill()  # the blocked read or write in _talk then ends at once
+E                     inbox.put((None, None))  # and so does a wait for a model call
+E             
+E                 timer = threading.Timer(limit_s, expire)
+E                 timer.start()
+E                 try:
+E                     return _talk(process, payload, model, inbox)
+E                 except (OSError, ValueError, ChildError) as error:
+E                     if expired.is_set():
+E         >               raise ChildTimeout(f"the agent process was killed after {limit_s} seconds") from None
+E         E               model_interface.runner.ChildTimeout: the agent process was killed after 5 seconds
+E         
+E         model_interface/runner.py:103: ChildTimeout
+E         =========================== short test summary info ============================
+E         FAILED tests/t04_model_interface/test_isolation.py::test_a_name_lookup_is_refused
+E         1 failed, 127 passed in 11.11s
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/shubham/projects/watchlist-triage/.venv/bin/python', '-m', 'pytest', 'tests/t04_model_in...sts/t04_model_interface/test_isolation.py::test_a_name_lookup_is_refused\n1 failed, 127 passed in 11.11s\n', stderr='').returncode
+
+tests/t04_model_interface/test_mutation.py:121: AssertionError
+__ ERROR at setup of test_a_deliberate_breakage_is_caught[hardcode the stub] ___
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x7e86416c6e10>, _basetemp=PosixPath('/tmp/pytest-of-shubham/pytest-6'), _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope="module")
+    def untouched_copy_passes(tmp_path_factory):
+        done = run_suite(copy_to(tmp_path_factory.mktemp("untouched")), SUITE)
+>       assert done.returncode == 0, done.stdout
+E       AssertionError: ........................................................................ [ 56%]
+E         ..................F.....................................                 [100%]
+E         =================================== FAILURES ===================================
+E         ________________________ test_a_name_lookup_is_refused _________________________
+E         
+E             def test_a_name_lookup_is_refused():
+E                 probes = ["getaddrinfo", "gethostbyname", "connect", "create_connection"]
+E         >       report = run_child(PROBE, {"probes": probes, "host": "example.com", "port": 443}, Stub(), limit_s=5)
+E                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         
+E         tests/t04_model_interface/test_isolation.py:141: 
+E         _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+E         
+E         module = 'tests.t04_model_interface.t04_probes'
+E         payload = {'probes': ['getaddrinfo', 'gethostbyname', 'connect', 'create_connection'], 'host': 'example.com', 'port': 443}
+E         model = <model_interface.stub.Stub object at 0x7b94ff0c5820>, limit_s = 5
+E         
+E             def run_child(module, payload, model, limit_s=60):
+E                 """Run `module.main(model, payload)` in a child process with the network guard, and return what it returns.
+E             
+E                 `payload` and the return value must be JSON values. The child gets an empty environment, so the parent's
+E                 environment variables are not passed to it. The guard stops ordinary, accidental and prompt-led network use,
+E                 not code written to defeat it.
+E             
+E                 The whole run, model calls included, may take `limit_s` seconds by the wall clock. After that the child is
+E                 killed and ChildTimeout is raised, even if a model call has not returned. This is a safety net against a run
+E                 that never ends, not a timeout policy.
+E                 """
+E                 process = subprocess.Popen(
+E                     [sys.executable, "-I", str(CHILD), module],
+E                     stdin=subprocess.PIPE, stdout=subprocess.PIPE, env={}, text=True, encoding="utf-8")
+E                 expired = threading.Event()
+E                 inbox = queue.SimpleQueue()
+E             
+E                 def expire():
+E                     expired.set()
+E                     process.kill()  # the blocked read or write in _talk then ends at once
+E                     inbox.put((None, None))  # and so does a wait for a model call
+E             
+E                 timer = threading.Timer(limit_s, expire)
+E                 timer.start()
+E                 try:
+E                     return _talk(process, payload, model, inbox)
+E                 except (OSError, ValueError, ChildError) as error:
+E                     if expired.is_set():
+E         >               raise ChildTimeout(f"the agent process was killed after {limit_s} seconds") from None
+E         E               model_interface.runner.ChildTimeout: the agent process was killed after 5 seconds
+E         
+E         model_interface/runner.py:103: ChildTimeout
+E         =========================== short test summary info ============================
+E         FAILED tests/t04_model_interface/test_isolation.py::test_a_name_lookup_is_refused
+E         1 failed, 127 passed in 11.11s
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/shubham/projects/watchlist-triage/.venv/bin/python', '-m', 'pytest', 'tests/t04_model_in...sts/t04_model_interface/test_isolation.py::test_a_name_lookup_is_refused\n1 failed, 127 passed in 11.11s\n', stderr='').returncode
+
+tests/t04_model_interface/test_mutation.py:121: AssertionError
+=========================== short test summary info ============================
+ERROR tests/t04_model_interface/test_mutation.py::test_a_deliberate_breakage_is_caught[remove the network block]
+ERROR tests/t04_model_interface/test_mutation.py::test_a_deliberate_breakage_is_caught[remove the program block]
+ERROR tests/t04_model_interface/test_mutation.py::test_a_deliberate_breakage_is_caught[remove the wall-clock cap]
+ERROR tests/t04_model_interface/test_mutation.py::test_a_deliberate_breakage_is_caught[remove the model-call thread]
+ERROR tests/t04_model_interface/test_mutation.py::test_a_deliberate_breakage_is_caught[accept unknown request keys]
+ERROR tests/t04_model_interface/test_mutation.py::test_a_deliberate_breakage_is_caught[accept unknown settings keys]
+ERROR tests/t04_model_interface/test_mutation.py::test_a_deliberate_breakage_is_caught[add a retry]
+ERROR tests/t04_model_interface/test_mutation.py::test_a_deliberate_breakage_is_caught[hardcode the stub]
+128 passed, 8 errors in 17.18s
+exit=1  memory used: before 1521 MB, peak 1617 MB (limit for stopping 3000 MB)
+timed_run exit=1
+ended: 2026-10-21T06:19:57+00:00

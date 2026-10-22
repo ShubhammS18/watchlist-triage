@@ -1,0 +1,17 @@
+2026-10-21T06:05:29+00:00
+2b79630aac2c8b8f7035ae427cb3853427faa56a
+UNCHECKED TIMING: the checks below do not stop this run
+Power: ON BATTERY
+UNCHECKED TIMING: on battery; plug the charger in
+benchmark: 0.905 s (N=12000000, result 983797)
+........................................................................ [ 74%]
+.........................                                                [100%]
+============================= slowest 5 durations ==============================
+1.02s call     tests/t07_baseline/test_trial.py::test_every_trial_alert_is_one_call_and_every_verdict_passes
+0.50s call     tests/t07_baseline/test_adapter.py::test_a_reply_that_trickles_in_ends_at_the_overall_deadline[body]
+0.50s call     tests/t07_baseline/test_adapter.py::test_a_reply_that_trickles_in_ends_at_the_overall_deadline[headers]
+0.24s call     tests/t07_baseline/test_adapter.py::test_the_canary_key_appears_in_no_error_text_traceback_repr_or_log
+0.19s call     tests/t07_baseline/test_wrapper.py::test_a_clean_run_prints_the_upper_bound_asks_and_runs_through_timed_run
+97 passed in 5.36s
+exit=0  memory used: before 1535 MB, peak 1627 MB (limit for stopping 3000 MB)
+timed_run exit=0

@@ -1,0 +1,15 @@
+2026-10-21T06:10:27+00:00
+2b79630aac2c8b8f7035ae427cb3853427faa56a
+Power: plugged in
+benchmark: 0.783 s (N=12000000, result 983797)
+........................................................................ [ 74%]
+.........................                                                [100%]
+============================= slowest 5 durations ==============================
+0.90s call     tests/t07_baseline/test_trial.py::test_every_trial_alert_is_one_call_and_every_verdict_passes
+0.50s call     tests/t07_baseline/test_adapter.py::test_a_reply_that_trickles_in_ends_at_the_overall_deadline[headers]
+0.50s call     tests/t07_baseline/test_adapter.py::test_a_reply_that_trickles_in_ends_at_the_overall_deadline[body]
+0.23s call     tests/t07_baseline/test_adapter.py::test_the_canary_key_appears_in_no_error_text_traceback_repr_or_log
+0.15s call     tests/t07_baseline/test_wrapper.py::test_each_refusal_names_its_reason_and_starts_nothing[credit not confirmed]
+97 passed in 4.86s
+exit=0  memory used: before 1528 MB, peak 1630 MB (limit for stopping 3000 MB)
+timed_run exit=0
