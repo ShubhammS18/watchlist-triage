@@ -222,8 +222,8 @@ changed:
   address (neither `config/model.json` nor `trial/model.json` sets one). The trial used only the adapter, which never
   follows redirects. The old wrapper key check could have followed a redirect from that address, so exposure of the
   run key cannot be ruled out from these files; both keys were revoked after the fix. Since the run commit, the
-  agent, the harness and the adapter's behaviour are unchanged; the wrapper's pre-run key check, the adapter's
-  comments and the T07 tests changed.
+  agent, the harness and the adapter's behaviour are unchanged; the wrapper's pre-run checks and comments, the
+  adapter's and the trial script's comments, and the T07 tests and docs changed.
 
 ## What the release must fix
 
