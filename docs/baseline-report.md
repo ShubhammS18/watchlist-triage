@@ -221,9 +221,11 @@ changed:
   `https://api.anthropic.com` and refuses any redirect. Every run and the trial were aimed at Anthropic's default
   address (neither `config/model.json` nor `trial/model.json` sets one). The trial used only the adapter, which never
   follows redirects. The old wrapper key check could have followed a redirect from that address, so exposure of the
-  run key cannot be ruled out from these files; both keys were revoked after the fix. Since the run commit, the
-  agent, the harness and the adapter's behaviour are unchanged; the wrapper's pre-run checks and comments, the
-  adapter's and the trial script's comments, and the T07 tests and docs changed.
+  run key cannot be ruled out from these files; both keys were revoked after the fix. Since the run commit, the code
+  that produced the results (the agent, the harness and the adapter's behaviour) is unchanged. What changed: the
+  wrapper's pre-run checks and comments; comments in the adapter and the trial script; the T07 tests; and added or
+  edited documents, review reports, evidence, the baseline/ run output, the release targets file, the README pointer
+  and the Genesis records. git diff --name-status 229362c..HEAD lists every file.
 
 ## What the release must fix
 
