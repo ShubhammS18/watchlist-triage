@@ -14,7 +14,8 @@ OK = {"id": "msg_1", "type": "message", "role": "assistant", "model": "claude-ha
 
 
 class Fake(ThreadingHTTPServer):
-    """A local server that records every request and answers with `self.script(handler, body)`."""
+    """A local server that records POST, GET, PUT, DELETE, HEAD and PATCH requests. It answers a POST with
+    `self.script(handler, body)` and the others with 405."""
     daemon_threads = True
     request_queue_size = 64  # above the thread test's 8 at once, so no connection waits for a retry
 
