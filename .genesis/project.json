@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-21T05:57:45.766Z"
+    "updated_at": "2026-10-22T06:55:06.567Z"
   },
   "policy": {
     "ponytail": "full",
@@ -1537,6 +1537,20 @@
       "source": "Owner decision during S5, 20 Oct 2026",
       "recorded_at": "2026-10-21T05:57:45.730Z",
       "paths": [],
+      "tags": [
+        "t07"
+      ]
+    },
+    {
+      "id": "DEC-T07-TARGETS",
+      "title": "Release targets from the baseline",
+      "text": "These are the release targets, worked out by the rules I recorded on 19 October, before any paid run. The baseline is run set f2e614d2: three valid runs at commit 229362c, stored in baseline/ and reported in docs/baseline-report.md. Over-escalation: at most 3.9% of clear false positives, the break-even share, because the baseline's 52.72% (2562 of 4860) is far above it. Verdict consistency: at least 68.84% (1239 of 1800), the baseline value. Citation accuracy: 100% (2298 of 2298); my rule took the higher of the baseline and 95%, and the baseline was already 100%, so the release may not close a single clear false positive without supporting evidence. I accept that this is a strict bar. Cost: at most USD 0.20 per alert-framing item, which is 5% of a USD 4.00 analyst cost per alert; the baseline was USD 0.000187. The exact fractions are in targets/release-targets.json (SHA-256 eae0d9646a1faaa4ba5e6cde8efedc30f7b7d589729a7f156b11e671bbd4f1f0). These targets cannot be edited: any change needs a new record and a full re-run of acceptance.",
+      "status": "accepted",
+      "source": "Owner decision, 22 Oct 2026; links: AC-16, AC-25",
+      "recorded_at": "2026-10-22T06:55:06.553Z",
+      "paths": [
+        "targets/release-targets.json"
+      ],
       "tags": [
         "t07"
       ]

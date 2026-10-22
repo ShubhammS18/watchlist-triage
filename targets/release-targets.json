@@ -1,0 +1,71 @@
+{
+  "kind": "release-targets",
+  "note": "Exact fractions are the targets. target_decimal is shown to six places, rounded in the strict direction (down for at_most, up for at_least). Recorded in DEC-T07-TARGETS by the rules of DEC-T07-TARGET-RULES; immutable: a change needs a new file, a new record and a full re-run of acceptance.",
+  "baseline": {
+    "run_set": "f2e614d2d530dc65c1d9f4dbec452d93296f5f52420b0f7829ff4404e7a99305",
+    "run_commit": "229362cacf833383b6bffb22756da81f573334b2",
+    "valid_runs": 3,
+    "report": "docs/baseline-report.md",
+    "set_report": "baseline/sets/f2e614d2d530dc65c1d9f4dbec452d93296f5f52420b0f7829ff4404e7a99305.json",
+    "set_report_sha256": "1450fede30e7b4d53990cd62c55f3a8ae4ec8d4598be322f34bf5e24b62f0114"
+  },
+  "targets": {
+    "over_escalation": {
+      "direction": "at_most",
+      "target": {
+        "numerator": 39,
+        "denominator": 1000
+      },
+      "rule": "The lower of the baseline's pooled over-escalation and 3.9% (39/1000), the break-even share at BASE with every close second-reviewed, rounded down.",
+      "baseline_pooled": {
+        "numerator": 2562,
+        "denominator": 4860
+      },
+      "baseline_source": "pooled.figures.overall.over_escalation",
+      "target_decimal": "0.039"
+    },
+    "verdict_consistency": {
+      "direction": "at_least",
+      "target": {
+        "numerator": 1239,
+        "denominator": 1800
+      },
+      "rule": "The baseline's pooled verdict consistency.",
+      "baseline_pooled": {
+        "numerator": 1239,
+        "denominator": 1800
+      },
+      "baseline_source": "pooled.figures.overall.verdict_consistency",
+      "target_decimal": "0.688334"
+    },
+    "citation_accuracy": {
+      "direction": "at_least",
+      "target": {
+        "numerator": 2298,
+        "denominator": 2298
+      },
+      "rule": "The higher of the baseline's pooled citation accuracy and 95% (95/100); 95% if the baseline is not applicable.",
+      "baseline_pooled": {
+        "numerator": 2298,
+        "denominator": 2298
+      },
+      "baseline_source": "pooled.figures.overall.citation_accuracy",
+      "target_decimal": "1"
+    },
+    "cost_per_alert": {
+      "direction": "at_most",
+      "target": {
+        "numerator": 1,
+        "denominator": 5
+      },
+      "unit": "USD per alert-framing item",
+      "rule": "USD 0.20 per alert-framing item: 5% of a USD 4.00 analyst cost per alert (USD 30 an hour, the low end of a press figure, times the 8-minute BASE manual clearing).",
+      "baseline_pooled": {
+        "numerator": 3371461,
+        "denominator": 18000000000
+      },
+      "baseline_source": "pooled.cost.per_alert",
+      "target_decimal": "0.2"
+    }
+  }
+}
