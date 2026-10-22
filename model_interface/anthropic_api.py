@@ -86,7 +86,8 @@ class Anthropic:
 
     `thinking` must be "disabled": it is in the options so that the configuration file, and so its hash in every
     manifest, says how the model was asked. `base_url` exists for the tests; only the Anthropic API or a local
-    test server is accepted, so a configuration cannot send the key anywhere else.
+    test server is accepted, so a configuration can send the key only to the Anthropic API or to an address on
+    this machine.
     """
 
     def __init__(self, thinking, base_url=API_URL):
