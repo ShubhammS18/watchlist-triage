@@ -11,7 +11,7 @@ from baseline_run import wrapper
 from harness.manifest import REPO
 from model_interface.anthropic_api import KEY_VARIABLE
 
-from fake_api import CANARY, answer, server  # noqa: F401  (server is a fixture)
+from fake_api import CANARY, answer, other_server, server  # noqa: F401  (server and other_server are fixtures)
 
 MODEL = "claude-haiku-5-5"
 TIMES = {"LOW": ("3", "0.5", "40", "1"), "BASE": ("8", "2", "120", "2"), "HIGH": ("30", "5", "480", "5")}
@@ -31,7 +31,8 @@ def prices():
 
 
 @pytest.fixture
-def setup(tmp_path, server):
+def setup(tmp_path, server, monkeypatch):
+    monkeypatch.setattr(wrapper, "KEY_CHECK_URL", server.url)  # the run config itself names no address
     repo = tmp_path.joinpath("repo")
     repo.mkdir()
     git = lambda *args: subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True)
@@ -45,7 +46,7 @@ def setup(tmp_path, server):
              "workers": 4, "pacer_per_minute": 120, "infra_invalid_threshold": "0.02", "price_table": "prices.json",
              "modelled_time": "times.json"},
         model={"provider": "anthropic", "model": MODEL, "temperature": 1, "max_tokens": 512, "timeout_s": 30,
-               "options": {"thinking": "disabled", "base_url": server.url}},
+               "options": {"thinking": "disabled"}},
         times=times(), prices=prices())
     return s
 
@@ -93,6 +94,10 @@ REFUSALS = [
     ("c.pacer", lambda s: s.run.update(pacer_per_minute=None), "pacer_per_minute is None", False),
     ("c.threshold", lambda s: s.run.update(infra_invalid_threshold="0.05"), "infra_invalid_threshold is '0.05'", False),
     ("c.agent", lambda s: s.run.update(agent="always_close"), "agent is 'always_close'", False),
+    ("c.base_url local", lambda s: s.model["options"].update(base_url=s.server.url),
+     "base_url must be exactly https://api.anthropic.com (the default)", False),
+    ("c.base_url other host", lambda s: s.model["options"].update(base_url="https://api.anthropic.com.example.invalid"),
+     "base_url must be exactly https://api.anthropic.com (the default)", False),
     ("d.fixture", lambda s: s.times.update(kind="fixture") or s.times.pop("sources"), 'kind "sourced"', False),
     ("d.order", lambda s: s.times["sets"]["LOW"].update(l2="200"), "LOW <= BASE <= HIGH", False),
     ("d.zero", lambda s: s.times["sets"]["LOW"].update(proposal_review="0"), "above 0", False),
@@ -120,6 +125,17 @@ def test_each_refusal_names_its_reason_and_starts_nothing(setup, monkeypatch, ca
     assert setup.ran == []
     if not network:  # every check before the key check is made without the network
         assert setup.server.requests == []
+    assert CANARY not in printed
+
+
+@pytest.mark.parametrize("status", [301, 302, 303, 307, 308])
+def test_a_redirected_key_check_is_refused_and_the_key_never_reaches_the_other_host(setup, other_server, capsys, status):
+    target = other_server.url + "/v1/messages/count_tokens"
+    setup.server.script = lambda h, b: answer(h, status, {}, headers=(("location", target),))
+    assert go(setup) == 2
+    printed = capsys.readouterr().out
+    assert f"REFUSED: the key check was redirected (HTTP {status}); a redirect is never followed" in printed
+    assert len(setup.server.requests) == 1 and other_server.requests == [] and setup.ran == []
     assert CANARY not in printed
 
 

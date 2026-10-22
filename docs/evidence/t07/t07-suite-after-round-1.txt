@@ -1,0 +1,12 @@
+commit: 1239513 (1239513469fc8600fd8289cd482d7df5d34375ab), tree clean: NO
+uncommitted changes (the round-1 fix, committed next): 6 paths, sha256 of git diff HEAD: 840a5e3c8347ae0133ed1a5e864c5e591eb73dd4dcd7371a8253cb4191cb09f7
+command: BENCH_MAX_S=0.82 tools/timed_run.sh .venv/bin/python -m pytest tests/t07_baseline -q -p no:cacheprovider
+started: 2026-10-22T07:19:41+00:00
+Power: plugged in
+benchmark: 0.791 s (N=12000000, result 983797)
+........................................................................ [ 62%]
+............................................                             [100%]
+116 passed in 5.20s
+exit=0  memory used: before 1793 MB, peak 1897 MB (limit for stopping 3000 MB)
+timed_run exit=0
+ended: 2026-10-22T07:19:47+00:00

@@ -216,6 +216,11 @@ changed:
 - **The wrapper's cost estimate.** The run cost the wrapper prints before a run (USD 0.8509) is an upper bound for
   one attempt per item only if no prompt byte becomes more than one token, which held in the trial (2.39 to 2.57
   bytes per token); every answer is counted at the 512-token cap, and retries are not counted. The runs cost about 0.35 each.
+- **Key check hardened after the runs (review round 1).** The wrapper's key check followed HTTP redirects, which could
+  carry the key to another host, and the wrapper accepted a local address; it now accepts only
+  `https://api.anthropic.com` and refuses any redirect. Every run and the trial used the default Anthropic address
+  (neither `config/model.json` nor `trial/model.json` sets one), so no key was exposed, and the code that produced
+  the results is unchanged (since the run commit, only comments in the adapter changed).
 
 ## What the release must fix
 

@@ -11,7 +11,7 @@ import pytest
 from model_interface import BadReply, ModelRefusal, ModelTimeout, ProviderError, Request, Settings, providers
 from model_interface.anthropic_api import KEY_VARIABLE, VERSION, Anthropic
 
-from fake_api import CANARY, OK, answer, server  # noqa: F401  (server is a fixture)
+from fake_api import CANARY, OK, answer, other_server, server  # noqa: F401  (fixtures)
 
 SETTINGS = Settings(model="claude-haiku-5-5", temperature=1, max_tokens=512, timeout_s=5)
 MESSAGES = [{"role": "system", "content": "be brief"}, {"role": "user", "content": "ping"}]
@@ -269,3 +269,13 @@ def test_calls_from_several_threads_each_get_their_own_answer(server):
         thread.join(timeout=10)
     assert not errors and len(results) == 40 and len(server.requests) == 40
     assert all(text == prompt and tokens == len(prompt) for prompt, (text, tokens) in results.items())
+
+
+@pytest.mark.parametrize("status", [301, 302, 303, 307, 308])
+def test_a_redirect_is_a_provider_error_and_is_never_followed(server, other_server, status):
+    # review round 1, T07-01: the key is sent to one host only; http.client follows no redirect
+    target = other_server.url + "/v1/messages"
+    server.script = lambda h, b: answer(h, status, {}, headers=(("location", target),))
+    with pytest.raises(ProviderError, match=f"HTTP {status}") as caught:
+        call(server)
+    assert len(server.requests) == 1 and other_server.requests == [] and CANARY not in str(caught.value)

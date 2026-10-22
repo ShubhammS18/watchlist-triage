@@ -9,26 +9,27 @@ fake server):
     b. the inputs the score step would refuse later are not there (harness known issue 3): a blank re-run cause,
        a model name of only spaces, a temperature or timeout that is not finite; and a written re-run cause is
        given when the last earlier run in the output folder was aborted, never finished or infra-invalid
-    c. the run configuration is the recorded one
+    c. the run configuration is the recorded one, and the model is asked at https://api.anthropic.com only
     d. the modelled-time file is sourced, LOW <= BASE <= HIGH for every parameter, and every value is above 0
     e. the price table is sourced and prices the configured model
-    f. the API key is set and well formed, and one free token-counting request with it succeeds
+    f. the API key is set and well formed, and one free token-counting request with it succeeds; that request
+       never follows a redirect
 
 Then it prints an upper bound on the run cost for one attempt per item (retries not counted; it assumes at most
 one token per prompt byte), asks the owner to type "yes", and runs the harness's
 run-and-score through tools/timed_run.sh. After the run it prints the run's own report status and its refusal
 share, and flags the run-1 refusal checkpoint (DEC-T07-REFUSALS).
 """
+import http.client
 import json
 import math
 import os
 import subprocess
 import sys
-import urllib.error
-import urllib.request
 from decimal import Decimal
 from fractions import Fraction
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from baseline_agent import prompt
 from baseline_agent.payload import build_payload
@@ -44,6 +45,7 @@ RECORDED = {"provider": "anthropic", "temperature": 1, "thinking": "disabled", "
 ENV = {"MEMORY_GUARD_MAX_SECONDS": "7200", "BENCH_MAX_S": "0.82"}
 CREDIT_MARGIN = Fraction(3, 2)
 REFUSAL_CHECKPOINT = Fraction(2, 100)  # more than this share of run 1's items refused: stop and decide
+KEY_CHECK_URL = API_URL  # where the key check is sent; only the tests point it at a fake server on this machine
 
 
 class Refused(Exception):
@@ -104,6 +106,9 @@ def check_settings(run_config, model_config):
         value = found[key]
         if isinstance(value, bool) or value != wanted:  # True == 1 in Python, so a flag is refused first
             raise Refused(f"{key} is {value!r}, not the recorded {wanted!r}")
+    base_url = (model_config.get("options") or {}).get("base_url", API_URL)
+    if base_url != API_URL:  # a paid run sends the key to Anthropic and nowhere else (review round 1, T07-01)
+        raise Refused(f"the model configuration's base_url must be exactly {API_URL} (the default), not {base_url!r}")
 
 
 def check_times(parameters):
@@ -134,26 +139,35 @@ def check_prices(table, model):
         raise Refused(f"the price table has no entry for the configured model {model!r}")
 
 
-def check_key(model_config):
-    """f. The key is checked by making the adapter, then used for one token-counting request, which Anthropic's
-    docs say is free. Neither error text names the key."""
+def check_key(model_config, url=None):
+    """f. The key is checked by making the adapter, then used for one token-counting request to `url` (KEY_CHECK_URL
+    unless given), which Anthropic's docs say is free. The request is made with http.client, which never follows a
+    redirect: any 3xx reply is a refusal, so the key cannot be carried to another host (review round 1, T07-01).
+    No error text names the key."""
     options = model_config.get("options") or {}
     try:
         Anthropic(**options)
     except (TypeError, ValueError) as problem:
         raise Refused(str(problem)) from None
+    target = urlsplit(url or KEY_CHECK_URL)
+    kind = http.client.HTTPSConnection if target.scheme == "https" else http.client.HTTPConnection
     body = json.dumps({"model": model_config["model"], "messages": [{"role": "user", "content": "ping"}]})
-    request = urllib.request.Request(
-        options.get("base_url", API_URL) + "/v1/messages/count_tokens", data=body.encode("utf-8"), method="POST",
-        headers={"x-api-key": os.environ[KEY_VARIABLE], "anthropic-version": VERSION, "content-type": "application/json"})
+    headers = {"x-api-key": os.environ[KEY_VARIABLE], "anthropic-version": VERSION, "content-type": "application/json"}
+    connection = kind(target.hostname, target.port, timeout=15)
     try:
-        with urllib.request.urlopen(request, timeout=15) as response:
-            response.read()
-    except urllib.error.HTTPError as error:
-        what = "the API key does not authenticate" if error.code in (401, 403) else "the key check was refused"
-        raise Refused(f"{what}: HTTP {error.code} from the token-counting endpoint") from None
-    except (OSError, urllib.error.URLError) as error:
+        connection.request("POST", "/v1/messages/count_tokens", body=body.encode("utf-8"), headers=headers)
+        response = connection.getresponse()
+        response.read()
+        status = response.status
+    except (OSError, http.client.HTTPException) as error:
         raise Refused(f"the key check could not reach the provider: {type(error).__name__}") from None
+    finally:
+        connection.close()
+    if 300 <= status < 400:
+        raise Refused(f"the key check was redirected (HTTP {status}); a redirect is never followed")
+    if status != 200:
+        what = "the API key does not authenticate" if status in (401, 403) else "the key check was refused"
+        raise Refused(f"{what}: HTTP {status} from the token-counting endpoint")
 
 
 def expected_cost(world, table, model, max_tokens):

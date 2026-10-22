@@ -36,6 +36,15 @@ class Handler(BaseHTTPRequestHandler):
                                          "body": json.loads(body)})
         self.server.script(self, json.loads(body))
 
+    def _other(self):
+        """Any other method is recorded too, so a redirect followed as a GET (as urllib does) is seen; then 405."""
+        with self.server.lock:
+            self.server.requests.append({"method": self.command, "path": self.path, "headers": dict(self.headers),
+                                         "body": None})
+        answer(self, 405, {"error": {"type": "method_not_allowed", "message": "fake"}})
+
+    do_GET = do_PUT = do_DELETE = do_HEAD = do_PATCH = _other
+
     def log_message(self, *args):
         pass
 
@@ -49,12 +58,28 @@ def answer(handler, status, reply, headers=()):
     handler.wfile.write(data)
 
 
+def _serve():
+    fake = Fake()
+    threading.Thread(target=fake.serve_forever, kwargs={"poll_interval": 0.01}, daemon=True).start()
+    return fake
+
+
+def _stop(fake):
+    fake.shutdown()
+    fake.server_close()
+
+
 @pytest.fixture
 def server(monkeypatch):
     monkeypatch.setenv(KEY_VARIABLE, CANARY)
-    fake = Fake()
-    thread = threading.Thread(target=fake.serve_forever, kwargs={"poll_interval": 0.01}, daemon=True)
-    thread.start()
+    fake = _serve()
     yield fake
-    fake.shutdown()
-    fake.server_close()
+    _stop(fake)
+
+
+@pytest.fixture
+def other_server():
+    """A second fake server, the target of a redirect: it must never be reached."""
+    fake = _serve()
+    yield fake
+    _stop(fake)
