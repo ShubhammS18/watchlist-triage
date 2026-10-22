@@ -12,7 +12,8 @@ DEC-T07-REFUSALS, DEC-T07-PRICES):
 
 The API key comes from WT_ANTHROPIC_API_KEY, read by the adapter. stop_reason is derived, not reported: the
 adapter keeps no stop_reason, and with no tools and no stop sequences a call that returned ended on a refusal
-(its own error), on the max_tokens cap (output tokens equal to the cap) or at the end of its turn.
+(its own error), on the max_tokens cap (output tokens equal to the cap; an answer that happened to end at exactly
+512 tokens would look the same) or at the end of its turn.
 """
 import json
 import math

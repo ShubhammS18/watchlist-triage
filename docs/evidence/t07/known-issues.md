@@ -27,12 +27,13 @@ So: 1 stall in 1 + 1 + 3 = 5 runs of the untouched-copy setup through `timed_run
 rerun and the three mutation-file runs, each of which runs the copy first), and none in 8 direct runs of the test.
 
 **Cause: unconfirmed.** The test normally answers in about a twentieth of a second, so the stall was more than a
-hundred times its usual time. A fault in the code would be expected to fail every time; it did not recur. A
+hundred times its usual time. A deterministic fault would fail every time; a race would not, so a code cause is not ruled out. It did not recur. A
 possible cause is contention for the host's CPU (WSL shares the Windows host's processors, and a pause in the WSL
 virtual machine would stall a child process start), but this was not measured and is not shown. The copy holds
 the whole `model_interface/` package, including the T07 adapter, so a missing file is ruled out.
 
-**Effect on T07.** None of the T04 code or tests changed in T07 except the provider registry entry and its test.
+**Effect on T07.** Apart from the new adapter module in `model_interface/`, the registry entry and its test, no T04
+file changed in T07.
 The test that stalled is about the network guard of the agent process, which T07 did not touch. Reported here so
 the reviewer sees the failed run as well as the passing ones; `t04-suite.txt` is kept unchanged.
 

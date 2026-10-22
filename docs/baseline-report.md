@@ -1,8 +1,10 @@
 # Baseline report (T07)
 
-Status: draft for review, 22 Oct 2026. Every number here comes from the committed run output in `baseline/`
+Status: draft for review, 22 Oct 2026. Run figures come from the committed run output in `baseline/`
 (commit f580c1b), byte copies of what the harness wrote, listed in `baseline/SHA256SUMS`. The runs were made at
-commit 229362c. Evidence for the checks named below is in `docs/evidence/t07/`.
+commit 229362c. The trial figures come from `docs/evidence/t07/trial/trial-results.json`, the break-even shares are
+derived from `config/modelled_time.json`, and the bill is the Console's. Evidence for the checks named below is in
+`docs/evidence/t07/`.
 
 ## Supersedes
 
@@ -12,7 +14,7 @@ this report and the code describe the current state. `docs/README.md` indexes al
 | Line | What it says | Now |
 |---|---|---|
 | `docs/model-interface-design.md:46` | T04 has no real provider adapter, no SDK and no keys | `model_interface/anthropic_api.py` is a real adapter for the Anthropic Messages API (standard library only), registered as `anthropic`; the key comes from one environment variable |
-| `docs/model-interface-design.md:174-175` | Stub only; swapping to a real provider by configuration is not tested | The baseline swapped to Claude Haiku 5.5 by configuration alone (`config/model.json`), and the T04 registry test now expects both providers |
+| `docs/model-interface-design.md:174-175` | Stub only; swapping to a real provider by configuration is not tested | With the adapter registered (one entry in `providers.py`), the baseline switched to Claude Haiku 5.5 by configuration alone (`config/model.json`), and the T04 registry test now expects both providers |
 | `docs/baseline-agent-design.md:12-14` | The agent has only run against the stub; no adapter, no baseline numbers | The agent ran 5,535 items against Claude Haiku 5.5; the numbers are below |
 | `docs/baseline-agent-design.md:300` | No real model has run; no baseline numbers | As above |
 | `docs/harness-design.md:30-31` | The harness has only been planned against a test-only fake model; the adapter comes in T07 | The harness ran the baseline with the real adapter; the harness itself still holds no provider code |
@@ -33,25 +35,25 @@ this report and the code describe the current state. `docs/README.md` indexes al
 - When it closed a clear false positive, it cited supporting evidence **every time** (2298/2298), and every close
   in every run passed the automatic citation check.
 - The same alert got the same verdict in all three framings for **68.8%** of alerts.
-- Model cost was **0.000187 USD per alert** (1.0369551 USD for all three runs), and the bill agrees.
+- Model cost was **0.000187 USD per alert** (1.0369551 USD for all three runs), and the Console bill is within about 0.3% of it.
 
 ## What was run
 
 | | |
 |---|---|
-| Agent | The naive baseline agent: one fixed prompt, one call per alert-framing item, CLOSE or ESCALATE with a reason and cited evidence IDs; any fault fails closed to ESCALATE |
+| Agent | The naive baseline agent: one fixed prompt, one call per alert-framing item, CLOSE or ESCALATE with a reason and cited evidence IDs; any fault of the model or the agent process fails closed to ESCALATE |
 | Model | Claude Haiku 5.5, requested as `claude-haiku-5-5`; Anthropic reported `claude-haiku-5-5` for all 5,535 calls |
 | Provider | Anthropic Messages API, through `model_interface/anthropic_api.py`; no SDK, no tools, no streaming, no batch API |
 | Temperature | 1. Claude Haiku 5.5 accepts no other value, so it is sent explicitly and recorded as 1. The baseline is therefore not deterministic, which the three runs show (see the spread below) |
 | Thinking | Off. Every request sends `thinking: {"type": "disabled"}`. It is pinned in `config/model.json` under `options`; the manifest records that file's hash (`4ec986f2718c...`) among the run-set inputs, not the setting itself. The adapter refuses any other value |
 | Answer size | max_tokens 512; the largest answer in the trial was 232 tokens |
-| Timeouts and retries | 30 s per call as one overall deadline; the agent retries a timeout or provider error 2 times with no backoff; the adapter itself never retries. No call needed a retry |
+| Timeouts and retries | 30 s per call: one deadline for sending and reading; connecting is bounded only by the agent's 100 s child limit; the agent retries a timeout or provider error 2 times with no backoff; the adapter itself never retries. No call needed a retry |
 | Load | 4 workers, at most 120 hand-offs per minute; about 16 to 17 minutes per run |
 | Validity rule | A run is invalid for infrastructure reasons if more than 2% of its items end in a timeout or provider error. No run had any |
 | World | The frozen synthetic world (hash `b77a6804a52b...`): 600 alerts in three framings, plus 15 control twins in three framings, so 1,845 items per run |
 | Prompt | The fixed T05 prompt, hash `0c2538b80f10...` |
 | Tables | Price table `config/prices.json` and modelled-time file `config/modelled_time.json`, both sourced; their hashes are in every manifest |
-| Runs | Three, at commit 229362c with a clean tree, all with identical inputs: run set `f2e614d2`. All three are valid; the set is eligible as a baseline. No run was aborted or repeated |
+| Runs | Three, at commit 229362c with a clean tree, all with identical inputs: run set `f2e614d2`. All three are valid; the set is eligible as a baseline. The output folder's index lists no aborted or repeated run |
 
 The modelled-time file was committed on its own (1f06342) before any paid call, trials included; it is an ancestor of
 the run commit and its hash matches every manifest. The hidden files of the world were checked against the world
@@ -151,7 +153,8 @@ framings does not change the share. The last column gives the same point as a sh
 | HIGH | every close second-reviewed | 25.89 of 540 = 4.80% | 25 = 4.63% | 14.32% |
 | HIGH | no second review | 31.25 of 540 = 5.79% | 31 = 5.74% | 15.21% |
 
-The baseline escalated 52.72% of clear false positives, more than ten times every break-even share.
+The baseline escalated 52.72% of clear false positives, more than seven times even the largest break-even share (6.94%,
+LOW with no second review), and more than thirteen times the BASE share under every close second-reviewed.
 
 ## Cost and the billing check
 
@@ -169,7 +172,7 @@ reported its token counts and had a price, so no figure here is a lower bound.
 Billing check: the Anthropic Console showed USD 1.04 for the run key, against the harness's 1.0369551, about 0.3%
 apart once the Console's rounding to cents is allowed for; the rule was to investigate a gap above 5%. The trial's
 0.0035544 shows as 0.00 in the Console. Total model spend for the task, trial and runs: USD 1.0405095. The key
-check before each run uses Anthropic's token-counting endpoint, which Anthropic documents as free.
+check before each run uses Anthropic's token-counting endpoint, which Anthropic documents as free (token-counting page, read 20 Oct 2026).
 
 ## Trial
 
@@ -195,7 +198,8 @@ changed:
 - **One world.** These figures are for the frozen synthetic world only. The fresh-seed world comes later.
 - **Byte order of the set report.** The harness rewrites the run set's report every time it scores. Scoring from
   the run command and from the score command orders the runs differently, and where runs tie on a figure the
-  minimum or maximum shown is the first run's fraction, so the two files differ in bytes but not in any value.
+  minimum or maximum shown is the first run's fraction; in the one pair compared, the files differ in bytes but in no
+  value.
   `baseline/` holds the version the score command wrote. (`docs/evidence/t07/known-issues.md`, issue 3.)
 - **One stall of an earlier test.** During the hand reruns of the earlier suites, one T04 isolation test once took
   more than its 5-second limit inside a copy of the code, and it did not recur in five further runs. The cause is
@@ -210,8 +214,8 @@ changed:
 - **Missed alert not named here.** The report counts missed true matches by run, framing and family but does not
   name the alert; finding it needs the hidden labels, which this report does not open.
 - **The wrapper's cost estimate.** The run cost the wrapper prints before a run (USD 0.8509) is an upper bound for
-  one attempt per item: every prompt byte counted as a token and every answer at the 512-token cap. Retries are not
-  counted in it. The runs cost about 0.35 each.
+  one attempt per item only if no prompt byte becomes more than one token, which held in the trial (2.39 to 2.57
+  bytes per token); every answer is counted at the 512-token cap, and retries are not counted. The runs cost about 0.35 each.
 
 ## What the release must fix
 
@@ -236,7 +240,7 @@ AC-1, AC-5 and AC-6 are release acceptance checks: the baseline is measured agai
 | Requirement | Where it is met or shown |
 |---|---|
 | FR-16 | Model swapped by configuration alone: `config/model.json`, `model_interface/anthropic_api.py` |
-| FR-20, FR-21 | Every figure by run, framing and primary family: Results |
+| FR-20, FR-21 | Figures by run, framing and primary family: Results. The injection figures have no primary-family breakdown (Limits) |
 | FR-22, AC-25 | Modelled review time and its parameters; parameters committed in 1f06342 before the first paid call: What was run, Modelled review time |
 | NFR-1 | Missed true matches reported as their own count: In short, Results |
 | NFR-3 | Manifests in `baseline/<run>/manifest.json`: What was run |

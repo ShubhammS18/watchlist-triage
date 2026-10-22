@@ -1,8 +1,10 @@
 """The Anthropic Messages API as a model, for task T07 (DEC-T07-ADAPTER). Python standard library only.
 
 One call is one HTTP request: no tools, no streaming, no retries and no waiting on `retry-after`, because retries
-belong to the baseline agent (DEC-T05-RETRIES). `timeout_s` is one deadline for the whole call: the connection
-and every send and read get only the time that is left, so a reply that trickles in slowly still ends on time.
+belong to the baseline agent (DEC-T05-RETRIES). `timeout_s` is one deadline for sending the request and reading
+the reply, so a reply that trickles in slowly still ends on time. Connecting starts with the time left but is not
+cut at the deadline: the name lookup has no timeout, and the TCP connect and TLS handshake each get the time left.
+The agent's child-process limit bounds the whole call.
 
 The API key is read from the environment variable WT_ANTHROPIC_API_KEY when the model is made, and from nowhere
 else. It is sent only in the x-api-key header, and no error text or repr names it.
@@ -40,7 +42,7 @@ class _Deadline:
     """Wraps a connected socket so that every send and read has only the time left until `deadline`.
 
     http.client sends through `sendall` and reads the status line, the headers and the body through the file that
-    `makefile` returns, so these two cover every byte of the call.
+    `makefile` returns, so these two cover every byte sent and read after the connection is made.
     """
 
     def __init__(self, sock, deadline):

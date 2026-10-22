@@ -1,0 +1,11 @@
+commit: 455f6dd (455f6dd634984edb21bb3388c553f812a4b69d1c), tree clean: yes
+command: BENCH_MAX_S=0.82 tools/timed_run.sh .venv/bin/python -m pytest tests/t07_baseline -q -p no:cacheprovider
+started: 2026-10-22T06:58:13+00:00
+Power: plugged in
+benchmark: 0.807 s (N=12000000, result 983797)
+........................................................................ [ 69%]
+................................                                         [100%]
+104 passed in 4.91s
+exit=0  memory used: before 1529 MB, peak 1615 MB (limit for stopping 3000 MB)
+timed_run exit=0
+ended: 2026-10-22T06:58:19+00:00

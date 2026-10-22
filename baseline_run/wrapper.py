@@ -1,7 +1,9 @@
-"""The run wrapper: every paid run starts here (DEC-T07-WRAPPER, DEC-T07-WRAPPER-CHECKS, DEC-T07-RUN-SETTINGS-2).
+"""The run wrapper: the T07 baseline runs are started here; the harness's own run command still works without it
+(DEC-T07-WRAPPER, DEC-T07-WRAPPER-CHECKS, DEC-T07-RUN-SETTINGS-2).
 
 It refuses to start, naming the reason, unless every check below holds, in this order; only the last one uses
-the network, so a run that fails an earlier check sends nothing anywhere:
+the network, so a run that fails an earlier check makes no network request (the tests check that none reaches the
+fake server):
 
     a. the working tree is clean, untracked files included, and the output folder lies outside the repository
     b. the inputs the score step would refuse later are not there (harness known issue 3): a blank re-run cause,
@@ -12,7 +14,8 @@ the network, so a run that fails an earlier check sends nothing anywhere:
     e. the price table is sourced and prices the configured model
     f. the API key is set and well formed, and one free token-counting request with it succeeds
 
-Then it prints the expected run cost as an upper bound, asks the owner to type "yes", and runs the harness's
+Then it prints an upper bound on the run cost for one attempt per item (retries not counted; it assumes at most
+one token per prompt byte), asks the owner to type "yes", and runs the harness's
 run-and-score through tools/timed_run.sh. After the run it prints the run's own report status and its refusal
 share, and flags the run-1 refusal checkpoint (DEC-T07-REFUSALS).
 """
