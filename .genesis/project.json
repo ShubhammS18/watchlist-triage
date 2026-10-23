@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-22T08:01:15.776Z"
+    "updated_at": "2026-10-23T13:20:28.736Z"
   },
   "policy": {
     "ponytail": "full",
@@ -1609,6 +1609,18 @@
       ],
       "tags": [
         "t07"
+      ]
+    },
+    {
+      "id": "DEC-README-BASELINE",
+      "title": "Short baseline README now; the full README stays in wave 2",
+      "text": "I am replacing the placeholder README with a short public README for the wave-1 baseline, for recruiters and engineers. It says what the project is, that wave 1 is done and wave 2 is in progress, the baseline results with the misses first, how the agent is evaluated, the release targets, the main limits, how to run the tests without an API key, a repo map and the licence. Every number comes from a committed file. It states what is already true of the baseline: 6 true matches per family, a synthetic world that may not represent real alerts, no real analyst timings, that I can see the labels, that model reasons may contain synthetic customer values, and the narrow scope of the citation checks. It is not the full README the spec asks for: self-asserted reviewer identities and the scope of the audit-log, review-policy, isolation and injection checks describe wave-2 work, so the full README, reviewed against the release checklist, stays a wave-2 task. This record changes no requirement. I also change the status lines of docs/README.md and docs/baseline-report.md from draft to \"Approved, 22 Oct 2026 (review round 4)\", because T07 is done.",
+      "status": "accepted",
+      "source": "Owner decision, 22 Oct 2026; links: NFR-7, NFR-8",
+      "recorded_at": "2026-10-23T13:20:28.736Z",
+      "paths": [],
+      "tags": [
+        "readme"
       ]
     }
   ],

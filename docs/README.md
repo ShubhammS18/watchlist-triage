@@ -12,6 +12,6 @@ the baseline, read `baseline-report.md`.
 | `model-interface-design.md` | T04-model-interface | Done | `:46` (no real adapter) and `:174-175` (stub only): a real Anthropic adapter now exists |
 | `baseline-agent-design.md` | T05-baseline-agent | Done | `:12-14` and `:300` (only run against the stub, no baseline numbers): the baseline has run |
 | `harness-design.md` | T06-harness | Done | `:30-31` and `:635` (only a test-only fake model): the harness has run a real model; `:134-135` and `:681-682` (a `runs/` folder inside the repository): runs stay outside the repository and are copied into `baseline/` |
-| `baseline-report.md` | T07-baseline-run | Draft, in review | the current doc; its "Supersedes" table repeats the lines above |
+| `baseline-report.md` | T07-baseline-run | Approved, 22 Oct 2026 (review round 4) | the current doc; its "Supersedes" table repeats the lines above |
 
 Review reports are in `reviews/`; the evidence behind the T07 report is in `evidence/t07/`.

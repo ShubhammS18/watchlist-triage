@@ -1,6 +1,6 @@
 # Baseline report (T07)
 
-Status: draft for review, 22 Oct 2026. Run figures come from the committed run output in `baseline/`
+Status: Approved, 22 Oct 2026 (review round 4). Run figures come from the committed run output in `baseline/`
 (commit f580c1b), byte copies of what the harness wrote, listed in `baseline/SHA256SUMS`. The runs were made at
 commit 229362c. The trial figures come from `docs/evidence/t07/trial/trial-results.json`, the break-even shares are
 derived from `config/modelled_time.json`, and the bill is the Console's. Evidence for the checks named below is in
