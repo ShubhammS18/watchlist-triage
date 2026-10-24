@@ -4,11 +4,11 @@
 
 - objective: Triage sanctions/PEP name-match alerts from a frozen synthetic world: recommend close or escalate with cited evidence, human-approved, measured on zero missed planted true matches.
 - phase/status: build/active
-- active task: WAVE2-RESERVED — Reserved for wave-2 planning. Upgrades, audit log, review policy, operational mode, release protocol and README are planned in detail after the baseline. This task is rejected at the wave-2 reopen and is not meant to be completed.
+- active task: W2-07-dns-isolation — The guarded agent process cannot look up a host name: a connect, sendto or other socket call given a name is refused before any name lookup is sent, and so is every direct lookup. The name-lookup isolation test passes with no network. The network claim covers ordinary, accidental and prompt-injected routes only; hostile code inside the agent process stays out of scope until an operating-system sandbox exists.
 - blocker: none
 - next action: Run the task pre-flight.
 - phase instruction: Implement only the active task and prove it against current sources. Check `genesis query . impact PATH` before editing shared code.
-- gates: reserved:pending
+- gates: tests:pending, t04:pending, independent-review:pending
 - recent failures: none
 
 ## Resume
@@ -17,6 +17,9 @@ Load Genesis and official Ponytail full, then run `genesis brief .` for the curr
 Fetch full records with `genesis context . --id ID` only when needed. Do not load project.json or historical proof wholesale.
 Ask the index before reading code: `genesis query . search|scope|callers|callees|impact|path` (`--json` for parsing). Run `genesis query . impact PATH` before editing shared code. Answers are advisory static analysis; `ambiguous` means candidates were not ruled out, so confirm in source.
 Run `genesis serve .` for a live map of the repository when structure is unclear; it reindexes on save and is read-only. Run `genesis index .` if the index is stale and nothing is watching.
-Context fingerprint: e7a51c0c0de05a88533cb8fd5704be2bac77d5a542091f9df73e3c23c62c33a1. Use --since only after receiving that full packet; kickoff is not the packet.
+Context fingerprint: 2f710db80e3879f2b61f7c8922374cc1a806e8b552f90507c0a5489d74164219. Use --since only after receiving that full packet; kickoff is not the packet.
+- DEC-W2-PLAN: Plan wave 2 in steps; the agent upgrade decides the rest
+- DEC-W2-SPEND: Hard spend ceiling of USD 25 for all of wave 2
+- DEC-W2-AC12-RULE: Injected text may change no verdict; citations are information only
 Applicable invariants, active rules, authorization and proof references are in the packet. Truncated summaries are retrieval pointers, not the full evidence.
 Reuse fresh gates with --reuse. Reconcile interrupted attempts before replaying commands. Report state → evidence → blocker → next action; checkpoint before stopping.

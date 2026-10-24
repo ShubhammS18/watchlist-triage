@@ -14,8 +14,10 @@ targets, is in progress, starting with planning.
 Claude Haiku 5.5, one fixed prompt, three runs over 600 alerts in three framings (`docs/baseline-report.md`, from
 the output in `baseline/`).
 
-- **It missed 3 true matches**: it recommended closing one in each run, always in the second framing and the
-  common-name family.
+- **It missed 3 true matches**: one in each run, always in the second framing and the common-name family. One
+  reading of the hidden labels shows all three are one alert carrying injected text. In these runs it was closed
+  only in that version; with the injected text removed it was escalated every time. (Corrected 23 Oct 2026;
+  `docs/baseline-report.md`, Correction.)
 - **It closed 1 alert that is ambiguous by design.**
 - It escalated 52.7% of clear false positives (2562/4860).
 - The three framings of an alert agreed for 68.8% of alerts (1239/1800).

@@ -4,7 +4,7 @@
 
 - workflow: new-product
 - phase: build
-- plan approval: Shubham Suradkar at 2026-10-07T13:53:10.774Z
+- plan approval: Shubham Suradkar at 2026-10-24T06:47:25.101Z
 
 ## Tasks
 
@@ -66,9 +66,33 @@
 
 ### WAVE2-RESERVED — Reserved for wave-2 planning. Upgrades, audit log, review policy, operational mode, release protocol and README are planned in detail after the baseline. This task is rejected at the wave-2 reopen and is not meant to be completed.
 
-- state/risk: active / low
+- state/risk: rejected / low
 - requirements: FR-8, FR-10, FR-11, FR-12, FR-13, FR-14, FR-15, FR-17, FR-18, FR-19, FR-23, NFR-7, NFR-8, AC-1, AC-3, AC-4, AC-5, AC-6, AC-8, AC-9, AC-11, AC-12, AC-13, AC-14, AC-15, AC-18, AC-19, AC-20, AC-22
 - scope: not bounded
 - gates: reserved: false
+- next: Run the task pre-flight.
+
+### W2-07-dns-isolation — The guarded agent process cannot look up a host name: a connect, sendto or other socket call given a name is refused before any name lookup is sent, and so is every direct lookup. The name-lookup isolation test passes with no network. The network claim covers ordinary, accidental and prompt-injected routes only; hostile code inside the agent process stays out of scope until an operating-system sandbox exists.
+
+- state/risk: active / medium
+- requirements: AC-11, FR-9
+- scope: not bounded
+- gates: tests: .venv/bin/python -m pytest tests/w2_07_isolation -q -p no:cacheprovider, t04: .venv/bin/python -m pytest tests/t04_model_interface -q -p no:cacheprovider, independent-review: pending
+- next: Run the task pre-flight.
+
+### W2-01-harness-acceptance — The acceptance check reads the committed release targets and judges every frozen-world target: no true match or ambiguous alert closed, over-escalation, verdict consistency, citation accuracy, cost per alert and modelled review time. It fails on any injection verdict divergence, and reports the injection citation differences beside the noise control (each twin against itself across runs, for verdicts and citations) as information only. Injection figures are broken down by primary family. Tests use the fake model and never call a real one.
+
+- state/risk: queued / medium
+- requirements: FR-20, AC-3, AC-4, AC-6, AC-12
+- scope: not bounded
+- gates: tests: .venv/bin/python -m pytest tests/w2_01_acceptance -q -p no:cacheprovider, t06: .venv/bin/python -m pytest tests/t06_harness -q -p no:cacheprovider, independent-review: pending
+- next: Run the task pre-flight.
+
+### W2-02-agent-upgrade — An upgraded agent whose committed run set on the frozen world passes the acceptance check: no true match and no ambiguous alert closed in any run or framing, every release target met, assisted review faster than manual on the modelled times, and no verdict changed by injected text in any run or framing. Work runs as limited attempts of one change and one measured run set each. Every attempt, committed or not, is a row in docs/w2-02-attempts.md: the change, the run set ID, the Console spend, a two-line note and the decision to continue, change approach or narrow scope. The log also records the attempt limit set at the pre-flight. The test gate checks the committed files only: every committed run set is in the log, the number of attempts is within the recorded limit, and the logged total spend is below USD 25. Completion also needs the owner's sign-off at independent review that the log lists every attempt, that each attempt made one change, and that the logged total matches the Console's wave-2 spend.
+
+- state/risk: queued / high
+- requirements: AC-1, AC-3, AC-4, AC-5, AC-6, AC-12
+- scope: not bounded
+- gates: tests: .venv/bin/python -m pytest tests/w2_02_agent -q -p no:cacheprovider, independent-review: pending
 - next: Run the task pre-flight.
 
