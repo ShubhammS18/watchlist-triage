@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-24T06:47:25.160Z"
+    "updated_at": "2026-10-25T06:58:13.753Z"
   },
   "policy": {
     "ponytail": "full",
@@ -1700,6 +1700,28 @@
       "status": "accepted",
       "source": "Owner, 23 Oct 2026, planning decision W2-E; follows DEC-T07-BUDGET",
       "recorded_at": "2026-10-24T06:45:04.253Z",
+      "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-07-SOCKET-BLOCK",
+      "title": "The agent process may not create any socket",
+      "text": "The guard in the agent process now refuses socket creation, not only connections. Python looks up a host name in C before the connect check runs, so the old guard let a name lookup leave the process: a fake name server counting queries saw one under the old guard and none with socket creation refused. The agent process needs no socket: it hands model requests to the parent through a pipe, and the parent makes the call. I rejected wrapping each socket method, which misses lookups made in C, refusing only internet sockets, which adds logic for no use, and a network namespace around the agent process, which is the operating-system sandbox that stays out of scope. The claim covers ordinary, accidental and prompt-injected routes; hostile code inside the process stays out of scope.",
+      "status": "accepted",
+      "source": "Owner, 25 Oct 2026; W2-07-dns-isolation pre-flight, sections 2-4; AC-11, FR-9",
+      "recorded_at": "2026-10-25T06:58:12.283Z",
+      "paths": [
+        "model_interface/child.py"
+      ],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-07-NETNS-PROOF",
+      "title": "The zero-query proof is required unless explicitly skipped",
+      "text": "The strongest proof that no name lookup leaves the agent process counts queries inside a private network namespace, which needs unprivileged user namespaces on Linux. I wanted the proof required in the task gate and skipped elsewhere, but a task's gate cannot be changed once the task is added. So the proof runs by default and fails with a clear message where the namespace is not available. Setting WT_SKIP_NETNS=1 skips it with a message saying the proof did not run, and the README says so in one line. The gate does not set that variable, so it can never pass on a skipped proof.",
+      "status": "accepted",
+      "source": "Owner, 25 Oct 2026; W2-07-dns-isolation; Genesis task set has no gate option (genesis.mjs task set and task add)",
+      "recorded_at": "2026-10-25T06:58:13.753Z",
       "paths": [],
       "tags": []
     }
