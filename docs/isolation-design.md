@@ -59,7 +59,8 @@ Not covered:
   query from a control child with no block, and the agent process sends none at all, each route refused by name.
 - **Refused before the resolver.** Without the namespace, every route in the agent process ends in the guard's
   refusal and none in `gaierror`, the sign that the resolver ran.
-- **No socket object.** Every way to make one is refused, and the one unaudited route is pinned down as above.
+- **Socket creation.** The listed audited ways to make a socket are refused; the unaudited local socket pair is
+  checked separately.
 - **With no network.** The T04 name-lookup test passes inside `unshare -rn`.
 
 A copy of the package with `"socket.__new__"` removed makes the first three fail (`test_dns_mutation.py`, run

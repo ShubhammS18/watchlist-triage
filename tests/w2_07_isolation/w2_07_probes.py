@@ -130,13 +130,24 @@ def _attempt(call, *args):
     return "reached"
 
 
+def _inet_pair(module):
+    """Ask for an internet (AF_INET) socket pair: whether one came back, and the errno of the OSError if not."""
+    try:
+        pair = module.socketpair(socket.AF_INET)
+    except OSError as error:
+        return {"socket_returned": False, "oserror_errno": error.errno}
+    for sock in pair:
+        sock.close()
+    return {"socket_returned": True, "oserror_errno": None}
+
+
 def _unaudited_socketpair():
     """The one way to get a socket object that raises no audit event. It makes only local (AF_UNIX) sockets."""
     import _socket
     first, second = _socket.socketpair()
     try:
         return {"family": socket.AddressFamily(first.family).name,
-                "inet": _attempt(_socket.socketpair, socket.AF_INET),
+                "inet": _inet_pair(_socket),
                 "connect_with_a_name": _attempt(first.connect, ("lookup-probe.invalid", PORT))}
     finally:
         first.close()

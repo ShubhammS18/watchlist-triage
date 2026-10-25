@@ -91,7 +91,12 @@ def test_no_socket_object_can_be_made():
     pair = report.pop("unaudited_socketpair")
     assert report == {f"make:{name}": REFUSED + "socket.__new__" for name in MAKE_SOCKET}
     # The one unaudited way to a socket object makes only local sockets, and these take no host name.
-    assert pair == {"family": "AF_UNIX", "inet": "error: OSError: [Errno 95] Operation not supported",
+    inet = pair.pop("inet")
+    # Any errno: the code is the C library's choice (95, EOPNOTSUPP, here); what matters is that no pair is made.
+    assert not inet["socket_returned"] and inet["oserror_errno"] is not None, (
+        f"an AF_INET socket pair should raise OSError and return nothing; socket returned: "
+        f"{inet['socket_returned']}, errno: {inet['oserror_errno']}")
+    assert pair == {"family": "AF_UNIX",
                     "connect_with_a_name": "error: TypeError: a bytes-like object is required, not 'tuple'"}
 
 

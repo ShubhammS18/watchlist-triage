@@ -11,14 +11,15 @@ import pytest
 
 @pytest.fixture(scope="session")
 def netns():
-    """Fail unless `unshare -rnm` works here."""
+    """Fail unless `unshare -rnm` works here and the loopback device can be brought up inside it."""
     try:
-        done = subprocess.run(["unshare", "-rnm", "true"], capture_output=True, text=True, timeout=30)
+        done = subprocess.run(["unshare", "-rnm", "ip", "link", "set", "lo", "up"], capture_output=True, text=True,
+                              timeout=30)
         problem = (done.stderr.strip() or f"exit status {done.returncode}") if done.returncode else None
     except FileNotFoundError:
         problem = "unshare is not installed"
     except subprocess.TimeoutExpired:
         problem = "it did not finish in 30 seconds"
     if problem:
-        pytest.fail(f"zero-query proof cannot run: `unshare -rnm` is not available here ({problem}). It needs Linux "
-                    f"with unprivileged user namespaces.", pytrace=False)
+        pytest.fail(f"zero-query proof cannot run: `unshare -rnm ip link set lo up` failed here ({problem}). It needs "
+                    f"Linux with unprivileged user namespaces and the `ip` command.", pytrace=False)
