@@ -29,13 +29,14 @@ PROBE = "tests.t04_model_interface.t04_probes"
 REQUEST = asdict(Request([{"role": "user", "content": "ping"}], Settings("stub-1", 0, 64, 5)))
 REFUSED = "blocked: blocked in the agent process: "
 
-# probe name -> the audit event that must refuse it
+# probe name -> the audit event that must refuse it. Probes that make a socket object are refused when it is
+# made, since connect, sendto, sendmsg and bind would look a host name up in C before their own event.
 NETWORK = {
-    "connect": "socket.connect",
+    "connect": "socket.__new__",
     "create_connection": "socket.getaddrinfo",  # it looks the name up first, and that is already refused
-    "sendto": "socket.sendto",
-    "sendmsg": "socket.sendmsg",
-    "bind": "socket.bind",
+    "sendto": "socket.__new__",
+    "sendmsg": "socket.__new__",
+    "bind": "socket.__new__",
     "getaddrinfo": "socket.getaddrinfo",
     "gethostbyname": "socket.gethostbyname",
     "gethostbyaddr": "socket.gethostbyaddr",
@@ -54,7 +55,9 @@ PROGRAMS = {
 }
 # No real call raises these on Linux, so they are only raised by hand.
 WINDOWS_ONLY = ("os.spawn", "os.startfile", "os.startfile/2")
-EVENTS = sorted({*NETWORK.values(), *PROGRAMS.values(), *WINDOWS_ONLY})
+# Still blocked as a second check, but no socket object can be made to raise them, so they too are raised by hand.
+HAND_ONLY = ("socket.connect", "socket.bind", "socket.sendto", "socket.sendmsg")
+EVENTS = sorted({*NETWORK.values(), *PROGRAMS.values(), *WINDOWS_ONLY, *HAND_ONLY})
 
 CONTROL = ("import json, sys; sys.path.insert(0, sys.argv[1]); "
            "from tests.t04_model_interface import t04_probes; "
@@ -137,8 +140,9 @@ def test_an_outside_address_is_refused():
 
 
 def test_a_name_lookup_is_refused():
+    # .invalid never resolves (RFC 6761), and the guard refuses before any lookup, so this passes with no network
     probes = ["getaddrinfo", "gethostbyname", "connect", "create_connection"]
-    report = run_child(PROBE, {"probes": probes, "host": "example.com", "port": 443}, Stub(), limit_s=5)
+    report = run_child(PROBE, {"probes": probes, "host": "lookup-probe.invalid", "port": 443}, Stub(), limit_s=5)
     assert report == {probe: REFUSED + NETWORK[probe] for probe in probes}
 
 

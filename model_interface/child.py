@@ -15,8 +15,10 @@ plain assignments, and code in this process could put the originals back.
 import sys
 
 BLOCKED = frozenset((
-    # network
-    "socket.connect", "socket.bind", "socket.sendto", "socket.sendmsg",
+    # network. socket.__new__ comes first: for connect, connect_ex, bind, sendto and sendmsg, Python turns a host
+    # name into an address in C, which sends a name lookup, before their own event is raised. With no socket
+    # object those calls cannot be reached.
+    "socket.__new__", "socket.connect", "socket.bind", "socket.sendto", "socket.sendmsg",
     "socket.getaddrinfo", "socket.gethostbyname", "socket.gethostbyaddr", "socket.getnameinfo",
     # starting another program
     "subprocess.Popen", "os.system", "os.exec", "os.spawn", "os.posix_spawn", "os.fork", "os.forkpty",

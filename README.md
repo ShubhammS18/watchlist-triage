@@ -60,14 +60,15 @@ From `targets/release-targets.json` and `SPEC.md`:
 ## Running the tests
 
 No test needs an API key; the adapter is tested against a fake local API. Installing pytest needs the network once.
-One test needs a working DNS lookup: offline, `test_a_name_lookup_is_refused` in `tests/t04_model_interface/` fails,
-and that folder's mutation tests, which rerun its suite, then error. Every other folder passes offline. The T07
-tests read the git history, so use a git clone, not a downloaded archive. I run them with Python 3.12, on Linux (WSL).
+The T07 tests read the git history, so use a git clone, not a downloaded archive. I run them with Python 3.12, on
+Linux (WSL).
+The `tests/w2_07_isolation/` proofs need `unshare -rnm` (unprivileged user namespaces) and fail without it;
+`WT_SKIP_NETNS=1` skips them, and the zero-query proof then does not run.
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
-for t in tests/t0*/; do .venv/bin/python -m pytest "$t" -q -p no:cacheprovider; done
+for t in tests/t0*/ tests/w2_*/; do .venv/bin/python -m pytest "$t" -q -p no:cacheprovider; done
 ```
 
 ## Repository map

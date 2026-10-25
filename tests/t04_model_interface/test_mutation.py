@@ -17,7 +17,7 @@ ROOT = HERE.parents[1]
 PACKAGE = ROOT.joinpath("model_interface")
 SUITE = ("test_interface.py", "test_isolation.py")
 
-NETWORK_EVENTS = '''    "socket.connect", "socket.bind", "socket.sendto", "socket.sendmsg",
+NETWORK_EVENTS = '''    "socket.__new__", "socket.connect", "socket.bind", "socket.sendto", "socket.sendmsg",
     "socket.getaddrinfo", "socket.gethostbyname", "socket.gethostbyaddr", "socket.getnameinfo",
 '''
 PROGRAM_EVENTS = '''    "subprocess.Popen", "os.system", "os.exec", "os.spawn", "os.posix_spawn", "os.fork", "os.forkpty",
