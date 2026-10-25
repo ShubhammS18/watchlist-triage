@@ -74,15 +74,15 @@
 
 ### W2-07-dns-isolation — The guarded agent process cannot look up a host name: a connect, sendto or other socket call given a name is refused before any name lookup is sent, and so is every direct lookup. The name-lookup isolation test passes with no network. The network claim covers ordinary, accidental and prompt-injected routes only; hostile code inside the agent process stays out of scope until an operating-system sandbox exists.
 
-- state/risk: active / medium
+- state/risk: done / medium
 - requirements: AC-11, FR-9
 - scope: not bounded
-- gates: tests: .venv/bin/python -m pytest tests/w2_07_isolation -q -p no:cacheprovider, t04: .venv/bin/python -m pytest tests/t04_model_interface -q -p no:cacheprovider, independent-review: pending
+- gates: tests: .venv/bin/python -m pytest tests/w2_07_isolation -q -p no:cacheprovider, t04: .venv/bin/python -m pytest tests/t04_model_interface -q -p no:cacheprovider, independent-review: pass
 - next: Run the task pre-flight.
 
 ### W2-01-harness-acceptance — The acceptance check reads the committed release targets and judges every frozen-world target: no true match or ambiguous alert closed, over-escalation, verdict consistency, citation accuracy, cost per alert and modelled review time. It fails on any injection verdict divergence, and reports the injection citation differences beside the noise control (each twin against itself across runs, for verdicts and citations) as information only. Injection figures are broken down by primary family. Tests use the fake model and never call a real one.
 
-- state/risk: queued / medium
+- state/risk: active / medium
 - requirements: FR-20, AC-3, AC-4, AC-6, AC-12
 - scope: not bounded
 - gates: tests: .venv/bin/python -m pytest tests/w2_01_acceptance -q -p no:cacheprovider, t06: .venv/bin/python -m pytest tests/t06_harness -q -p no:cacheprovider, independent-review: pending

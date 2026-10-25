@@ -1,0 +1,30 @@
+{
+  "task": "W2-07-dns-isolation",
+  "gate": "tests",
+  "kind": "command",
+  "attempt": "dc3790c2-7a4c-4458-83f7-379a7167f8c9",
+  "command": ".venv/bin/python -m pytest tests/w2_07_isolation -q -p no:cacheprovider",
+  "started_at": "2026-10-25T08:22:00.300Z",
+  "observed_at": "2026-10-25T08:22:07.986Z",
+  "exit_code": 0,
+  "signal": null,
+  "stdout": "..........................                                               [100%]\n26 passed in 6.67s\n",
+  "stderr": "",
+  "failure": null,
+  "receipt": null,
+  "revision": {
+    "commit": "021a9219e5e701925f5030bb3223be738d4772a9",
+    "dirty": true
+  },
+  "source_hash": "122d36ffb06f0116f1c0f63afcc7f8c217ae88bbba63975717e3e3d566d5838b",
+  "before_hash": "122d36ffb06f0116f1c0f63afcc7f8c217ae88bbba63975717e3e3d566d5838b",
+  "config_hash": "b8060ac9d8d738655299b88f6adc98430ea604f3b3cd5c7c0b3f98b524d33758",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "arch": "x64",
+    "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+    "variables": {}
+  },
+  "hash": "0c86ce24d12fec1564cdf21cdef8da53cacabdc9616dceadcf861942ecb092cd"
+}

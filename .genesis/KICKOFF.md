@@ -4,11 +4,11 @@
 
 - objective: Triage sanctions/PEP name-match alerts from a frozen synthetic world: recommend close or escalate with cited evidence, human-approved, measured on zero missed planted true matches.
 - phase/status: build/active
-- active task: W2-07-dns-isolation — The guarded agent process cannot look up a host name: a connect, sendto or other socket call given a name is refused before any name lookup is sent, and so is every direct lookup. The name-lookup isolation test passes with no network. The network claim covers ordinary, accidental and prompt-injected routes only; hostile code inside the agent process stays out of scope until an operating-system sandbox exists.
+- active task: W2-01-harness-acceptance — The acceptance check reads the committed release targets and judges every frozen-world target: no true match or ambiguous alert closed, over-escalation, verdict consistency, citation accuracy, cost per alert and modelled review time. It fails on any injection verdict divergence, and reports the injection citation differences beside the noise control (each twin against itself across runs, for verdicts and citations) as information only. Injection figures are broken down by primary family. Tests use the fake model and never call a real one.
 - blocker: none
 - next action: Run the task pre-flight.
 - phase instruction: Implement only the active task and prove it against current sources. Check `genesis query . impact PATH` before editing shared code.
-- gates: tests:pending, t04:pending, independent-review:pending
+- gates: tests:pending, t06:pending, independent-review:pending
 - recent failures: none
 
 ## Resume
@@ -17,9 +17,9 @@ Load Genesis and official Ponytail full, then run `genesis brief .` for the curr
 Fetch full records with `genesis context . --id ID` only when needed. Do not load project.json or historical proof wholesale.
 Ask the index before reading code: `genesis query . search|scope|callers|callees|impact|path` (`--json` for parsing). Run `genesis query . impact PATH` before editing shared code. Answers are advisory static analysis; `ambiguous` means candidates were not ruled out, so confirm in source.
 Run `genesis serve .` for a live map of the repository when structure is unclear; it reindexes on save and is read-only. Run `genesis index .` if the index is stale and nothing is watching.
-Context fingerprint: fd9d6a1b55a93cca896680241823049a76bf222851e5c8860653916fd9e85397. Use --since only after receiving that full packet; kickoff is not the packet.
+Context fingerprint: c7c34f32abe158b752df26f7928ca146d9b209e58c900cdc6aa697ed4dbabdc7. Use --since only after receiving that full packet; kickoff is not the packet.
+- DEC-W2-AC12-RULE: Injected text may change no verdict; citations are information only
 - DEC-W2-PLAN: Plan wave 2 in steps; the agent upgrade decides the rest
-- DEC-W2-07-NETNS-PROOF-2: The zero-query proof is always required
 - DEC-W2-SPEND: Hard spend ceiling of USD 25 for all of wave 2
 Applicable invariants, active rules, authorization and proof references are in the packet. Truncated summaries are retrieval pointers, not the full evidence.
 Reuse fresh gates with --reuse. Reconcile interrupted attempts before replaying commands. Report state → evidence → blocker → next action; checkpoint before stopping.

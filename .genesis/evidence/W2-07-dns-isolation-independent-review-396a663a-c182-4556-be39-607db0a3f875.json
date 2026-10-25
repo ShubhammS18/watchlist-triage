@@ -1,0 +1,13 @@
+{
+  "task": "W2-07-dns-isolation",
+  "gate": "independent-review",
+  "kind": "review",
+  "attempt": "396a663a-c182-4556-be39-607db0a3f875",
+  "human": "Shubham Suradkar",
+  "reason": "Three independent review rounds: round 1 found a blocker (the skip variable leaked into the gate) and two small issues, all fixed with both records superseded; round 2 one small issue, fixed; round 3 clean. Decision record DEC-W2-07-REVIEW.",
+  "observed_at": "2026-10-25T08:23:11.529Z",
+  "source_hash": "122d36ffb06f0116f1c0f63afcc7f8c217ae88bbba63975717e3e3d566d5838b",
+  "config_hash": "b8060ac9d8d738655299b88f6adc98430ea604f3b3cd5c7c0b3f98b524d33758",
+  "reviewed_proofs": "6c684864f3034dd928b0fd1542ec5a281801a0807a0decf95fa44a9d1251b507",
+  "hash": "a16fc29de9366362d3a840dd4228b129c8c4ef812c9a1958745afb6452d51fa0"
+}
