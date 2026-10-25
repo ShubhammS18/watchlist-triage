@@ -17,9 +17,9 @@ Load Genesis and official Ponytail full, then run `genesis brief .` for the curr
 Fetch full records with `genesis context . --id ID` only when needed. Do not load project.json or historical proof wholesale.
 Ask the index before reading code: `genesis query . search|scope|callers|callees|impact|path` (`--json` for parsing). Run `genesis query . impact PATH` before editing shared code. Answers are advisory static analysis; `ambiguous` means candidates were not ruled out, so confirm in source.
 Run `genesis serve .` for a live map of the repository when structure is unclear; it reindexes on save and is read-only. Run `genesis index .` if the index is stale and nothing is watching.
-Context fingerprint: 9d9ecca43db3d0df760de0ecd7b95e8b9132ef9d8b7d2a59e3474a7c1c9bc4e0. Use --since only after receiving that full packet; kickoff is not the packet.
+Context fingerprint: fd9d6a1b55a93cca896680241823049a76bf222851e5c8860653916fd9e85397. Use --since only after receiving that full packet; kickoff is not the packet.
 - DEC-W2-PLAN: Plan wave 2 in steps; the agent upgrade decides the rest
-- DEC-W2-07-NETNS-PROOF: The zero-query proof is required unless explicitly skipped
+- DEC-W2-07-NETNS-PROOF-2: The zero-query proof is always required
 - DEC-W2-SPEND: Hard spend ceiling of USD 25 for all of wave 2
 Applicable invariants, active rules, authorization and proof references are in the packet. Truncated summaries are retrieval pointers, not the full evidence.
 Reuse fresh gates with --reuse. Reconcile interrupted attempts before replaying commands. Report state → evidence → blocker → next action; checkpoint before stopping.

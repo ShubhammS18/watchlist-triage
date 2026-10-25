@@ -1,7 +1,8 @@
 # Name-lookup isolation for W2-07-dns-isolation
 
-Requirements: FR-9 and the network part of AC-11. Decision records: `DEC-W2-07-SOCKET-BLOCK` and
-`DEC-W2-07-NETNS-PROOF`, both owner decisions of 2026-10-25, within the scope set by `DEC-T04-AC11-SCOPE`.
+Requirements: FR-9 and the network part of AC-11. Decision records: `DEC-W2-07-SOCKET-BLOCK-2` and
+`DEC-W2-07-NETNS-PROOF-2`, owner decisions of 2026-10-25 after review round 1, which supersede
+`DEC-W2-07-SOCKET-BLOCK` and `DEC-W2-07-NETNS-PROOF`; all within the scope set by `DEC-T04-AC11-SCOPE`.
 
 ## The gap
 
@@ -37,12 +38,13 @@ scope. This is a guard inside Python, as in T04: code in the process could put b
 | `socket.create_connection` and what is built on it, such as `http.client` and `urllib.request` | refused at `socket.getaddrinfo`, as before |
 | `getaddrinfo`, `gethostbyname`, `gethostbyname_ex`, `gethostbyaddr`, `getnameinfo` | refused by their own events, as before |
 | `getent` or another program; libc's resolver through `ctypes` | refused by the program and ctypes blocks of T04 |
-| every way to make a socket object: `socket.socket`, `socketpair`, `fromfd`, `socket(fileno=)`, `create_server`, `_socket.socket` | refused at `socket.__new__` |
+| the audited socket-creation routes: `socket.socket`, `socketpair`, `fromfd`, `socket(fileno=)`, `create_server`, `_socket.socket` | refused at `socket.__new__`; the one unaudited route, `_socket.socketpair()`, makes only AF_UNIX sockets, which take no host name (below) |
 
 Not covered:
 
-- `_socket.socketpair()` raises no audit event and still works. It makes only local (AF_UNIX) sockets, which take
-  no host name, and asking it for an internet pair fails. A test pins this down.
+- `_socket.socketpair()`, the one unaudited socket-creation route, raises no audit event and still works. It makes
+  only AF_UNIX sockets, which take no host name and cannot reach the network, and asking it for an internet pair
+  fails. A test pins this down.
 - `socket.getfqdn()` swallows the refusal and returns the name unchanged. It sends no query.
 - Hostile code inside the process, as above.
 - Only Python 3.12.3 on Linux (WSL2, glibc resolver) was tested. Another Python version may order the C lookup
@@ -64,8 +66,7 @@ A copy of the package with `"socket.__new__"` removed makes the first three fail
 inside `unshare -rn` so the broken copy cannot send a lookup off the machine).
 
 The namespace proofs need Linux with unprivileged user namespaces. Where that is not available they fail with a
-message saying so. `WT_SKIP_NETNS=1` skips them, with the message "zero-query proof did not run". The gate does not
-set it.
+message saying so; there is no way to skip them.
 
 ## Supersedes
 

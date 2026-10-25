@@ -6,7 +6,6 @@ this machine. The untouched copy must pass the same tests, the broken copy must 
 real files must hash the same before and after.
 """
 import hashlib
-import os
 import shutil
 import subprocess
 import sys
@@ -36,11 +35,10 @@ def run_copy(folder, broken):
         source = child.read_text(encoding="utf-8")
         assert source.count(BREAK) == 1, "the text to break is no longer in child.py"
         child.write_text(source.replace(BREAK, ""), encoding="utf-8")
-    env = {key: value for key, value in os.environ.items() if key != "WT_SKIP_NETNS"}  # the copy must not skip
     return subprocess.run(
         ["unshare", "-rn", sys.executable, "-m", "pytest", "tests/w2_07_isolation/test_dns_isolation.py",
-         "-k", "not t04_name_lookup", "-q", "-p", "no:cacheprovider", "-rf"],
-        cwd=folder, env=env, capture_output=True, text=True, timeout=120)
+         "-k", "not t04_name_lookup and not old_variable", "-q", "-p", "no:cacheprovider", "-rf"],
+        cwd=folder, capture_output=True, text=True, timeout=120)
 
 
 def test_removing_the_socket_creation_block_is_caught(netns, tmp_path):

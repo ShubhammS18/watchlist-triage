@@ -1,12 +1,13 @@
 """W2-07: every in-scope route by which the agent process could look up a host name is refused before any lookup.
 
-Scope as in DEC-W2-07-SOCKET-BLOCK and DEC-T04-AC11-SCOPE: ordinary, accidental and prompt-injected routes. Code
+Scope as in DEC-W2-07-SOCKET-BLOCK-2 and DEC-T04-AC11-SCOPE: ordinary, accidental and prompt-injected routes. Code
 written to defeat the guard from inside the process is out of scope, and nothing here tests it.
 
 The strongest proof counts queries: in a private network namespace with a fake name server, each route sends at
 least one query from a control child with no block, and none at all from the agent process.
 """
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -92,6 +93,15 @@ def test_no_socket_object_can_be_made():
     # The one unaudited way to a socket object makes only local sockets, and these take no host name.
     assert pair == {"family": "AF_UNIX", "inet": "error: OSError: [Errno 95] Operation not supported",
                     "connect_with_a_name": "error: TypeError: a bytes-like object is required, not 'tuple'"}
+
+
+def test_the_proof_cannot_be_skipped_by_the_old_variable():
+    # WT_SKIP_NETNS once skipped the namespace proofs. It is gone: with it set, the proof still runs and passes.
+    test = "tests/w2_07_isolation/test_dns_isolation.py::test_no_dns_query_leaves_the_agent_process"
+    done = subprocess.run([sys.executable, "-m", "pytest", test, "-q", "-p", "no:cacheprovider", "-rs"], cwd=ROOT,
+                          env={**os.environ, "WT_SKIP_NETNS": "1"}, capture_output=True, text=True, timeout=60)
+    assert done.returncode == 0, done.stdout
+    assert "1 passed" in done.stdout and "skipped" not in done.stdout
 
 
 # ---- the T04 name-lookup test, with no network at all

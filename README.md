@@ -62,8 +62,7 @@ From `targets/release-targets.json` and `SPEC.md`:
 No test needs an API key; the adapter is tested against a fake local API. Installing pytest needs the network once.
 The T07 tests read the git history, so use a git clone, not a downloaded archive. I run them with Python 3.12, on
 Linux (WSL).
-The `tests/w2_07_isolation/` proofs need `unshare -rnm` (unprivileged user namespaces) and fail without it;
-`WT_SKIP_NETNS=1` skips them, and the zero-query proof then does not run.
+`tests/w2_07_isolation/` needs unprivileged user namespaces (`unshare -rnm`) on Linux and fails without them.
 
 ```bash
 python3 -m venv .venv
