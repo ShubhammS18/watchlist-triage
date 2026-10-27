@@ -45,9 +45,9 @@ def test_the_fixture_configuration_loads():
     assert config["settings"].model == "fake-1" and isinstance(config["model"], fake_model.Fake)
 
 
-def test_the_shipped_agent_registry_holds_exactly_three_agents_and_never_the_in_process_one():
+def test_the_shipped_agent_registry_holds_exactly_four_agents_and_never_the_in_process_one():
     shipped = python("import json; from harness.run import AGENTS; print(json.dumps(sorted(AGENTS)))")
-    assert shipped == ["always_close", "always_escalate", "baseline"] and "inprocess" not in shipped
+    assert shipped == ["always_close", "always_escalate", "baseline", "triage"] and "inprocess" not in shipped  # W2-02
     assert "inprocess" in harness_run.AGENTS  # here it is, but only because these tests registered it
 
 

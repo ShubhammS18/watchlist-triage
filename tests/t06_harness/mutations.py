@@ -18,7 +18,8 @@ from concurrent import futures
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-COPIED = ("harness", "tests/t06_harness", "baseline_agent", "model_interface", "worldgen", "framings", "data/world")
+COPIED = ("harness", "tests/t06_harness", "baseline_agent", "triage_agent", "model_interface", "worldgen", "framings",
+          "data/world")  # triage_agent: the harness imports it since W2-02
 AT_A_TIME = 2  # copies running at once
 MEMORY_LIMIT = 1 << 30  # bytes of address space (RLIMIT_AS) for each copy's test process and what it starts
 CAUGHT = ("failed", "out of memory")  # the two ways a broken copy can be caught

@@ -101,9 +101,11 @@ AMOUNT = {"numerator": COUNT, "denominator": POSITIVE, "not_applicable": FLAG, "
 CALLS = {"attempts": COUNT, "without_token_counts": COUNT, "input_tokens": COUNT, "output_tokens": COUNT}
 COST = {"known_cost": AMOUNT, "currency": NONEMPTY, "attempts": COUNT, "attempts_without_token_counts": COUNT,
         "attempts_without_price": COUNT, "at_least": FLAG, "statement": NONEMPTY}
-RUN_SET_INPUTS = {"agent": NONEMPTY, "commit": maybe(HEX40), "world_hash": HEX64, "prompt_hash": HEX64,
-                  "model_config": HEX64, "workers": WORKERS, "pacer_per_minute": maybe(POSITIVE),
-                  "infra_invalid_threshold": THRESHOLD, "price_table": HEX64, "modelled_time": HEX64}
+_INPUTS = {"agent": NONEMPTY, "commit": maybe(HEX40), "world_hash": HEX64, "prompt_hash": HEX64,
+           "model_config": HEX64, "workers": WORKERS, "pacer_per_minute": maybe(POSITIVE),
+           "infra_invalid_threshold": THRESHOLD, "price_table": HEX64, "modelled_time": HEX64}
+# an agent with rule code adds that code's hash; the plain shape is last, so its problem is the one reported
+RUN_SET_INPUTS = Either({**_INPUTS, "rule_code_hash": HEX64}, _INPUTS)
 # the two embedded tables are checked whole by the run step's own checks (harness/cost.py); here only their place
 TABLE = Rule("an object", lambda value: isinstance(value, dict))
 
@@ -112,7 +114,9 @@ _MANIFEST_COMMON = {
     "agent": NONEMPTY,
     "world": {"world_hash": HEX64, "generator_version": TEXT, "rubric_version": TEXT},
     "model": {"used": FLAG, "provider": maybe(NONEMPTY), "requested": maybe(NONEMPTY), "reported": MapOf(COUNT)},
-    "prompt": maybe({"text": NONEMPTY, "sha256": HEX64}),
+    # an agent with rule code adds that code's hash; the plain shape is last, so its problem is the one reported
+    "prompt": maybe(Either({"text": NONEMPTY, "sha256": HEX64, "rule_code_sha256": HEX64},
+                           {"text": NONEMPTY, "sha256": HEX64})),
     "decoding": maybe({"temperature": SECONDS, "max_tokens": POSITIVE}),
     "retry_policy": maybe({"retries": COUNT, "timeout_s": SECONDS, "retried_errors": ListOf(NONEMPTY), "backoff": NULL}),
     "review_policies": ListOf(REVIEW_POLICY),

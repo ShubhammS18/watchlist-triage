@@ -9,14 +9,15 @@ fake server):
     b. the inputs the score step would refuse later are not there (harness known issue 3): a blank re-run cause,
        a model name of only spaces, a temperature or timeout that is not finite; and a written re-run cause is
        given when the last earlier run in the output folder was aborted, never finished or infra-invalid
-    c. the run configuration is the recorded one, and the model is asked at https://api.anthropic.com only
+    c. the run configuration is the recorded one, the agent is one of the model agents named here, and the model
+       is asked at https://api.anthropic.com only
     d. the modelled-time file is sourced, LOW <= BASE <= HIGH for every parameter, and every value is above 0
     e. the price table is sourced and prices the configured model
     f. the API key is set and well formed, and one free token-counting request with it succeeds; that request
        never follows a redirect
 
-Then it prints an upper bound on the run cost for one attempt per item (retries not counted; it assumes at most
-one token per prompt byte), asks the owner to type "yes", and runs the harness's
+Then it prints an upper bound on the run cost for one attempt per item that the agent sends to the model (retries
+not counted; it assumes at most one token per prompt byte), asks the owner to type "yes", and runs the harness's
 run-and-score through tools/timed_run.sh. After the run it prints the run's own report status and its refusal
 share, and flags the run-1 refusal checkpoint (DEC-T07-REFUSALS).
 """
@@ -37,11 +38,15 @@ from harness import cost as money
 from harness import manifest as records
 from harness.run import bundles, load_config
 from model_interface.anthropic_api import API_URL, KEY_VARIABLE, VERSION, Anthropic
+from triage_agent.rules import decide
 
 REPO = records.REPO
 # The recorded run settings (DEC-T07-RUN-SETTINGS-2, DEC-T07-PROVIDER-2). A change needs a superseding record first.
 RECORDED = {"provider": "anthropic", "temperature": 1, "thinking": "disabled", "max_tokens": 512, "timeout_s": 30,
-            "workers": 4, "pacer_per_minute": 120, "infra_invalid_threshold": "0.02", "agent": "baseline"}
+            "workers": 4, "pacer_per_minute": 120, "infra_invalid_threshold": "0.02"}
+# The agents a paid run may use, chosen by the run configuration's "agent" (DEC-W2-02-LAYOUT), and for each whether
+# it sends an item to the model; the upgraded agent sends only the items its rules do not decide.
+MODEL_AGENTS = {"baseline": lambda payload: True, "triage": lambda payload: decide(payload["items"]) is None}
 ENV = {"MEMORY_GUARD_MAX_SECONDS": "7200", "BENCH_MAX_S": "0.82"}
 CREDIT_MARGIN = Fraction(3, 2)
 REFUSAL_CHECKPOINT = Fraction(2, 100)  # more than this share of run 1's items refused: stop and decide
@@ -101,11 +106,13 @@ def check_settings(run_config, model_config):
     found = {"provider": model_config.get("provider"), "temperature": model_config.get("temperature"),
              "thinking": (model_config.get("options") or {}).get("thinking"),
              "max_tokens": model_config.get("max_tokens"), "timeout_s": model_config.get("timeout_s"),
-             **{key: run_config.get(key) for key in ("workers", "pacer_per_minute", "infra_invalid_threshold", "agent")}}
+             **{key: run_config.get(key) for key in ("workers", "pacer_per_minute", "infra_invalid_threshold")}}
     for key, wanted in RECORDED.items():
         value = found[key]
         if isinstance(value, bool) or value != wanted:  # True == 1 in Python, so a flag is refused first
             raise Refused(f"{key} is {value!r}, not the recorded {wanted!r}")
+    if run_config.get("agent") not in MODEL_AGENTS:
+        raise Refused(f"agent is {run_config.get('agent')!r}, not one of the model agents {sorted(MODEL_AGENTS)}")
     base_url = (model_config.get("options") or {}).get("base_url", API_URL)
     if base_url != API_URL:  # a paid run sends the key to Anthropic and nowhere else (review round 1, T07-01)
         raise Refused(f"the model configuration's base_url must be exactly {API_URL} (the default), not {base_url!r}")
@@ -170,13 +177,16 @@ def check_key(model_config, url=None):
         raise Refused(f"{what}: HTTP {status} from the token-counting endpoint")
 
 
-def expected_cost(world, table, model, max_tokens):
-    """The upper bound of DEC-T07-WRAPPER-CHECKS, as (calls, prompt bytes, cost): one call per item, every prompt
-    byte one input token, every answer max_tokens output tokens. Retries are not counted."""
+def expected_cost(world, table, model, max_tokens, agent="baseline"):
+    """The upper bound of DEC-T07-WRAPPER-CHECKS, as (calls, prompt bytes, cost): one call per item the agent sends
+    to the model, every prompt byte one input token, every answer max_tokens output tokens. Retries are not counted."""
     calls = size = 0
     for item in bundles(world):
+        payload = build_payload(item["evidence"])
+        if not MODEL_AGENTS[agent](payload):
+            continue
         calls += 1
-        size += sum(len(m["content"].encode("utf-8")) for m in prompt.build_messages(build_payload(item["evidence"])))
+        size += sum(len(m["content"].encode("utf-8")) for m in prompt.build_messages(payload))
     prices = table["models"][model]
     total = (size * Fraction(Decimal(prices["input"])) + calls * max_tokens * Fraction(Decimal(prices["output"])))
     return calls, size, total / 1_000_000
@@ -239,7 +249,8 @@ def main(config, out, rerun_cause=None, repo=REPO, ask=input, run=launch):
             loaded = load_config(config_path)  # everything else the harness itself would refuse
         except ValueError as problem:
             raise Refused(f"the harness refuses the configuration: {problem}") from None
-        calls, size, cost = expected_cost(loaded["world"], table, model_config["model"], model_config["max_tokens"])
+        calls, size, cost = expected_cost(loaded["world"], table, model_config["model"], model_config["max_tokens"],
+                                          run_config["agent"])
         hold = cost * CREDIT_MARGIN
         print(f"expected run cost, upper bound: {money.amount(cost, places=4)['decimal']} {table['currency']} "
               f"({calls} calls, {size} prompt bytes counted as tokens, every answer at {model_config['max_tokens']} "

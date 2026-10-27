@@ -2,8 +2,8 @@
 must each make its named guard test fail, while the same test passes on an untouched copy; the real files are not
 changed. The proof machinery is T06's (tests/t06_harness/mutations.py). Only the copy differs: these tests need git
 (run commits, the committed price table, the targets file at HEAD), so each copy is a shared clone of the repository
-with the current harness/, worldgen/ and tests/w2_01_acceptance/ laid over it. The clone only reads the real
-repository.
+with the current harness/, worldgen/, triage_agent/ and tests/w2_01_acceptance/ laid over it. The clone only reads the
+real repository.
 
 They run in the gate: about 22 s on this machine, with the gate under 60 s."""
 import shutil
@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1].joinpath("t06_harness
 import mutations  # noqa: E402
 
 REPO = mutations.REPO
-OVERLAID = ("harness", "worldgen", "tests/w2_01_acceptance")  # laid over the clone: the work not yet committed
+OVERLAID = ("harness", "worldgen", "triage_agent", "tests/w2_01_acceptance")  # laid over the clone: work not yet committed
 W = "tests/w2_01_acceptance/"
 ASSERTS = mutations.ASSERTS
 

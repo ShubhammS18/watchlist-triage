@@ -22,6 +22,8 @@ from baseline_agent.agent import RETRIED
 from baseline_agent.recommend import recommend
 from framings import FRAMINGS, frame
 from model_interface import providers
+from triage_agent import PROMPT as TRIAGE_PROMPT
+from triage_agent.recommend import recommend as triage_recommend
 from worldgen.harness_twins import load_twins
 from worldgen.loader import load_alerts
 
@@ -58,8 +60,21 @@ def baseline(items, model, settings, item_id):
     return recommend(items, model, settings, sink=sink, retries=RETRIES, correlation_id=item_id), sink
 
 
+def triage(items, model, settings, item_id):
+    """The upgraded agent for one bundle: the rubric's rules here, or the baseline's guarded child process for an
+    alert whose close turns on a snippet. Returns (result, sink list)."""
+    sink = []
+    return triage_recommend(items, model, settings, sink=sink, retries=RETRIES, correlation_id=item_id), sink
+
+
 # Agent name -> a function (evidence items, model, settings, item id) -> (result, the log records it handed over).
-AGENTS = {"baseline": baseline, "always_escalate": always_escalate, "always_close": always_close}
+AGENTS = {"baseline": baseline, "triage": triage, "always_escalate": always_escalate, "always_close": always_close}
+# Agent name -> the prompt record its manifest names, as the agent's own package states it: the prompt text and its
+# hash and, for an agent with rule code, that code's hash (DEC-W2-02-LAYOUT). Any other agent that calls a model is
+# the baseline's code and names the baseline's prompt; the reference agents keep the baseline's prompt hash among
+# their run-set inputs, as before, so their run-set IDs do not change.
+PROMPTS = {"baseline": {"text": prompt.SYSTEM + "\n" + prompt.USER, "sha256": prompt.PROMPT_SHA256},
+           "triage": TRIAGE_PROMPT}
 MODEL_FREE = ("always_escalate", "always_close")  # the reference agents call no model
 MAX_WORKERS = 64
 NOT_REAL = frozenset(("stub",))  # providers that are no real model; a run with any other refuses fixture files
@@ -310,10 +325,13 @@ def run(config_path, out_dir, rerun_cause=None):
     price_hash = records.content_hash(config["price_table"])
     time_hash = records.content_hash(config["modelled_time"])
     inputs = {"agent": config["agent"], "commit": commit, "world_hash": listed["world_hash"],
-              "prompt_hash": prompt.PROMPT_SHA256,
+              "prompt_hash": PROMPTS.get(config["agent"], PROMPTS["baseline"])["sha256"],
               "model_config": records.content_hash(config["model_config"]), "workers": config["workers"],
               "pacer_per_minute": config["pacer_per_minute"], "infra_invalid_threshold": config["threshold"],
               "price_table": price_hash, "modelled_time": time_hash}
+    rule_code = PROMPTS.get(config["agent"], {}).get("rule_code_sha256")
+    if rule_code is not None:  # only an agent with rule code: every other agent's run-set ID stays as it was
+        inputs["rule_code_hash"] = rule_code
     run_set = records.content_hash(inputs)
     superseded = records.read_index(out)["sets"].get(run_set)
     if superseded:  # refused before any call (DEC-T06-FAULTS)
@@ -363,7 +381,7 @@ def run(config_path, out_dir, rerun_cause=None):
         "model": {"used": uses_model, "provider": config["model_config"]["provider"] if uses_model else None,
                   "requested": settings.model if uses_model else None,
                   "reported": dict(Counter(one["model_id"] for one in attempts if one["model_id"] is not None))},
-        "prompt": {"text": prompt.SYSTEM + "\n" + prompt.USER, "sha256": prompt.PROMPT_SHA256} if uses_model else None,
+        "prompt": dict(PROMPTS.get(config["agent"], PROMPTS["baseline"])) if uses_model else None,
         "decoding": {"temperature": settings.temperature, "max_tokens": settings.max_tokens} if uses_model else None,
         "retry_policy": {"retries": RETRIES, "timeout_s": settings.timeout_s, "retried_errors": list(RETRIED),
                          "backoff": None} if uses_model else None,
