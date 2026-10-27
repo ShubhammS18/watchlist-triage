@@ -4,11 +4,11 @@
 
 - objective: Triage sanctions/PEP name-match alerts from a frozen synthetic world: recommend close or escalate with cited evidence, human-approved, measured on zero missed planted true matches.
 - phase/status: build/active
-- active task: W2-01-harness-acceptance — The acceptance check reads the committed release targets and judges every frozen-world target: no true match or ambiguous alert closed, over-escalation, verdict consistency, citation accuracy, cost per alert and modelled review time. It fails on any injection verdict divergence, and reports the injection citation differences beside the noise control (each twin against itself across runs, for verdicts and citations) as information only. Injection figures are broken down by primary family. Tests use the fake model and never call a real one.
+- active task: W2-02-agent-upgrade — An upgraded agent whose committed run set on the frozen world passes the acceptance check: no true match and no ambiguous alert closed in any run or framing, every release target met, assisted review faster than manual on the modelled times, and no verdict changed by injected text in any run or framing. Work runs as limited attempts of one change and one measured run set each. Every attempt, committed or not, is a row in docs/w2-02-attempts.md: the change, the run set ID, the Console spend, a two-line note and the decision to continue, change approach or narrow scope. The log also records the attempt limit set at the pre-flight. The test gate checks the committed files only: every committed run set is in the log, the number of attempts is within the recorded limit, and the logged total spend is below USD 25. Completion also needs the owner's sign-off at independent review that the log lists every attempt, that each attempt made one change, and that the logged total matches the Console's wave-2 spend.
 - blocker: none
 - next action: Run the task pre-flight.
 - phase instruction: Implement only the active task and prove it against current sources. Check `genesis query . impact PATH` before editing shared code.
-- gates: tests:pending, t06:pending, independent-review:pending
+- gates: tests:pending, independent-review:pending
 - recent failures: none
 
 ## Resume
@@ -17,9 +17,9 @@ Load Genesis and official Ponytail full, then run `genesis brief .` for the curr
 Fetch full records with `genesis context . --id ID` only when needed. Do not load project.json or historical proof wholesale.
 Ask the index before reading code: `genesis query . search|scope|callers|callees|impact|path` (`--json` for parsing). Run `genesis query . impact PATH` before editing shared code. Answers are advisory static analysis; `ambiguous` means candidates were not ruled out, so confirm in source.
 Run `genesis serve .` for a live map of the repository when structure is unclear; it reindexes on save and is read-only. Run `genesis index .` if the index is stale and nothing is watching.
-Context fingerprint: 40fbc8655d7fb767309b880f10de7fd1e0eb06d20fa197fd0288873fccd2ce87. Use --since only after receiving that full packet; kickoff is not the packet.
-- DEC-W2-AC12-RULE: Injected text may change no verdict; citations are information only
-- DEC-W2-01-ELIGIBILITY: The check passes only on inputs it can verify
+Context fingerprint: 312b7b815289b75b6818153ba2221aef9d074f7da2ef7d728900be4eab46e1e1. Use --since only after receiving that full packet; kickoff is not the packet.
 - DEC-W2-PLAN: Plan wave 2 in steps; the agent upgrade decides the rest
+- DEC-W2-01-TIME-RULE: The time saving is judged on the strictest of the six settings
+- DEC-W2-AC12-RULE: Injected text may change no verdict; citations are information only
 Applicable invariants, active rules, authorization and proof references are in the packet. Truncated summaries are retrieval pointers, not the full evidence.
 Reuse fresh gates with --reuse. Reconcile interrupted attempts before replaying commands. Report state → evidence → blocker → next action; checkpoint before stopping.

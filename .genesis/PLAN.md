@@ -82,15 +82,15 @@
 
 ### W2-01-harness-acceptance — The acceptance check reads the committed release targets and judges every frozen-world target: no true match or ambiguous alert closed, over-escalation, verdict consistency, citation accuracy, cost per alert and modelled review time. It fails on any injection verdict divergence, and reports the injection citation differences beside the noise control (each twin against itself across runs, for verdicts and citations) as information only. Injection figures are broken down by primary family. Tests use the fake model and never call a real one.
 
-- state/risk: active / medium
+- state/risk: done / medium
 - requirements: FR-20, AC-3, AC-4, AC-6, AC-12
 - scope: not bounded
-- gates: tests: .venv/bin/python -m pytest tests/w2_01_acceptance -q -p no:cacheprovider, t06: .venv/bin/python -m pytest tests/t06_harness -q -p no:cacheprovider, independent-review: pending
+- gates: tests: .venv/bin/python -m pytest tests/w2_01_acceptance -q -p no:cacheprovider, t06: .venv/bin/python -m pytest tests/t06_harness -q -p no:cacheprovider, independent-review: pass
 - next: Run the task pre-flight.
 
 ### W2-02-agent-upgrade — An upgraded agent whose committed run set on the frozen world passes the acceptance check: no true match and no ambiguous alert closed in any run or framing, every release target met, assisted review faster than manual on the modelled times, and no verdict changed by injected text in any run or framing. Work runs as limited attempts of one change and one measured run set each. Every attempt, committed or not, is a row in docs/w2-02-attempts.md: the change, the run set ID, the Console spend, a two-line note and the decision to continue, change approach or narrow scope. The log also records the attempt limit set at the pre-flight. The test gate checks the committed files only: every committed run set is in the log, the number of attempts is within the recorded limit, and the logged total spend is below USD 25. Completion also needs the owner's sign-off at independent review that the log lists every attempt, that each attempt made one change, and that the logged total matches the Console's wave-2 spend.
 
-- state/risk: queued / high
+- state/risk: active / high
 - requirements: AC-1, AC-3, AC-4, AC-5, AC-6, AC-12
 - scope: not bounded
 - gates: tests: .venv/bin/python -m pytest tests/w2_02_agent -q -p no:cacheprovider, independent-review: pending
