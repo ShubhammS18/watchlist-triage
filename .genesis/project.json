@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-27T08:16:17.282Z"
+    "updated_at": "2026-10-27T08:29:35.963Z"
   },
   "policy": {
     "ponytail": "full",
@@ -1815,6 +1815,18 @@
       "source": "Owner, 27 Oct 2026; W2-01-harness-acceptance review round 3; extends the budget in the W2-01 pre-flight",
       "recorded_at": "2026-10-27T08:16:17.280Z",
       "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-01-ELIGIBILITY-WORLD",
+      "title": "When the world is not the frozen one, no target is worked out",
+      "text": "My earlier record says a run set that is not eligible still shows its per-target results, marked as mechanism only. One case is different: when the world's manifest does not carry the frozen world's hash, the check stops at once and follows nothing from that manifest, because its file list cannot be trusted. Then no figure can be worked out safely, so each target is shown as not worked out, with the reason, marked as mechanism only. The earlier record still holds for every other case.",
+      "status": "accepted",
+      "source": "Owner, 27 Oct 2026; clarifies DEC-W2-01-ELIGIBILITY; W2-01-harness-acceptance review round 3, the should finding",
+      "recorded_at": "2026-10-27T08:29:35.962Z",
+      "paths": [
+        "harness/release_check.py"
+      ],
       "tags": []
     }
   ],
