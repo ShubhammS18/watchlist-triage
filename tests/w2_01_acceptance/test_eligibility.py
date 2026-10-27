@@ -2,12 +2,13 @@
 Each case starts from the passing oracle set or from an oracle set made with other files; its per-target results are
 still worked out, and marked mechanism only."""
 import json
+from datetime import datetime, timezone
 
 import pytest
 
 from harness import release_check
 
-from conftest import FIXTURES, SOURCED, copy_set, make_set, rewrite
+from conftest import FIXTURES, SOURCED, TRUTH, copy_set, make_set, rewrite
 
 
 def a_call_with_no_token_counts(rows):
@@ -19,6 +20,7 @@ def assert_not_eligible(result, reason):
     assert result["result"] == "NOT ELIGIBLE" and result["mechanism_only"] is True
     assert any(reason in why for why in result["not_eligible_because"]), result["not_eligible_because"]
     assert set(result["targets"]) == {*release_check.COUNTS, *release_check.RATES, "modelled_review_time"}
+    assert all(part["mechanism_only"] is True for part in result["targets"].values())
 
 
 def test_a_changed_targets_file(oracle_set, tmp_path):
@@ -79,6 +81,45 @@ def test_a_run_that_cannot_be_loaded(oracle_set, tmp_path):
     result = release_check.check(out, run_set)
     assert_not_eligible(result, "items.jsonl does not match the hash in its manifest")
     assert_not_eligible(result, "2 valid runs, fewer than 3")
+
+
+def remove(alert_ids):
+    def change(rows):
+        rows[:] = [row for row in rows if row["alert_id"] not in alert_ids]
+    return change
+
+
+def flip_a_twin_flag(rows):
+    rows[0]["twin"] = not rows[0]["twin"]
+
+
+A_TRUE_MATCH = next(alert for alert, facts in sorted(TRUTH.items())
+                    if facts["label"] == "TRUE_MATCH" and facts["twin"] is None and facts["twin_of"] is None)
+A_TWIN = next(alert for alert, facts in sorted(TRUTH.items()) if facts["twin_of"] is not None)
+
+
+@pytest.mark.parametrize("change, wrong", [
+    (remove({A_TRUE_MATCH}), "missing"),  # in every framing
+    (remove({A_TWIN, TRUTH[A_TWIN]["twin_of"]}), "missing"),  # an injection pair: the alert and its control twin
+    (flip_a_twin_flag, "with the wrong twin flag")], ids=["a true match removed", "an injection pair removed",
+                                                          "a twin flag flipped"])
+def test_a_run_that_does_not_hold_exactly_the_worlds_items(oracle_set, tmp_path, change, wrong):
+    out, run_set, ids = copy_set(oracle_set, tmp_path)
+    rewrite(out, ids[0], change)  # the manifest's hash and counts follow, so the run itself loads
+    result = release_check.check(out, run_set)
+    assert_not_eligible(result, f"{ids[0]} does not hold exactly the world's items")
+    assert wrong in next(why for why in result["not_eligible_because"] if ids[0] in why)
+
+
+def test_a_superseded_run_set(oracle_set, tmp_path):
+    out, run_set, _ = copy_set(oracle_set, tmp_path)
+    index = json.loads(out.joinpath("index.json").read_text(encoding="utf-8"))
+    index["sets"][run_set] = {"superseded_by": "a" * 64, "cause": "a test",
+                              "at": datetime.now(timezone.utc).isoformat()}
+    out.joinpath("index.json").write_text(json.dumps(index), encoding="utf-8")
+    result = release_check.check(out, run_set)
+    assert_not_eligible(result, "the index marks the run set superseded")
+    assert len(result["not_eligible_because"]) == 1 and result["failed"] == []
 
 
 def test_the_command_exits_0_only_on_pass(oracle_set, tmp_path, capsys):

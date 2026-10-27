@@ -91,6 +91,10 @@ def test_the_oracle_run_set_passes(oracle_result):
     assert oracle_result["result"] == "PASS" and oracle_result["failed"] == []
     assert oracle_result["not_eligible_because"] == [] and oracle_result["mechanism_only"] is False
     assert len(oracle_result["runs"]["completed"]) == 4 and len(oracle_result["runs"]["valid"]) == 3
+    assert all(part["mechanism_only"] is False for part in oracle_result["targets"].values())
+    beside = oracle_result["targets"]["modelled_review_time"]["shown_beside"]
+    assert len(beside) == 5 and all(set(part) == {"lower_than_manual", "assisted_per_alert", "manual_per_alert"}
+                                    for part in beside.values())
 
 
 @pytest.mark.parametrize("name, run, change, target", VARIANTS, ids=[variant[0] for variant in VARIANTS])

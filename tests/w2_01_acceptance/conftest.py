@@ -45,7 +45,7 @@ def registered():
 
 def rewrite(out, run_id, change=None, dirty=False, rehash=True):
     """Change a run in a temporary output folder consistently: `change(rows)` edits its item rows in place, the
-    items file is rewritten and, with `rehash`, its hash in the manifest follows; the run is marked dirty or clean
+    items file is rewritten and, with `rehash`, its hash and item counts in the manifest follow; the run is marked dirty or clean
     in the manifest and the index alike."""
     run_dir = Path(out).joinpath(run_id)
     manifest = json.loads(run_dir.joinpath("manifest.json").read_text(encoding="utf-8"))
@@ -56,6 +56,8 @@ def rewrite(out, run_id, change=None, dirty=False, rehash=True):
     run_dir.joinpath("items.jsonl").write_text(text, encoding="utf-8")
     if rehash:
         manifest["outputs"]["sha256"] = harness_run.records.sha256(text.encode("utf-8"))
+        twins = sum(row["twin"] for row in rows)
+        manifest["items"].update(total=len(rows), main=len(rows) - twins, twin=twins)
     manifest["git"]["dirty"] = dirty
     run_dir.joinpath("manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
     index = json.loads(Path(out).joinpath("index.json").read_text(encoding="utf-8"))
