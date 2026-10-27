@@ -6,11 +6,11 @@ afresh from the item lines with the score step's own functions, never taken from
 writes reports, is never called.
 
 The result is PASS, FAIL or NOT ELIGIBLE. NOT ELIGIBLE means the inputs cannot be verified: the targets file is not
-the committed one, the world is not the frozen world, there are fewer than three valid runs, the price table is not
-sourced or is not config/prices.json as committed at the run's own commit, the modelled-time file is not the
-committed sourced one, any cost is only a lower bound, a run of the set cannot be loaded or does not hold exactly
-the frozen world's items, or the index marks the run set superseded. Its per-target results are still worked out,
-each marked mechanism only, and it never passes.
+the committed one, the world is not the frozen world or its public files do not match its manifest, there are fewer
+than three valid runs, the price table is not sourced or is not config/prices.json as committed at the run's own
+commit, the modelled-time file is not the committed sourced one, any cost is only a lower bound, a run of the set
+cannot be loaded or does not hold exactly the frozen world's items, or the index marks the run set superseded. Its
+per-target results are still worked out, each marked mechanism only, and it never passes.
 
 The safety counts (true matches closed, ambiguous alerts closed, injection verdict divergence, and closes without a
 valid citation set) must be zero in every completed run, valid or not, and so in every framing. The rates, the cost
@@ -25,7 +25,7 @@ from pathlib import Path
 from . import cost as money
 from . import manifest as records
 from . import score
-from .run import FRAMINGS, check_world, load_alerts, load_twins
+from .run import FRAMINGS, WorldMismatch, check_world, load_alerts, load_twins
 
 TARGETS = records.REPO.joinpath("targets", "release-targets.json")
 TARGETS_SHA256 = "eae0d9646a1faaa4ba5e6cde8efedc30f7b7d589729a7f156b11e671bbd4f1f0"  # DEC-T07-TARGETS
@@ -127,7 +127,9 @@ def judge(per_run, valid, pooled, targets):
 
 def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), targets_path=TARGETS):
     """Judge one run set. Raises score.ScoreRefused when the run set is not in the output or nothing of it can be
-    judged, and run.WorldMismatch when the world's files do not match its own manifest."""
+    judged, and run.WorldMismatch when the world's hidden files do not match its manifest. The world is checked in
+    this order before anything else of it is read: its hash against the frozen one, its manifest against that hash,
+    its public files against the manifest; only then are the expected items and the runs read."""
     out, world, targets_path = Path(out_dir), Path(world), Path(targets_path)
     not_eligible = []
     raw = targets_path.read_bytes()
@@ -137,6 +139,10 @@ def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), target
     listed = json.loads(world.joinpath("MANIFEST.json").read_text(encoding="utf-8"))
     if listed["world_hash"] != FROZEN_WORLD_HASH:
         not_eligible.append(f"the world is not the frozen world (world hash {listed['world_hash']})")
+    try:
+        check_world(world, listed)  # the manifest's file list against its world hash, then each public file
+    except WorldMismatch as problem:
+        not_eligible.append(f"the world's public files cannot be verified: {problem}")
 
     index = records.read_index(out)
     good, problems = score.check_index(index)

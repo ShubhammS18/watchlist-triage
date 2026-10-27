@@ -2,13 +2,14 @@
 Each case starts from the passing oracle set or from an oracle set made with other files; its per-target results are
 still worked out, and marked mechanism only."""
 import json
+import shutil
 from datetime import datetime, timezone
 
 import pytest
 
 from harness import release_check
 
-from conftest import FIXTURES, SOURCED, TRUTH, copy_set, make_set, rewrite
+from conftest import FIXTURES, SOURCED, TRUTH, WORLD, copy_set, make_set, rewrite
 
 
 def a_call_with_no_token_counts(rows):
@@ -109,6 +110,24 @@ def test_a_run_that_does_not_hold_exactly_the_worlds_items(oracle_set, tmp_path,
     result = release_check.check(out, run_set)
     assert_not_eligible(result, f"{ids[0]} does not hold exactly the world's items")
     assert wrong in next(why for why in result["not_eligible_because"] if ids[0] in why)
+
+
+@pytest.mark.parametrize("name, alert", [("alerts.jsonl", A_TRUE_MATCH), ("twin_alerts.jsonl", A_TWIN)],
+                         ids=["an alert removed from the public alert list", "a twin removed from the twin list"])
+def test_a_world_whose_public_files_do_not_match_its_manifest(oracle_set, tmp_path, name, alert):
+    world = tmp_path.joinpath("world")
+    shutil.copytree(WORLD, world)
+    listed = world.joinpath("agent", name)
+    lines = listed.read_text(encoding="utf-8").split("\n")
+    kept = [line for line in lines if not line or json.loads(line)["id"] != alert]
+    assert len(kept) == len(lines) - 1
+    listed.write_text("\n".join(kept), encoding="utf-8")
+    out, run_set, ids = copy_set(oracle_set, tmp_path)
+    for number, run in enumerate(ids):  # every run then holds exactly the changed list's items
+        rewrite(out, run, remove({alert}), dirty=number == 3)
+    result = release_check.check(out, run_set, world=world)
+    assert_not_eligible(result, f"the world's public files cannot be verified: agent/{name} does not match")
+    assert len(result["not_eligible_because"]) == 1 and len(result["runs"]["valid"]) == 3
 
 
 def test_a_superseded_run_set(oracle_set, tmp_path):
