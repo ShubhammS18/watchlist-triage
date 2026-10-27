@@ -137,9 +137,9 @@ def test_the_time_half_of_ac6_is_decided_at_base_under_four_eyes_with_the_other_
     base = escalate[2]["modelled_time"]["sets"]["BASE"]
     assert base["STRICT_FOUR_EYES"]["assisted_per_alert"]["decimal"] == base["none"]["assisted_per_alert"]["decimal"] == "17.000000"
     assert base["always_escalate_beats_manual"] is False
-    # always-close passes the time half and has closes to judge, so AC-6 stays open until AC-16 sets targets
-    assert close[3]["acceptance"]["AC-6"]["result"] == "not determined: no AC-16 targets exist yet"
-    assert close[3]["acceptance"]["AC-6"]["citation_accuracy"]["result"].startswith("not determined")
+    # always-close passes the time half and has closes to judge, so AC-6 is left to the release check (python -m harness acceptance)
+    assert close[3]["acceptance"]["AC-6"]["result"] == "not determined here: the release targets are judged by python -m harness acceptance"
+    assert close[3]["acceptance"]["AC-6"]["citation_accuracy"]["result"] == "not determined here: the release targets are judged by python -m harness acceptance"
 
 
 # ---- the acceptance check on hand-made runs

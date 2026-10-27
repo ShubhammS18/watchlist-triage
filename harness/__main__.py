@@ -10,8 +10,13 @@
     python -m harness score OUT WORLD [--rescore]           writes a report for every completed run under OUT that
                                                             has none; --rescore replaces the reports that exist
     python -m harness supersede OUT OLD NEW --cause TEXT    a human records that run set OLD is superseded by NEW
+    python -m harness acceptance OUT RUN_SET [--world WORLD]
+                                                            judges run set RUN_SET under OUT against the release
+                                                            targets; writes nothing, prints the result as JSON, and
+                                                            exits 0 only on PASS
 """
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -38,6 +43,10 @@ def main(arguments=None):
     one.add_argument("old")
     one.add_argument("new")
     one.add_argument("--cause", required=True)
+    one = commands.add_parser("acceptance")
+    one.add_argument("out")
+    one.add_argument("run_set")
+    one.add_argument("--world", default=str(records.REPO.joinpath("data", "world")))
     args = parser.parse_args(arguments)
     try:
         if args.command in ("run", "run-and-score"):
@@ -63,6 +72,11 @@ def main(arguments=None):
                 print(f"excluded {run_id}: {reason}", file=sys.stderr)
             if done["excluded"]:
                 return 1
+        elif args.command == "acceptance":
+            from .release_check import check  # loads the scoring code, like the score command
+            result = check(args.out, args.run_set, args.world)
+            print(json.dumps(result, indent=2, sort_keys=True))
+            return 0 if result["result"] == "PASS" else 1
         else:
             records.supersede(args.out, args.old, args.new, args.cause)
             print(f"run set {args.old[:8]} is superseded by {args.new[:8]}")

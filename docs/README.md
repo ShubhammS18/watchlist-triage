@@ -14,5 +14,6 @@ the baseline, read `baseline-report.md`.
 | `harness-design.md` | T06-harness | Done | `:30-31` and `:635` (only a test-only fake model): the harness has run a real model; `:134-135` and `:681-682` (a `runs/` folder inside the repository): runs stay outside the repository and are copied into `baseline/` |
 | `baseline-report.md` | T07-baseline-run | Approved, 22 Oct 2026 (review round 4) | the current doc; its "Supersedes" table repeats the lines above |
 | `isolation-design.md` | W2-07-dns-isolation | Approved, 25 Oct 2026 (review round 3) | the current doc for the name-lookup guard; its "Supersedes" table repeats the `model-interface-design.md` lines `:18-19` and `:94-95` |
+| `acceptance-design.md` | W2-01-harness-acceptance | Built; independent review pending | the current doc for the release check |
 
 Review reports are in `reviews/`; the evidence behind the T07 report is in `evidence/t07/`.
