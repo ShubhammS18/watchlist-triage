@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-27T08:42:03.810Z"
+    "updated_at": "2026-10-27T09:29:26.122Z"
   },
   "policy": {
     "ponytail": "full",
@@ -1842,6 +1842,58 @@
         "docs/reviews/W2-01-harness-acceptance-review-round-3.md",
         "docs/reviews/W2-01-harness-acceptance-review-round-4.md"
       ],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-02-PRACTICE-WORLD",
+      "title": "Mistakes are studied on a practice world; the frozen world is only measured",
+      "text": "I study the agent's mistakes on a practice world made by the same generator from a different seed, full size, kept outside the repository, with its seed and hash written in the attempt log so it can be regenerated. Its labels may be read for error analysis. The frozen world is used only to measure each attempt, through its figures; its labels are not read. The fresh-seed world at release stays the final test, with its seed fixed by the freeze commit's hash. A smaller practice world would need generator changes for no real saving, and working on the frozen world alone would mean either guessing blind or tuning on the test.",
+      "status": "accepted",
+      "source": "Owner, 27 Oct 2026; W2-02-agent-upgrade pre-flight point 2; FR-23",
+      "recorded_at": "2026-10-27T09:29:19.925Z",
+      "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-02-RULES-FIRST",
+      "title": "Rubric rules decide what the fields settle; the model reads only snippets",
+      "text": "Alerts that the rubric settles from structured fields alone are decided by code: those it can never close are escalated, and those it can close with no snippet are closed, with no model call. The model is asked only about alerts whose close depends on reading a snippet. The rule code is written from the published rubric only, never from the generator; a static test checks that the agent imports nothing from the generator and contains none of its snippet templates. Because the generator used the same rubric to make the labels, a high score on synthetic worlds shows that the rubric can be written as code and that the model is used narrowly; it does not show that the agent handles real alerts, whose fields are messier. The fresh-seed test does not remove this limit, since the same generator builds it. The report and the README say this beside the results. I rejected improving the prompt alone, which is what the baseline did, and a model second opinion on every rule close, which would bring back the over-escalation. During the pre-flight the groups were first counted with the generator's field-comparison code; before any rule code was written, they were recounted from the rubric and the public fields alone, and the counts agreed.",
+      "status": "accepted",
+      "source": "Owner, 27 Oct 2026; W2-02-agent-upgrade pre-flight points 3 and 4; anchor A.05.1; SPEC.md Risks, synthetic-world bias",
+      "recorded_at": "2026-10-27T09:29:21.804Z",
+      "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-02-SPEND-PLAN",
+      "title": "Spend plan for the upgrade, with the release runs reserved first",
+      "text": "Within the USD 25 ceiling for wave 2, which includes the 5.51 already in credit, 6.00 is locked for the release runs, three on the frozen world and three on the fresh-seed world; 9.00 is for up to six frozen-world attempts; 4.00 is for practice runs; 2.00 is margin; 4.00 is unallocated. Credit is added in steps, only when the attempt log shows it is needed, prepaid with auto-reload off. The log keeps a running total, checked against the Console at review.",
+      "status": "accepted",
+      "source": "Owner, 27 Oct 2026; W2-02-agent-upgrade pre-flight point 1; follows DEC-W2-SPEND",
+      "recorded_at": "2026-10-27T09:29:23.272Z",
+      "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-02-LAYOUT",
+      "title": "The upgraded agent is a new package; each agent declares its own prompt and rule-code hash",
+      "text": "The upgraded agent is a new package beside the baseline agent, so the committed baseline stays reproducible. The harness wrote the baseline's prompt into every run's manifest whichever agent ran, which would make the new agent's manifests name a prompt it did not use. Each agent now supplies its own prompt text and hash, and a hash of its rule code, and the harness records those. The earlier harness tests change only where they assume the baseline prompt; the full suite and its by-hand breakage proofs are rerun. Changing the baseline in place, or leaving the harness as it is, were rejected.",
+      "status": "accepted",
+      "source": "Owner, 27 Oct 2026; W2-02-agent-upgrade pre-flight point 5; NFR-3",
+      "recorded_at": "2026-10-27T09:29:24.709Z",
+      "paths": [
+        "harness/run.py"
+      ],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-02-ATTEMPTS",
+      "title": "At most six measured attempts; practice runs are logged but not counted",
+      "text": "An attempt is one change and one measured run set on the frozen world. The limit is six, matching the attempt budget. Practice-world runs do not count as attempts, but each is logged with its cost. Every attempt is a row in docs/w2-02-attempts.md with the change, the run set, the cost, a two-line note and a decision to continue, change approach or narrow scope. If six attempts do not pass, I either start a different approach with a new decision record or narrow the scope and report the missed targets as a gap; there is no quiet seventh attempt. The gate checks that the acceptance check passes on the committed run set, that the log matches the committed run sets and stays within the limit and below USD 25, the guards on rules and generator text, and that the manifest names the new agent's own prompt and rule-code hash.",
+      "status": "accepted",
+      "source": "Owner, 27 Oct 2026; W2-02-agent-upgrade pre-flight point 6; DEC-W2-PLAN; W2-02-agent-upgrade task outcome",
+      "recorded_at": "2026-10-27T09:29:26.122Z",
+      "paths": [],
       "tags": []
     }
   ],
