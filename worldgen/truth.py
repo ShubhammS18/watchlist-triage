@@ -11,8 +11,8 @@ HIDDEN_DIR = ROOT.parent.joinpath("data", "world", "hidden")
 LABEL_FIELDS = ("label", "correct_action", "primary_family", "secondary_family", "hard_case", "recipe", "injection")
 
 
-def _read(folder, name):
-    text = Path(folder).joinpath(name).read_text(encoding="utf-8")
+def _read(folder, name, texts=None):
+    text = texts[name].decode("utf-8") if texts is not None else Path(folder).joinpath(name).read_text(encoding="utf-8")
     return [json.loads(line) for line in text.split("\n") if line]
 
 
@@ -20,18 +20,19 @@ def load_snippet_tags(hidden_dir=HIDDEN_DIR):
     return {row["evidence_item_id"]: row["tag"] for row in _read(hidden_dir, "snippet_tags.jsonl")}
 
 
-def load_truth(hidden_dir=HIDDEN_DIR):
-    """{alert id: truth}. Covers the 600 alerts and the 15 control twins.
+def load_truth(hidden_dir=HIDDEN_DIR, texts=None):
+    """{alert id: truth}. Covers the 600 alerts and the 15 control twins. With `texts` ({file name: bytes}, bytes
+    already checked against the world manifest) nothing is read from `hidden_dir`.
 
     A twin has the label and evidence key of the alert it copies; `twin_of` names that alert and
     `removed_evidence_item_id` the injected item the twin leaves out. For an alert, `twin` names its control twin.
     """
-    keys = {row["alert_id"]: row["evidence_item_ids"] for row in _read(hidden_dir, "supporting_evidence.jsonl")}
+    keys = {row["alert_id"]: row["evidence_item_ids"] for row in _read(hidden_dir, "supporting_evidence.jsonl", texts)}
     truth = {}
-    for row in _read(hidden_dir, "labels.jsonl"):
+    for row in _read(hidden_dir, "labels.jsonl", texts):
         truth[row["alert_id"]] = {**{field: row[field] for field in LABEL_FIELDS}, "evidence_key": keys[row["alert_id"]],
                                   "twin": None, "twin_of": None, "removed_evidence_item_id": None}
-    for link in _read(hidden_dir, "twin_links.jsonl"):
+    for link in _read(hidden_dir, "twin_links.jsonl", texts):
         original = truth[link["original_alert_id"]]
         original["twin"] = link["twin_alert_id"]
         truth[link["twin_alert_id"]] = {**original, "injection": False, "twin": None,

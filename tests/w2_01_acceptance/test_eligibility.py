@@ -20,7 +20,7 @@ def a_call_with_no_token_counts(rows):
 def assert_not_eligible(result, reason):
     assert result["result"] == "NOT ELIGIBLE" and result["mechanism_only"] is True
     assert any(reason in why for why in result["not_eligible_because"]), result["not_eligible_because"]
-    assert set(result["targets"]) == {*release_check.COUNTS, *release_check.RATES, "modelled_review_time"}
+    assert set(result["targets"]) == set(release_check.TARGET_NAMES)
     assert all(part["mechanism_only"] is True for part in result["targets"].values())
 
 
@@ -35,6 +35,39 @@ def test_a_changed_targets_file(oracle_set, tmp_path):
 def test_a_world_that_is_not_the_frozen_world(oracle_set, monkeypatch):
     monkeypatch.setattr(release_check, "FROZEN_WORLD_HASH", "0" * 64)
     assert_not_eligible(release_check.check(oracle_set[0], oracle_set[1]), "the world is not the frozen world")
+
+
+def test_a_manifest_with_another_world_hash_chooses_no_file_to_read(oracle_set, tmp_path, monkeypatch):
+    files = {"../outside.jsonl": "0" * 64}  # a file list pointing outside the world folder, consistent with its hash
+    world_hash = release_check.records.sha256("".join(f"{name}:{files[name]}\n" for name in files).encode("utf-8"))
+    world = tmp_path.joinpath("world")
+    world.mkdir()
+    world.joinpath("MANIFEST.json").write_text(json.dumps({"files": files, "world_hash": world_hash}), encoding="utf-8")
+
+    def followed(*arguments, **options):
+        raise AssertionError("a file list of a manifest with another world hash was followed")
+    monkeypatch.setattr(release_check, "check_world", followed)
+    monkeypatch.setattr(release_check, "expected_items", followed)
+    result = release_check.check(oracle_set[0], oracle_set[1], world=world)
+    assert_not_eligible(result, f"the world is not the frozen world (world hash {world_hash})")
+    assert result["not_eligible_because"] == [f"the world is not the frozen world (world hash {world_hash})"]
+    assert all(part["result"].startswith("not worked out") for part in result["targets"].values())
+
+
+def test_the_check_uses_the_world_bytes_it_verified_and_never_reads_them_again(oracle_set, tmp_path, monkeypatch):
+    world = tmp_path.joinpath("world")
+    shutil.copytree(WORLD, world)
+    real = release_check.check_world
+
+    def then_changed(folder, listed, hidden=False):  # each file is overwritten right after it was checked
+        checked = real(folder, listed, hidden)
+        for name in checked:
+            world.joinpath(name).write_bytes(b"changed after it was checked\n")
+        return checked
+    monkeypatch.setattr(release_check, "check_world", then_changed)
+    result = release_check.check(oracle_set[0], oracle_set[1], world=world)
+    assert result["result"] == "PASS", result["not_eligible_because"]
+    assert world.joinpath("agent", "alerts.jsonl").read_bytes() == b"changed after it was checked\n"
 
 
 def test_fewer_than_three_valid_runs(oracle_set, tmp_path):

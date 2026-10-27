@@ -25,7 +25,7 @@ from pathlib import Path
 from . import cost as money
 from . import manifest as records
 from . import score
-from .run import FRAMINGS, WorldMismatch, check_world, load_alerts, load_twins
+from .run import FRAMINGS, WorldMismatch, check_world
 
 TARGETS = records.REPO.joinpath("targets", "release-targets.json")
 TARGETS_SHA256 = "eae0d9646a1faaa4ba5e6cde8efedc30f7b7d589729a7f156b11e671bbd4f1f0"  # DEC-T07-TARGETS
@@ -47,6 +47,7 @@ COUNTS = {
     "injection_verdict_divergence": ("AC-12", lambda tree: tree["injection"]["verdict_divergence"]["overall"]["differ"]),
     "closes_without_valid_citations": ("AC-2", lambda tree: tree["ac2"]["main"]["violations"] + tree["ac2"]["twin"]["violations"]),
 }
+TARGET_NAMES = (*COUNTS, *RATES, "modelled_review_time")
 
 
 def _fraction(value):
@@ -72,12 +73,12 @@ def committed_price_hash(commit):
         return None
 
 
-def expected_items(world):
+def expected_items(public):
     """{item ID: whether it is a control twin} for every alert and twin of the world's public alert lists, in every
-    framing: what one completed run must hold, exactly."""
-    agent_dir = Path(world).joinpath("agent")
-    lists = ((False, load_alerts(agent_dir)), (True, load_twins(agent_dir)))
-    return {f"{alert['id']}/{framing}": twin for twin, alerts in lists for alert in alerts for framing in FRAMINGS}
+    framing: what one completed run must hold, exactly. `public` holds the checked bytes of the public files."""
+    ids = lambda name: [json.loads(line)["id"] for line in public[name].decode("utf-8").split("\n") if line]
+    lists = ((False, ids("agent/alerts.jsonl")), (True, ids("agent/twin_alerts.jsonl")))
+    return {f"{alert}/{framing}": twin for twin, alerts in lists for alert in alerts for framing in FRAMINGS}
 
 
 def item_problem(lines, expected):
@@ -128,8 +129,10 @@ def judge(per_run, valid, pooled, targets):
 def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), targets_path=TARGETS):
     """Judge one run set. Raises score.ScoreRefused when the run set is not in the output or nothing of it can be
     judged, and run.WorldMismatch when the world's hidden files do not match its manifest. The world is checked in
-    this order before anything else of it is read: its hash against the frozen one, its manifest against that hash,
-    its public files against the manifest; only then are the expected items and the runs read."""
+    this order before anything else of it is read: its hash against the frozen one (if it differs, nothing more of
+    the world is read and no target is worked out), its manifest against that hash, its public files against the
+    manifest; only then are the expected items and the runs read. Each world file is read once: the expected items
+    and the truth come from the very bytes that were checked."""
     out, world, targets_path = Path(out_dir), Path(world), Path(targets_path)
     not_eligible = []
     raw = targets_path.read_bytes()
@@ -137,12 +140,19 @@ def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), target
         not_eligible.append(f"the targets file is not the committed one (SHA-256 {records.sha256(raw)})")
     targets = json.loads(raw)["targets"]
     listed = json.loads(world.joinpath("MANIFEST.json").read_text(encoding="utf-8"))
-    if listed["world_hash"] != FROZEN_WORLD_HASH:
-        not_eligible.append(f"the world is not the frozen world (world hash {listed['world_hash']})")
+    world_hash = listed.get("world_hash") if isinstance(listed, dict) else None
+    if world_hash != FROZEN_WORLD_HASH:  # stop here: no file list of that manifest is followed
+        not_eligible.append(f"the world is not the frozen world (world hash {world_hash})")
+        unread = {"result": "not worked out: the world is not the frozen world", "mechanism_only": True}
+        return {"result": "NOT ELIGIBLE", "run_set": run_set, "world_hash": world_hash,
+                "targets_sha256": records.sha256(raw), "mechanism_only": True, "not_eligible_because": not_eligible,
+                "failed": [], "runs": None, "targets": {name: dict(unread) for name in TARGET_NAMES},
+                "information": None}
     try:
-        check_world(world, listed)  # the manifest's file list against its world hash, then each public file
+        public = check_world(world, listed)  # the manifest's file list against its world hash, then each public file
     except WorldMismatch as problem:
         not_eligible.append(f"the world's public files cannot be verified: {problem}")
+        public = None  # no unchecked bytes are used: the run items are then not compared with the world
 
     index = records.read_index(out)
     good, problems = score.check_index(index)
@@ -153,7 +163,7 @@ def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), target
     entries = [entry for entry in good if entry["run_set"] == run_set]
     if not entries:
         raise score.ScoreRefused(f"no run of run set {run_set} is in {out}")
-    loaded, expected = {}, expected_items(world)
+    loaded, expected = {}, None if public is None else expected_items(public)
     for entry in entries:
         try:
             got = score._load_run(out, entry, listed["world_hash"])
@@ -162,7 +172,7 @@ def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), target
             continue
         if got is None:
             continue
-        wrong = item_problem(got[1], expected)
+        wrong = expected is not None and item_problem(got[1], expected)
         if wrong:  # left out, as a run that cannot be loaded is: its figures would not be the world's
             not_eligible.append(f"{entry['run_id']} does not hold exactly the world's items: {wrong}")
         else:
@@ -184,9 +194,9 @@ def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), target
     if any(m["modelled_time"]["sha256"] != TIME_SHA256 for m in manifests):
         not_eligible.append("the modelled-time file is not the committed sourced one")
 
-    check_world(world, listed, hidden=True)
+    hidden = check_world(world, listed, hidden=True)
     from worldgen.truth import load_truth  # only here, after every output was checked, as in the score step
-    truth = load_truth(world.joinpath("hidden"))
+    truth = load_truth(texts={name.removeprefix("hidden/"): data for name, data in hidden.items()})
     per_run = {run: score.figures(lines, truth, prices, times) for run, (_, lines) in loaded.items()}
     if any(tree["cost"][part]["at_least"] for tree in per_run.values() for part in ("main", "twin", "total")):
         not_eligible.append("some cost is only a lower bound: a call without token counts or without a price")

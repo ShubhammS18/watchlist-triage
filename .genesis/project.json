@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-26T14:10:30.938Z"
+    "updated_at": "2026-10-27T08:16:17.282Z"
   },
   "policy": {
     "ponytail": "full",
@@ -1804,6 +1804,16 @@
       "status": "accepted",
       "source": "Owner, 26 Oct 2026; W2-01-harness-acceptance pre-flight points (b), (d), (e); targets/release-targets.json",
       "recorded_at": "2026-10-26T14:10:30.937Z",
+      "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-01-REVIEW-BUDGET",
+      "title": "One extra review round, limited to the last two fixes",
+      "text": "I set a limit of three review rounds before the first round. The third round still found a blocker: the check verified the public alert list and then read it again, so the bytes it used were not the bytes it verified. It also found that a manifest with the wrong world hash could still choose which files to read. Both fixes are small. I am allowing one more round, limited to these two fixes, so that the approval rests on a reviewed fix. If that round finds anything more, I fix it and record it without another round.",
+      "status": "accepted",
+      "source": "Owner, 27 Oct 2026; W2-01-harness-acceptance review round 3; extends the budget in the W2-01 pre-flight",
+      "recorded_at": "2026-10-27T08:16:17.280Z",
       "paths": [],
       "tags": []
     }

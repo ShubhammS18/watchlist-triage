@@ -154,14 +154,18 @@ def load_config(path):
 def check_world(world, listed, hidden=False):
     """Check a world against `listed`, its MANIFEST.json. By default this is the agent-side check of the run
     step: every file outside hidden/, and none inside it. With `hidden` it checks the hidden files instead,
-    which only the score step and the check-hidden command do."""
+    which only the score step and the check-hidden command do. Returns {name: bytes} of the files it checked, each
+    read once, so that a caller can use the very bytes that were checked."""
     files = listed["files"]
     lines = "".join(f"{name}:{files[name]}\n" for name in sorted(files))
     if records.sha256(lines.encode("utf-8")) != listed["world_hash"]:
         raise WorldMismatch("the manifest's world_hash does not match its own file list")
+    checked = {}
     for name in sorted(files):
-        if name.startswith("hidden/") == hidden and records.sha256(Path(world).joinpath(name).read_bytes()) != files[name]:
+        if name.startswith("hidden/") == hidden and \
+                records.sha256(checked.setdefault(name, Path(world).joinpath(name).read_bytes())) != files[name]:
             raise WorldMismatch(f"{name} does not match the world manifest")
+    return checked
 
 
 def bundles(world):

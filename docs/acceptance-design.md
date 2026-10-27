@@ -60,9 +60,14 @@ Choices made in the code, within the records:
   commit, read from git (as a manifest hashes it). A later model brings its prices by committing them there first.
 - **A run that cannot be loaded** makes the set not eligible, as the score step's fail-closed rule does.
 - **The world is verified before it is read**, in this order: its hash against the frozen one, its manifest's
-  file list against that hash, each public file against the manifest. A mismatch makes the set not eligible. Only
-  then are the expected items and the runs read; the hidden files are checked against the manifest before the
+  file list against that hash, each public file against the manifest. A mismatch makes the set not eligible. If the
+  world hash is not the frozen one, the check stops there: no file list of that manifest is followed, no run is
+  read, and every target is reported "not worked out", marked mechanism only. Only after the public files are
+  verified are the expected items and the runs read; the hidden files are checked against the manifest before the
   labels are loaded.
+- **Each world file is read once.** The expected items are built from the very bytes that were hashed, and the
+  labels are loaded from the checked hidden bytes (`load_truth(texts=...)`); no world file is opened again after
+  it is verified. If the public files cannot be verified, the run items are not compared with the world.
 - **A run that does not hold exactly the frozen world's items** makes the set not eligible, and is left out of the
   figures: every alert of the public alert list and every control twin of the public twin list, each in every
   framing, with the right twin flag. A missing, extra or wrongly flagged item is named in the reason. The list comes
@@ -101,7 +106,9 @@ framing and by primary family; the citation differences also by label.
   match its manifest, a run with one true match removed in every framing, a run with one injection pair removed,
   a run with one twin flag flipped (each with its manifest's hash and counts made consistent), and a superseded run
   set, and a world copy with one alert removed from its public alert list or one twin from its twin list (the runs
-  changed to match). Every per-target entry is then marked mechanism only; on the passing oracle set none is.
+  changed to match), a manifest with another world hash whose file list points outside the world folder (nothing
+  of it is followed), and a world copy whose files are each overwritten right after they are checked (the check
+  still passes, on the bytes it checked). Every per-target entry is then marked mechanism only; on the passing oracle set none is.
 - **Six deliberate breakages** of the check, each in its own shared git clone with the uncommitted work laid over
   it, each make their named guard test fail, while the guard passes on an untouched clone
   (`test_mutation.py`, with T06's proof machinery; the real files are unchanged).
