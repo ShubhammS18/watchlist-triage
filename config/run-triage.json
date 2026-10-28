@@ -1,0 +1,10 @@
+{
+  "agent": "triage",
+  "world": "../data/world",
+  "model_config": "model.json",
+  "workers": 4,
+  "pacer_per_minute": 120,
+  "infra_invalid_threshold": "0.02",
+  "price_table": "prices.json",
+  "modelled_time": "modelled_time.json"
+}

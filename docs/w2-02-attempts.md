@@ -26,7 +26,8 @@ cost but do not count as attempts. Every attempt is a row, whether its run set i
 | Date | Change | Agent commit | World | Runs | Key figures | Spend USD | Note |
 |---|---|---|---|---|---|---|---|
 | 27 Oct 2026 | rules first; group C to the model with the baseline prompt, unchanged (the attempt-1 design) | 99f4268 | practice, seed 20261027 (`e2cbcb69`) | 1 (`20261027T100058402618Z-5eed2587`, run set `5eed2587`) | true matches closed 0; ambiguous closed 0; over-escalation 439/1620 = 27.10%; consistency 511/600 = 85.17%; citation accuracy 1181/1181; injection verdict divergence 4/45; cost per item USD 0.000094; modelled time 44.58 against 20.00 manual (BASE, four eyes) | 0.17 | Console, w2-02-practice key. Harness's own cost USD 0.1719206: 888 calls, all claude-haiku-5-5, every one with token counts, no transient failure; 950 s |
+| 28 Oct 2026 | group C asks only whether a note links the customer to the listed person (names and notes, no decisive fields); LINK / NO_LINK / UNSURE, only NO_LINK closes | 9b998f3 | practice, seed 20261027 (`e2cbcb69`) | 1 (`20261028T124139581023Z-649f1615`, run set `649f1615`) | true matches closed 0; ambiguous closed 0; over-escalation 4/1620 = 0.25%; consistency 596/600 = 99.33%; citation accuracy 1616/1616; injection verdict divergence 0/45; cost per item USD 0.000052; modelled time 16.06 against 20.00 manual (BASE, four eyes) | 0.10 | Console, w2-02-practice key: balance 5.34 before, 5.24 after. Harness's own cost USD 0.0961643: 888 calls, all claude-haiku-5-5, every one with token counts, no transient failure; 925 s |
 
 ## Running total
 
-Wave-2 spend: USD 0.17 (before this log 0.00 + attempts 0.00 + practice 0.17 + release 0.00)
+Wave-2 spend: USD 0.27 (before this log 0.00 + attempts 0.00 + practice 0.27 + release 0.00)
