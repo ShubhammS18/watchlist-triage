@@ -38,15 +38,15 @@ from harness import cost as money
 from harness import manifest as records
 from harness.run import bundles, load_config
 from model_interface.anthropic_api import API_URL, KEY_VARIABLE, VERSION, Anthropic
-from triage_agent.rules import decide
+from triage_agent.recommend import messages_for
 
 REPO = records.REPO
 # The recorded run settings (DEC-T07-RUN-SETTINGS-2, DEC-T07-PROVIDER-2). A change needs a superseding record first.
 RECORDED = {"provider": "anthropic", "temperature": 1, "thinking": "disabled", "max_tokens": 512, "timeout_s": 30,
             "workers": 4, "pacer_per_minute": 120, "infra_invalid_threshold": "0.02"}
-# The agents a paid run may use, chosen by the run configuration's "agent" (DEC-W2-02-LAYOUT), and for each whether
-# it sends an item to the model; the upgraded agent sends only the items its rules do not decide.
-MODEL_AGENTS = {"baseline": lambda payload: True, "triage": lambda payload: decide(payload["items"]) is None}
+# The agents a paid run may use, chosen by the run configuration's "agent" (DEC-W2-02-LAYOUT), and for each the
+# messages it sends the model for an item, or None: the upgraded agent sends only the items its rules do not decide.
+MODEL_AGENTS = {"baseline": prompt.build_messages, "triage": messages_for}
 ENV = {"MEMORY_GUARD_MAX_SECONDS": "7200", "BENCH_MAX_S": "0.82"}
 CREDIT_MARGIN = Fraction(3, 2)
 REFUSAL_CHECKPOINT = Fraction(2, 100)  # more than this share of run 1's items refused: stop and decide
@@ -182,11 +182,11 @@ def expected_cost(world, table, model, max_tokens, agent="baseline"):
     to the model, every prompt byte one input token, every answer max_tokens output tokens. Retries are not counted."""
     calls = size = 0
     for item in bundles(world):
-        payload = build_payload(item["evidence"])
-        if not MODEL_AGENTS[agent](payload):
+        messages = MODEL_AGENTS[agent](build_payload(item["evidence"]))
+        if messages is None:
             continue
         calls += 1
-        size += sum(len(m["content"].encode("utf-8")) for m in prompt.build_messages(payload))
+        size += sum(len(m["content"].encode("utf-8")) for m in messages)
     prices = table["models"][model]
     total = (size * Fraction(Decimal(prices["input"])) + calls * max_tokens * Fraction(Decimal(prices["output"])))
     return calls, size, total / 1_000_000

@@ -7,11 +7,11 @@ import json
 
 import pytest
 
-import triage_agent
 from harness import agents
 from harness import manifest as records
 from harness import run as harness_run
 from triage_agent import recommend as agent
+from triage_agent.record import PROMPT, rule_code_sha256
 
 from conftest import REPO
 
@@ -22,11 +22,8 @@ BASELINE_SET = "f2e614d2d530dc65c1d9f4dbec452d93296f5f52420b0f7829ff4404e7a99305
 
 @pytest.fixture
 def run_agent(practice_world, tmp_path, monkeypatch):
-    def ask_model(items, model, settings, sink=None, retries=2, correlation_id=None):  # as the baseline call hands over
-        result, records_ = agents.always_escalate(items, model, settings, correlation_id)
-        sink.extend(records_)
-        return result
-    monkeypatch.setattr(agent, "ask_model", ask_model)
+    monkeypatch.setattr(agent, "ask", lambda payload, model, settings, retries:
+                        agents.always_escalate(payload["items"], model, settings, None)[0])
     tmp_path.joinpath("model.json").write_text(json.dumps(STUB), encoding="utf-8")
 
     def run(name, out="out"):
@@ -43,17 +40,17 @@ def run_agent(practice_world, tmp_path, monkeypatch):
 
 def test_the_manifest_names_the_agents_own_prompt_and_rule_code_hash(run_agent):
     manifest = run_agent("triage")
-    rules = hashlib.sha256(REPO.joinpath("triage_agent", "rules.py").read_bytes()).hexdigest()
-    assert manifest["agent"] == "triage" and manifest["prompt"] == triage_agent.PROMPT
+    rules = rule_code_sha256()
+    assert manifest["agent"] == "triage" and manifest["prompt"] == PROMPT
     assert manifest["prompt"]["rule_code_sha256"] == rules
     assert hashlib.sha256(manifest["prompt"]["text"].encode("utf-8")).hexdigest() == manifest["prompt"]["sha256"]
-    assert manifest["run_set_inputs"]["prompt_hash"] == triage_agent.PROMPT["sha256"]
+    assert manifest["run_set_inputs"]["prompt_hash"] == PROMPT["sha256"] != harness_run.PROMPTS["baseline"]["sha256"]
     assert manifest["run_set_inputs"]["rule_code_hash"] == rules
 
 
 def test_two_runs_differing_only_in_rule_code_are_different_run_sets(run_agent, monkeypatch):
     first = run_agent("triage", "one")
-    monkeypatch.setitem(harness_run.PROMPTS, "triage", {**triage_agent.PROMPT, "rule_code_sha256": "0" * 64})
+    monkeypatch.setitem(harness_run.PROMPTS, "triage", {**PROMPT, "rule_code_sha256": "0" * 64})
     other = run_agent("triage", "two")
     differ = {key for key in first["run_set_inputs"] if first["run_set_inputs"][key] != other["run_set_inputs"][key]}
     assert differ == {"rule_code_hash"} and first["run_set"] != other["run_set"]

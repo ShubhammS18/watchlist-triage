@@ -2,8 +2,8 @@
 way of using them: a rule decision calls no model, everything else goes to the baseline's model call unchanged."""
 import pytest
 
-import triage_agent
 from triage_agent import recommend as agent
+from triage_agent import record
 from triage_agent.rules import decide
 
 from conftest import REPO
@@ -54,19 +54,19 @@ def bundle(given):
     return [{**item, "as_of_date": "2026-09-30"} for item in given]
 
 
-def test_a_rule_decision_calls_no_model_and_a_snippet_case_goes_to_the_baseline_call(monkeypatch):
+def test_a_rule_decision_calls_no_model_and_a_snippet_case_goes_to_the_question(monkeypatch):
     asked = []
 
-    def ask_model(items, model, settings, **options):
-        asked.append([item["id"] for item in items])
-        return {"asked": True}
-    monkeypatch.setattr(agent, "ask_model", ask_model)
+    def ask(payload, model, settings, retries):
+        asked.append([item["id"] for item in payload["items"]])
+        return {"asked": True, "log": {}}
+    monkeypatch.setattr(agent, "ask", ask)
     never = lambda request: pytest.fail("a rule decision called the model")
     sink = []
     result = agent.recommend(bundle(items([DOB], [OTHER_DOB])), never, None, sink=sink, correlation_id="a/1")
     assert result["recommendation"] == "CLOSE" and result["log"]["attempts"] == 0 and sink == [result["log"]]
     assert result["log"]["correlation_id"] == "a/1" and not result["system_failure"]
-    assert agent.recommend(bundle(items([DOB], [OTHER_DOB], snippets=1)), never, None) == {"asked": True}
+    assert agent.recommend(bundle(items([DOB], [OTHER_DOB], snippets=1)), never, None)["asked"] is True
     assert asked == [["C-date_of_birth", "W-date_of_birth", "S-0"]]
 
 
@@ -75,7 +75,9 @@ def test_items_that_cannot_be_read_fail_closed():
     assert result["recommendation"] == "ESCALATE" and result["system_failure"] and result["failure_kind"] == "internal_error"
 
 
-def test_the_rule_code_hash_is_the_hash_of_the_rules_file():
+def test_the_rule_code_hash_covers_the_rules_the_verdicts_and_the_answer_reading():
     import hashlib
-    rules = REPO.joinpath("triage_agent", "rules.py").read_bytes()
-    assert triage_agent.PROMPT["rule_code_sha256"] == hashlib.sha256(rules).hexdigest()
+    digest = hashlib.sha256()
+    for name in ("rules.py", "recommend.py", "child.py"):
+        digest.update(name.encode() + b"\0" + REPO.joinpath("triage_agent", name).read_bytes() + b"\0")
+    assert record.PROMPT["rule_code_sha256"] == digest.hexdigest() == record.rule_code_sha256()

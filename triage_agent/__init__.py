@@ -3,15 +3,11 @@ only. It imports nothing from the generator (worldgen) or the framings; tests/w2
 
 `recommend.recommend` is the way in. The rubric's rules, written from docs/rubric.md alone (`rules`), decide every
 alert that the structured fields settle: one the rubric can never close is escalated, and one it can close with no
-snippet is closed, each citing the decisive evidence items, with no model call. Every other alert, whose close turns
-on reading a snippet, goes to the baseline agent's model call with its prompt unchanged.
+snippet is closed, each citing the decisive evidence items, with no model call. For every other alert the rules have
+already found that a decisive identifier conflicts and none agrees; whether it closes turns on its snippets. The model
+is asked only that, in the guarded child process (`child`, `prompt`): it sees the names and the snippets, quoted as
+data, never the decisive fields, and answers LINK, NO_LINK or UNSURE. Only NO_LINK closes.
 
-PROMPT is what the harness records for this agent: the prompt text and hash it sends, and the hash of its rule code.
+This file runs in the child process too, so it holds nothing but this text. What the harness records for the agent,
+its prompt and the hash of its rule code, is in `record`, which only the parent imports.
 """
-import hashlib
-from pathlib import Path
-
-from baseline_agent import prompt
-
-RULES_SHA256 = hashlib.sha256(Path(__file__).with_name("rules.py").read_bytes()).hexdigest()
-PROMPT = {"text": prompt.SYSTEM + "\n" + prompt.USER, "sha256": prompt.PROMPT_SHA256, "rule_code_sha256": RULES_SHA256}

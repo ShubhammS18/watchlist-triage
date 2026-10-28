@@ -22,7 +22,7 @@ from baseline_agent.agent import RETRIED
 from baseline_agent.recommend import recommend
 from framings import FRAMINGS, frame
 from model_interface import providers
-from triage_agent import PROMPT as TRIAGE_PROMPT
+from triage_agent.record import PROMPT as TRIAGE_PROMPT
 from triage_agent.recommend import recommend as triage_recommend
 from worldgen.harness_twins import load_twins
 from worldgen.loader import load_alerts
