@@ -35,7 +35,9 @@ cost but do not count as attempts. Every attempt is a row, whether its run set i
 
 A pass that rests on the cost assumption, PASS (cost bounded under a stated assumption), counts for this task only
 with the owner's sign-off that the Console total matches the harness's cost for that run set (`DEC-W2-01-PASS-LABEL`).
-The owner fills in the sign-off cell.
+The owner fills in the row. The gate test checks that its harness amount is the committed run set's own cost, rounded
+to the places written, that its Console amount is within 5% of that cost, and that its sign-off cell says "matches".
+The Console reading itself stays the owner's check: no test can see the Console.
 
 | Run set | Console USD | Harness USD | Sign-off |
 |---|---|---|---|

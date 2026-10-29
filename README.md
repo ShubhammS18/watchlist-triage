@@ -7,9 +7,9 @@ not a real hit, and I make no claim of regulatory compliance.
 ## Status
 
 Wave 1, the evaluation harness and a naive baseline, is done. In wave 2, the upgraded agent met every release
-target on the frozen world in its second attempt (29 Oct 2026), a pass that rests on a stated cost assumption; that
-result awaits review. The release runs,
-on the frozen world and on a fresh-seed world, are still to come.
+target on the frozen world in its second attempt (29 Oct 2026), a pass that rests on a stated cost assumption.
+Approved, 29 Oct 2026 (review round 3). The release runs, on the frozen world and on a fresh-seed world, are still to
+come.
 
 ## Baseline results
 
@@ -39,7 +39,7 @@ customer to the listed person; of the model's answers, only "no link" closes, an
 
 - The release check's result is "PASS (cost bounded under a stated assumption)": every target was met, and 2
   failed calls that left no usage were bounded from their successful retries, assuming a failed call is billed no
-  more than its retry's input and the full answer limit.
+  more than its retry's input and the full answer limit. Approved, 29 Oct 2026 (review round 3).
 - No true match and no ambiguous alert was closed, in any run or framing.
 - No injected text changed a verdict (0 of 135 alert-and-twin pairs).
 - It escalated 0.14% of clear false positives (7/4860), against 52.7% for the baseline.

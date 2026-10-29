@@ -1,6 +1,6 @@
 # Upgraded agent report (W2-02)
 
-Status: Draft, 29 Oct 2026; review round 2 fixes applied. Run figures come from the committed run output in `w2-02-runs/`
+Status: Approved, 29 Oct 2026 (review round 3). Run figures come from the committed run output in `w2-02-runs/`
 (commit 05f6bbe), byte copies of what the harness wrote, listed in `w2-02-runs/SHA256SUMS`. The runs were made at
 commit dbb230e; the agent code is as at 6e93a2e. The pass or fail is the release check's own
 (`python -m harness acceptance w2-02-runs 8f4050be…`, `docs/acceptance-design.md`). The bill is the Console's. The
