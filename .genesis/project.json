@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-29T08:58:20.779Z"
+    "updated_at": "2026-10-29T11:08:39.977Z"
   },
   "policy": {
     "ponytail": "full",
@@ -1901,14 +1901,15 @@
       "id": "DEC-W2-01-ELIGIBILITY-2",
       "title": "The check passes only on inputs it can verify, with cost judged on a proven bound",
       "text": "The check has three results: pass, fail and not eligible. A run set is not eligible if the targets file is not the committed one, if it is not on the frozen world, if it has fewer than three valid runs, or if the price or time file is not the sourced one. A run set that is not eligible never passes; its per-target results are shown marked as mechanism only, and the clarification for a world that is not the frozen one still holds. Cost is judged on what can be proven. When a call that failed and was retried left no token counts, its input is taken from the successful retry of the same request, and its answer is counted at the full answer limit. If no retry succeeded, its input is counted at one token per byte of its recorded prompt, trusted only if no successful call in the set used more tokens than bytes; if neither is known, the set is not eligible. The cost target passes only if the known cost plus that bound meets it. The report gives the known cost and the bound, and the Console figure is checked at review. This replaces my earlier rule that any lower-bound cost made a set not eligible: in the first counted attempt, two of the three runs had a retried provider error, so that rule would have made almost every set not eligible whatever the agent did. I did not assume that failed calls are free, because I could not confirm it from a source.",
-      "status": "accepted",
+      "status": "superseded",
       "source": "Owner, 28 Oct 2026; supersedes DEC-W2-01-ELIGIBILITY; W2-02-agent-upgrade attempt 1, run set 1c8d128b",
       "recorded_at": "2026-10-29T08:56:50.680Z",
       "paths": [
         "harness/release_check.py"
       ],
       "tags": [],
-      "supersedes": "DEC-W2-01-ELIGIBILITY"
+      "supersedes": "DEC-W2-01-ELIGIBILITY",
+      "superseded_by": "DEC-W2-01-ELIGIBILITY-3"
     },
     {
       "id": "DEC-W2-02-CLAIMED-LINK",
@@ -1919,6 +1920,29 @@
       "recorded_at": "2026-10-29T08:58:20.778Z",
       "paths": [],
       "tags": []
+    },
+    {
+      "id": "DEC-W2-02-MODEL-READING-RISK",
+      "title": "A wrong reading of a note can recommend a close; this is stated, not hidden",
+      "text": "The model's answer that a note does not link the customer to the listed person is trusted: if it is wrong, the agent recommends closing an alert the rubric says must escalate. The review showed this with a scripted wrong answer on a public alert, and attempt 1 did it once, on a control twin; attempt 2 did not. I accept this for this release instead of adding a keyword backstop, which would be fitted to how the generator writes notes, or a second model read, which lowers the odds without removing them. The agent only recommends: in operational mode every close needs a reviewer's approval and, under the default policy, a second reviewer. A test now shows the behaviour, and the report and the README state the limit. The step I would add before any real use is a second independent read before any close that depends on a note, run first in shadow against analysts' decisions.",
+      "status": "accepted",
+      "source": "Owner, 29 Oct 2026; W2-02-agent-upgrade review round 1, finding 1; FR-12, FR-13",
+      "recorded_at": "2026-10-29T11:08:38.717Z",
+      "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-01-ELIGIBILITY-3",
+      "title": "The check passes only on inputs it can verify; cost is bounded under a stated assumption",
+      "text": "The check has three results: pass, fail and not eligible. A run set is not eligible if the targets file is not the committed one, if it is not on the frozen world, if it has fewer than three valid runs, or if the price or time file is not the sourced one. A run set that is not eligible never passes; its per-target results are shown marked as mechanism only, and the clarification for a world that is not the frozen one still holds. When a call that failed left no token counts and a later try of the same request succeeded, the failed call's input is taken from that retry, which sent the identical request, and its answer is counted at the full answer limit, at the requested model's price. This is a bound under a stated assumption, not a proof: that the provider bills a failed call no more than a successful call with the same input and the full answer. The Console total is reconciled against the harness's cost at review. A failed call with no successful retry makes the set not eligible. This replaces my earlier rule, which called the bound proven and also allowed a bound from prompt bytes; the review showed that the bytes count only the message text, not the whole request, so that path could undercount.",
+      "status": "accepted",
+      "source": "Owner, 29 Oct 2026; supersedes DEC-W2-01-ELIGIBILITY-2; W2-02-agent-upgrade review round 1, finding 2",
+      "recorded_at": "2026-10-29T11:08:39.976Z",
+      "paths": [
+        "harness/release_check.py"
+      ],
+      "tags": [],
+      "supersedes": "DEC-W2-01-ELIGIBILITY-2"
     }
   ],
   "knowledge": [],

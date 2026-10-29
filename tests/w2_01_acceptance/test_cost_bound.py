@@ -1,8 +1,8 @@
-"""The proven cost bound (DEC-W2-01-ELIGIBILITY-2). A call that failed and left no token counts is bounded: its input
-is the input tokens of the successful retry of the same request or, with no successful retry, its recorded prompt bytes
-at one token per byte, trusted only if no successful call in the set used more input tokens than its prompt bytes; its
-answer counts at the full answer limit. A call that can be bounded neither way leaves the set not eligible. The cost
-target is judged on the known cost plus the bound."""
+"""The cost bound under a stated assumption (DEC-W2-01-ELIGIBILITY-3). A call that failed and left no token counts is
+bounded only by a successful retry of the same request: its input is the retry's input tokens, its answer counts at
+the full answer limit, at the requested model's price. A failed call with no successful retry leaves the set not
+eligible, whatever prompt bytes it recorded: they are information only. The cost target is judged on the known cost
+plus the bound."""
 import json
 from fractions import Fraction
 
@@ -37,25 +37,25 @@ def test_a_failed_try_is_bounded_by_its_successful_retry():
     assert problems == [] and found == {"tries": 1, "main": usd(600)}
 
 
-def test_a_failed_try_with_no_retry_is_bounded_by_its_prompt_bytes():
-    found, problems = bound([line({**FAILED, "prompt_bytes": 1000}), line(ok(600, 1500), item="B/1")])
-    assert problems == [] and found == {"tries": 1, "main": usd(1000)}
+def test_a_failed_try_with_no_successful_retry_cannot_be_bounded_even_with_its_prompt_bytes():
+    for lines in ([line(FAILED, FAILED)], [line({**FAILED, "prompt_bytes": 1000}, {**FAILED, "prompt_bytes": 1000})],
+                  [line({**FAILED, "prompt_bytes": 0}, {**FAILED, "prompt_bytes": 0})]):
+        found, problems = bound(lines + [line(ok(600, 1500), item="B/1")])
+        assert problems == ["2 calls left no token counts and have no successful retry, so their cost cannot be "
+                            "bounded (first: r1 A/1)"] and found == {"tries": 0, "main": 0}
 
 
-def test_the_prompt_bytes_bound_is_untrusted_when_a_call_used_more_tokens_than_bytes_or_has_no_size():
-    for success in (ok(1600, 1500), ok(600)):
-        _, problems = bound([line({**FAILED, "prompt_bytes": 1000}), line(success, item="B/1")])
-        assert len(problems) == 1 and problems[0].startswith("the prompt-size bound cannot be trusted: 1 successful")
+def test_prompt_bytes_do_not_change_a_bound_from_a_retry():
+    assert bound([line({**FAILED, "prompt_bytes": 5}, ok(600, 1500))]) == ({"tries": 1, "main": usd(600)}, [])
 
 
-def test_tokens_above_bytes_do_not_matter_when_no_bound_rests_on_bytes():
-    assert bound([line(FAILED, ok(600)), line(ok(1600, 1500), item="B/1")])[1] == []
-
-
-def test_a_failed_try_with_neither_a_retry_nor_a_size_cannot_be_bounded():
-    _, problems = bound([line(FAILED, FAILED)])
-    assert problems == ["2 calls left no token counts, no successful retry and no recorded prompt size, so their cost "
-                        "cannot be bounded (first: r1 A/1)"]
+def test_the_bound_is_at_the_requested_models_price_and_the_full_answer_limit():
+    manifest = {"model": {"requested": "no-such-model"}, "decoding": {"max_tokens": 512}}
+    _, problems = release_check.cost_bound({"r1": (manifest, [line(FAILED, ok(600))])}, ["r1"], PRICES)
+    assert problems == ["1 calls have no price, so their cost is unknown (first: r1 A/1)"]
+    manifest = {"model": {"requested": "claude-haiku-5-5"}, "decoding": {"max_tokens": 100}}
+    found, _ = release_check.cost_bound({"r1": (manifest, [line(FAILED, ok(600))])}, ["r1"], PRICES)
+    assert found["main"] == (600 * Fraction(1, 10) + 100 * Fraction(1, 2)) / 1_000_000
 
 
 def test_only_main_items_of_valid_runs_add_to_the_cost_target_but_every_try_must_be_bounded():

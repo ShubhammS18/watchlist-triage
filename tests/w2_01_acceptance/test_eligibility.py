@@ -1,4 +1,4 @@
-"""W2-01: a run set whose inputs the check cannot verify is NOT ELIGIBLE and never passes (DEC-W2-01-ELIGIBILITY).
+"""W2-01: a run set whose inputs the check cannot verify is NOT ELIGIBLE and never passes (DEC-W2-01-ELIGIBILITY-3).
 Each case starts from the passing oracle set or from an oracle set made with other files; its per-target results are
 still worked out, and marked mechanism only."""
 import json
@@ -105,8 +105,57 @@ def test_a_price_table_git_cannot_read_at_the_run_commit(oracle_set, monkeypatch
 
 def test_a_call_whose_cost_cannot_be_bounded(oracle_set, tmp_path):
     out, run_set, ids = copy_set(oracle_set, tmp_path)
-    rewrite(out, ids[1], a_call_with_no_token_counts)  # no retry and no recorded prompt size (DEC-W2-01-ELIGIBILITY-2)
-    assert_not_eligible(release_check.check(out, run_set), "1 calls left no token counts, no successful retry")
+    rewrite(out, ids[1], a_call_with_no_token_counts)  # no successful retry (DEC-W2-01-ELIGIBILITY-3)
+    assert_not_eligible(release_check.check(out, run_set), "1 calls left no token counts and have no successful retry")
+
+
+def change_manifests(out, change):
+    """`change(manifest)` on every run of a copied set, after giving each manifest the baseline's prompt record, which
+    a model agent writes (the oracle calls no model and records none; its run-set prompt hash is the baseline's
+    already). The run-set ID follows its inputs, in each manifest and in the index, so only the changed field
+    disagrees. Returns the new run-set ID."""
+    from harness import manifest as records
+    from harness.run import PROMPTS
+    index = json.loads(out.joinpath("index.json").read_text(encoding="utf-8"))
+    for entry in index["runs"]:
+        path = out.joinpath(entry["run_id"], "manifest.json")
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        assert manifest["prompt"] is None and manifest["run_set_inputs"]["prompt_hash"] == PROMPTS["baseline"]["sha256"]
+        manifest["prompt"] = dict(PROMPTS["baseline"])
+        change(manifest)
+        manifest["run_set"] = entry["run_set"] = records.content_hash(manifest["run_set_inputs"])
+        path.write_text(json.dumps(manifest), encoding="utf-8")
+    out.joinpath("index.json").write_text(json.dumps(index), encoding="utf-8")
+    return manifest["run_set"]
+
+
+PROMPT_BINDING = "its prompt text, its prompt hash and its run-set prompt hash do not all match"
+RULE_BINDING = "its rule-code hash is not the one among its run-set inputs"
+
+
+@pytest.mark.parametrize("change, reason", [
+    (lambda m: m["prompt"].update(text=m["prompt"]["text"] + " "), PROMPT_BINDING),
+    (lambda m: m["prompt"].update(sha256="a" * 64), PROMPT_BINDING),
+    (lambda m: m["run_set_inputs"].update(prompt_hash="a" * 64), PROMPT_BINDING),
+    (lambda m: m["prompt"].update(rule_code_sha256="b" * 64), RULE_BINDING),
+    (lambda m: m["run_set_inputs"].update(rule_code_hash="b" * 64), RULE_BINDING),
+    (lambda m: (m["prompt"].update(rule_code_sha256="b" * 64), m["run_set_inputs"].update(rule_code_hash="c" * 64)),
+     RULE_BINDING),
+], ids=["prompt text", "manifest prompt hash", "run-set prompt hash", "manifest rule-code hash only",
+        "run-set rule-code hash only", "rule-code hashes differ"])
+def test_a_prompt_or_rule_code_hash_that_does_not_bind_to_the_run_set(oracle_set, tmp_path, change, reason):
+    out, _, _ = copy_set(oracle_set, tmp_path)
+    result = release_check.check(out, change_manifests(out, change))
+    assert_not_eligible(result, reason)
+    assert all(reason in why for why in result["not_eligible_because"]) and len(result["not_eligible_because"]) == 4
+
+
+def test_a_prompt_and_rule_code_hashes_that_bind_pass(oracle_set, tmp_path):
+    out, _, _ = copy_set(oracle_set, tmp_path)
+    assert release_check.check(out, change_manifests(out, lambda m: None))["result"] == "PASS"
+    out, _, _ = copy_set(oracle_set, tmp_path.joinpath("both"))
+    both = lambda m: (m["prompt"].update(rule_code_sha256="b" * 64), m["run_set_inputs"].update(rule_code_hash="b" * 64))
+    assert release_check.check(out, change_manifests(out, both))["result"] == "PASS"
 
 
 def test_a_run_that_cannot_be_loaded(oracle_set, tmp_path):

@@ -1,6 +1,6 @@
 # Upgraded agent report (W2-02)
 
-Status: Draft, 29 Oct 2026; not yet reviewed. Run figures come from the committed run output in `w2-02-runs/`
+Status: Draft, 29 Oct 2026; review round 1 fixes applied. Run figures come from the committed run output in `w2-02-runs/`
 (commit 05f6bbe), byte copies of what the harness wrote, listed in `w2-02-runs/SHA256SUMS`. The runs were made at
 commit dbb230e; the agent code is as at 6e93a2e. The pass or fail is the release check's own
 (`python -m harness acceptance w2-02-runs 8f4050be…`, `docs/acceptance-design.md`). The bill is the Console's. The
@@ -39,9 +39,14 @@ things; `baseline_agent/` is untouched.
    is a LINK, whatever its source or how reliable it seems. This was attempt 2's one change, after attempt 1 closed
    the control twin of an injected alert once on that kind of note.
 
-A static test checks that the agent imports nothing from the world generator and holds none of its note texts. The
-manifest records the prompt hash (`1740d71e…`) and a hash of the rule code (`1c964fd8…`), and the run-set ID
-includes both. Model, temperature and every other run setting are the baseline's (`config/run-triage.json`
+A static test checks that each module of the agent imports only the modules listed for it, so nothing from the world
+generator, that no module uses importlib, `__import__`, `exec` or `eval`, and that no module's source holds a
+generator string of 20 characters or more or a note text of the frozen world; it does not check short fragments,
+text put together from pieces, or notes the generator would write on another seed. The manifest records the prompt
+hash (`1740d71e…`) and a hash of the rule code (`1c964fd8…`), and the run-set ID includes both; the release check
+confirms they agree. The rule-code hash covers the triage package's own decision files (`rules.py`, `recommend.py`,
+`child.py`, `prompt.py`); the shared baseline modules it also uses are pinned by the clean commit among the run-set
+inputs. Model, temperature and every other run setting are the baseline's (`config/run-triage.json`
 differs from `config/run.json` only in the agent).
 
 ## Attempts and practice runs
@@ -87,8 +92,10 @@ More detail on attempt 2:
 - **The 7 escalated clear false positives** came from 5 alerts: one answered UNSURE in framing 1 of every run, three
   answered UNSURE once, and one failed once on an unreadable answer and escalated as a system failure. These are
   also the only items behind the lost consistency.
-- **Cost.** Known cost USD 0.000054388 per item, plus a proven bound of 0.000000120 for two calls that failed with a
-  provider error and left no token counts; both were retried and succeeded. The harness's own cost for the three runs
+- **Cost.** Known cost USD 0.000054388 per item, plus a bound of 0.000000120 for two calls that failed with a provider
+  error and left no token counts, both retried successfully. The bound is under a stated assumption, not a proof:
+  that a failed call is billed no more than its successful retry's input and the full answer limit
+  (`DEC-W2-01-ELIGIBILITY-3`). The harness's own cost for the three runs
   is USD 0.2998; the Console showed USD 0.30 (balance 4.86 before run 1, 4.56 after run 3).
 - **Modelled time, the other five settings** (assisted against manual, minutes per alert): BASE with no second
   review 14.16 against 20.00; HIGH 58.12 and 53.62 against 78.00; LOW 5.45 and 4.55 against 7.00. Assisted was lower
@@ -104,6 +111,11 @@ More detail on attempt 2:
   the generator used the same rubric to make the labels, a high score on synthetic worlds shows that the rubric can
   be written as code and that the model is used narrowly; it does not show that the agent handles real alerts,
   whose fields are messier. The fresh-seed test does not remove this limit, since the same generator builds it."
+- **A wrong reading of a note can recommend a close.** Closes that depend on reading a note rest on the model's
+  answer, with no automatic double-check; one such error occurred in attempt 1 (on a control twin), none in attempt
+  2. Human review of every close is the control (`DEC-W2-02-MODEL-READING-RISK`; a test shows the behaviour with a
+  scripted wrong answer).
+- **Citation accuracy checks the cited IDs**, not whether the written reason is right.
 - **Temperature 1.** The provider fixes it for this model, so the same item can get different answers in different
   runs. Three runs show the spread; they do not bound it. Over-escalation and consistency moved between runs (2 to 3
   items, 597 to 598 alerts); a zero in three runs is not a proof of zero.

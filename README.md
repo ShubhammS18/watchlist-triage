@@ -52,6 +52,8 @@ Its limits:
   world is no longer unseen by the design;
 - the rules come from the same rubric the generator used to make the labels, so a high score shows the rubric can
   be written as code, not that the agent handles real alerts, whose fields are messier;
+- closes that depend on reading a note rest on the model's answer, with no automatic double-check; one such error
+  occurred in attempt 1 (on a control twin), none in attempt 2. Human review of every close is the control;
 - three runs at temperature 1 show the spread; they do not bound it;
 - the modelled times are assumptions, not measurements.
 
@@ -81,7 +83,8 @@ From `targets/release-targets.json` and `SPEC.md`:
 - No real analyst timings.
 - I built the world, so I can see the labels.
 - Three runs show the variation; they do not bound it.
-- Model reasons in `baseline/` may quote synthetic customer details.
+- Model reasons in `baseline/` and `w2-02-runs/` may quote synthetic customer details.
+- Reviewer identities are self-asserted: an approval records the name it is given, not a verified identity.
 - Each check is narrow: the citation checks test which evidence is cited, not whether the reason is right.
 
 ## Running the tests

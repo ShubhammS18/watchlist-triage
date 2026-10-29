@@ -1,6 +1,8 @@
 """What the harness records for the upgraded agent (DEC-W2-02-LAYOUT): the prompt text and hash it sends, and the hash
-of its rule code: the rules, the parent's verdicts and citations, the child's reading of the answer and the building
-of the prompt. Parent only."""
+of its rule code. The rule-code hash covers the triage package's own decision files only: the rules, the parent's
+verdicts and citations, the child's reading of the answer and the building of the prompt. The shared baseline modules
+it also uses (baseline_agent's payload, agent, reply, recommend and prompt modules) and model_interface are not in it;
+they are pinned by the clean commit among the run-set inputs. Parent only."""
 import hashlib
 from pathlib import Path
 

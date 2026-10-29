@@ -97,8 +97,8 @@ class Tokens:
     A call is noted when it STARTS, as unfinished, and filled in when it returns or raises. So a call that is
     still under way when its item returns, as after a child timeout, is counted as a call without token counts
     and makes the cost a lower bound. `snapshot` is what an item keeps: later changes do not reach it.
-    Every call also notes `prompt_bytes`, the UTF-8 bytes of its messages, so that a call that left no token counts
-    can still be bounded (DEC-W2-01-ELIGIBILITY-2); it is null for a request that carries no messages.
+    Every call also notes `prompt_bytes`, the UTF-8 bytes of its messages, for information only: it bounds no cost
+    (DEC-W2-01-ELIGIBILITY-3); it is null for a request that carries no messages.
     """
 
     def __init__(self, model):

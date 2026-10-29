@@ -1,5 +1,5 @@
 """The release check: one run set's committed output judged against the release targets (AC-3, AC-4, AC-6, AC-12;
-DEC-W2-01-DESIGN, DEC-W2-01-TIME-RULE, DEC-W2-01-RUN-RULE, DEC-W2-01-ELIGIBILITY). Python standard library only.
+DEC-W2-01-DESIGN, DEC-W2-01-TIME-RULE, DEC-W2-01-RUN-RULE, DEC-W2-01-ELIGIBILITY-3). Python standard library only.
 
 It reads the run output, the world and targets/release-targets.json, and writes nothing: the figures are worked out
 afresh from the item lines with the score step's own functions, never taken from a report, and score_all, which
@@ -8,8 +8,10 @@ writes reports, is never called.
 The result is PASS, FAIL or NOT ELIGIBLE. NOT ELIGIBLE means the inputs cannot be verified: the targets file is not
 the committed one, the world is not the frozen world or its public files do not match its manifest, there are fewer
 than three valid runs, the price table is not sourced or is not config/prices.json as committed at the run's own
-commit, the modelled-time file is not the committed sourced one, a cost cannot be proven (a call without a price, or
-a call that left no token counts and cannot be bounded), a run of the set cannot be loaded or does not hold exactly the frozen world's items, or the index marks the run set superseded. Its
+commit, the modelled-time file is not the committed sourced one, a cost cannot be bounded (a call without a price, or
+a call that left no token counts and has no successful retry), a run's prompt text, prompt hash and run-set prompt
+hash do not all agree, or its rule-code hash differs from the one among its run-set inputs, a run of the set cannot
+be loaded or does not hold exactly the frozen world's items, or the index marks the run set superseded. Its
 per-target results are still worked out, each marked mechanism only, and it never passes.
 
 The safety counts (true matches closed, ambiguous alerts closed, injection verdict divergence, and closes without a
@@ -17,12 +19,13 @@ valid citation set) must be zero in every completed run, valid or not, and so in
 and the modelled time are judged pooled over the valid runs, as the targets were set; each run's value stands
 beside. The modelled time decides at BASE under STRICT_FOUR_EYES; the other five settings are shown beside it.
 
-The cost is judged on what can be proven (DEC-W2-01-ELIGIBILITY-2). A call that failed and left no token counts is
-bounded: its input is the input tokens of the successful retry of the same request in the same item or, failing
-that, its recorded prompt bytes at one token per byte, trusted only if no successful call in the set used more input
-tokens than its prompt bytes; its answer counts at the run's full answer limit. The cost target passes only if the
-known cost plus that bound meets it. The known cost and the bound are both given; the Console figure is checked at
-review.
+The cost is judged on a bound under a stated assumption (DEC-W2-01-ELIGIBILITY-3). A call that failed and left no
+token counts is bounded only if a later try of the same request in the same item succeeded: its input is that
+retry's input tokens, its answer counts at the run's full answer limit, at the requested model's price. The
+assumption is that the provider bills a failed call no more than a successful call with the same input and the full
+answer; it is not a proof. A failed call with no successful retry makes the set not eligible; recorded prompt bytes
+are information only and bound nothing. The cost target passes only if the known cost plus that bound meets it. The
+known cost and the bound are both given; the Console total is reconciled against the harness's cost at review.
 """
 import json
 import subprocess
@@ -99,28 +102,24 @@ def item_problem(lines, expected):
 
 
 def cost_bound(loaded, valid, prices):
-    """The proven bound on the calls that left no token counts, as ({"tries": how many were bounded, "main": the bound
-    on those in main items of valid runs, in USD}, problems that leave a cost unproven)."""
-    tries, main, by_bytes, successes = 0, Fraction(0), False, []
+    """The bound, under the stated assumption, on the calls that left no token counts, as ({"tries": how many were
+    bounded, "main": the bound on those in main items of valid runs, in USD}, problems that leave a cost unbounded)."""
+    tries, main = 0, Fraction(0)
     unpriced, unbounded = [], []
     for run, (manifest, lines) in loaded.items():
         requested, limit = manifest["model"]["requested"], (manifest["decoding"] or {}).get("max_tokens")
         for line in lines:
             for number, attempt in enumerate(line["attempts"]):
                 if attempt["input_tokens"] is not None and attempt["output_tokens"] is not None:
-                    successes.append(attempt)
                     if attempt["model_id"] not in prices["models"]:
                         unpriced.append(f"{run} {line['item_id']}")
                     continue
                 retry = next((later for later in line["attempts"][number + 1:] if later["error"] is None
                               and later["input_tokens"] is not None and later["output_tokens"] is not None), None)
-                if retry is not None:  # the same request, sent again: its input is the retry's input
-                    input_tokens = retry["input_tokens"]
-                elif attempt.get("prompt_bytes") is not None:
-                    input_tokens, by_bytes = attempt["prompt_bytes"], True
-                else:
+                if retry is None:  # prompt bytes count only the message text, not the whole request: no bound
                     unbounded.append(f"{run} {line['item_id']}")
                     continue
+                input_tokens = retry["input_tokens"]  # the same request, sent again
                 if requested not in prices["models"] or limit is None:  # no price, or no answer limit to count
                     unpriced.append(f"{run} {line['item_id']}")
                     continue
@@ -134,15 +133,24 @@ def cost_bound(loaded, valid, prices):
     if unpriced:
         problems.append(f"{len(unpriced)} calls have no price, so their cost is unknown (first: {unpriced[0]})")
     if unbounded:
-        problems.append(f"{len(unbounded)} calls left no token counts, no successful retry and no recorded prompt "
-                        f"size, so their cost cannot be bounded (first: {unbounded[0]})")
-    if by_bytes:
-        untrusted = sum(1 for one in successes
-                        if one.get("prompt_bytes") is None or one["input_tokens"] > one["prompt_bytes"])
-        if untrusted:
-            problems.append(f"the prompt-size bound cannot be trusted: {untrusted} successful calls used more input "
-                            "tokens than their prompt bytes, or have no recorded prompt size")
+        problems.append(f"{len(unbounded)} calls left no token counts and have no successful retry, so their cost "
+                        f"cannot be bounded (first: {unbounded[0]})")
     return {"tries": tries, "main": main}, problems
+
+
+def hash_problem(run, manifest):
+    """Why a run's recorded prompt and rule code do not bind to its run-set inputs, or None: the prompt text's hash,
+    the manifest's prompt hash and the run-set prompt hash must be one value, and the manifest's rule-code hash must
+    be the run-set rule-code hash (both absent for an agent with no rule code). A model-free agent records no prompt,
+    so only its rule-code hash is checked: it has none."""
+    prompt, inputs = manifest["prompt"], manifest["run_set_inputs"]
+    if prompt is not None and not (records.sha256(prompt["text"].encode("utf-8")) == prompt["sha256"]
+                                   == inputs["prompt_hash"]):
+        return f"{run}: its prompt text, its prompt hash and its run-set prompt hash do not all match"
+    prompt = prompt or {}
+    if prompt.get("rule_code_sha256") != inputs.get("rule_code_hash"):
+        return f"{run}: its rule-code hash is not the one among its run-set inputs"
+    return None
 
 
 def judge_rate(value, target):
@@ -248,6 +256,7 @@ def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), target
         not_eligible.append(f"a run's price table is not {PRICES} as committed at that run's commit")
     if any(m["modelled_time"]["sha256"] != TIME_SHA256 for m in manifests):
         not_eligible.append("the modelled-time file is not the committed sourced one")
+    not_eligible.extend(filter(None, (hash_problem(run, manifest) for run, (manifest, _) in loaded.items())))
 
     hidden = check_world(world, listed, hidden=True)
     from worldgen.truth import load_truth  # only here, after every output was checked, as in the score step
@@ -265,8 +274,8 @@ def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), target
     added = bound["main"] / pooled["pooled"]["cost"]["main_items"]
     cost.update(value=money.amount(_fraction(known) + added, places=6), known_per_alert=known,
                 bound_added_per_alert=money.amount(added, places=6), failed_tries_bounded=bound["tries"],
-                rule="pooled over the valid runs: the known cost plus a proven bound for calls that left no token "
-                     "counts", console="the Console figure is checked at review")
+                rule="pooled over the valid runs: the known cost plus a bound under a stated assumption for calls "
+                     "that left no token counts", console="the Console figure is checked at review")
     cost["result"] = judge_rate(cost["value"], targets["cost_per_alert"])
     for part in results.values():
         part["mechanism_only"] = bool(not_eligible)

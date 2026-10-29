@@ -1,14 +1,28 @@
-"""W2-02: the agent is written from the rubric, not from the generator (DEC-W2-02-RULES-FIRST). It imports nothing from
-the generator or the framings, and its source holds none of the generator's snippet or wording text. The modules that
-run in the child process keep the baseline's child rules (DEC-T05-PAYLOAD): they open no files and import only the
+"""W2-02: the agent is written from the rubric, not from the generator (DEC-W2-02-RULES-FIRST). What is checked, and
+no more: each module of triage_agent/ imports only the modules listed for it, so nothing from the generator or the
+framings; no module names importlib, __import__, exec or eval, so no import is made at run time; and no module's
+source holds a generator string of 20 characters or more or a note text of the frozen world. Short fragments, text
+put together from pieces, and notes the generator would write on another seed are not checked. The modules that run
+in the child process keep the baseline's child rules (DEC-T05-PAYLOAD): they open no files and import only the
 standard modules json and time, model_interface and the baseline's own child modules."""
 import ast
 import json
 
+import pytest
+
 from conftest import REPO
 
 AGENT = sorted(REPO.joinpath("triage_agent").glob("*.py"))
-FORBIDDEN = ("worldgen", "framings")
+ALLOWED = {  # module -> what it may import; a leading dot is a relative import
+    "__init__.py": set(),
+    "child.py": {"json", "time", "baseline_agent.agent", "baseline_agent.reply", "model_interface", ".prompt"},
+    "prompt.py": {"baseline_agent.prompt"},
+    "record.py": {"hashlib", "pathlib", ".prompt"},
+    "recommend.py": {"copy", "time", "dataclasses", "baseline_agent.agent", "baseline_agent.payload",
+                     "baseline_agent.recommend", "model_interface.runner", ".prompt", ".rules"},
+    "rules.py": set(),
+}
+DYNAMIC = {"importlib", "__import__", "exec", "eval"}
 CHILD = ("__init__.py", "child.py", "prompt.py")  # triage_agent.child and what it imports
 CHILD_IMPORTS = {"json", "time", "model_interface", "baseline_agent.agent", "baseline_agent.reply",
                  "baseline_agent.prompt", "prompt"}  # "prompt": the relative import of .prompt
@@ -16,20 +30,38 @@ FILE_NAMES = {"open", "__import__", "eval", "exec", "read_text", "write_text", "
 TEMPLATES = (REPO.joinpath("worldgen", "snippets.py"), REPO.joinpath("framings", "wording.py"))
 
 
-def imports(path):
+def imports(source, relative="."):
     found = []
-    for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+    for node in ast.walk(ast.parse(source)):
         if isinstance(node, ast.Import):
             found += [alias.name for alias in node.names]
         elif isinstance(node, ast.ImportFrom):
-            found.append(node.module or "")
+            found.append(relative * node.level + (node.module or ""))
     return found
 
 
-def test_the_agent_imports_nothing_from_the_generator_or_the_framings():
-    assert {path.name for path in AGENT} == {"__init__.py", "child.py", "prompt.py", "record.py", "recommend.py", "rules.py"}
+def problems(source, allowed):
+    """What breaks the import rule in one module's source: an import not in `allowed`, or a name or attribute that
+    could import at run time."""
+    tree = ast.parse(source)
+    names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
+    names |= {node.attr for node in ast.walk(tree) if isinstance(node, ast.Attribute)}
+    return sorted(set(imports(source)) - allowed) + sorted((names | set(imports(source))) & DYNAMIC)
+
+
+def test_every_agent_module_imports_only_its_listed_modules_and_nothing_at_run_time():
+    assert {path.name for path in AGENT} == set(ALLOWED)
     for path in AGENT:
-        assert not [name for name in imports(path) if name.split(".")[0] in FORBIDDEN], path.name
+        assert problems(path.read_text(encoding="utf-8"), ALLOWED[path.name]) == [], path.name
+
+
+@pytest.mark.parametrize("source", [
+    "import worldgen", "from worldgen import snippets", "from framings.wording import X", "import json, os",
+    "import importlib", "importlib.import_module('worldgen')", "__import__('worldgen')", "exec('import worldgen')",
+    "eval('1')", "import builtins\nbuiltins.__import__('worldgen')", "from importlib import import_module",
+])
+def test_the_import_rule_catches_each_way_round_it(source):
+    assert problems(source, {"json"}) != []
 
 
 def test_the_child_modules_open_no_files_and_import_only_what_the_child_may():
@@ -37,7 +69,7 @@ def test_the_child_modules_open_no_files_and_import_only_what_the_child_may():
         if path.name not in CHILD:
             continue
         tree = ast.parse(path.read_text(encoding="utf-8"))
-        assert set(imports(path)) <= CHILD_IMPORTS, path.name
+        assert set(imports(path.read_text(encoding="utf-8"), relative="")) <= CHILD_IMPORTS, path.name
         used = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
         used |= {node.attr for node in ast.walk(tree) if isinstance(node, ast.Attribute)}
         assert not used & FILE_NAMES, path.name
