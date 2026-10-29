@@ -5,7 +5,10 @@ It reads the run output, the world and targets/release-targets.json, and writes 
 afresh from the item lines with the score step's own functions, never taken from a report, and score_all, which
 writes reports, is never called.
 
-The result is PASS, FAIL or NOT ELIGIBLE. NOT ELIGIBLE means the inputs cannot be verified: the targets file is not
+The result is PASS, PASS (cost bounded under a stated assumption), FAIL or NOT ELIGIBLE (DEC-W2-01-PASS-LABEL). A
+plain PASS means every call reported its usage. When the set would pass but some failed calls were bounded from their
+successful retries, the result is the qualified pass, with the number of calls bounded and the assumption beside it.
+NOT ELIGIBLE means the inputs cannot be verified: the targets file is not
 the committed one, the world is not the frozen world or its public files do not match its manifest, there are fewer
 than three valid runs, the price table is not sourced or is not config/prices.json as committed at the run's own
 commit, the modelled-time file is not the committed sourced one, a cost cannot be bounded (a call without a price, or
@@ -59,6 +62,9 @@ COUNTS = {
     "closes_without_valid_citations": ("AC-2", lambda tree: tree["ac2"]["main"]["violations"] + tree["ac2"]["twin"]["violations"]),
 }
 TARGET_NAMES = (*COUNTS, *RATES, "modelled_review_time")
+PASS, QUALIFIED_PASS = "PASS", "PASS (cost bounded under a stated assumption)"  # DEC-W2-01-PASS-LABEL
+ASSUMPTION = ("a failed call that left no token counts is billed no more than a successful call with the same input "
+              "and the full answer limit, at the requested model's price")
 
 
 def _fraction(value):
@@ -209,7 +215,7 @@ def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), target
         unread = {"result": "not worked out: the world is not the frozen world", "mechanism_only": True}
         return {"result": "NOT ELIGIBLE", "run_set": run_set, "world_hash": world_hash,
                 "targets_sha256": records.sha256(raw), "mechanism_only": True, "not_eligible_because": not_eligible,
-                "failed": [], "runs": None, "targets": {name: dict(unread) for name in TARGET_NAMES},
+                "failed": [], "cost_assumption": None, "runs": None, "targets": {name: dict(unread) for name in TARGET_NAMES},
                 "information": None}
     try:
         public = check_world(world, listed)  # the manifest's file list against its world hash, then each public file
@@ -280,11 +286,12 @@ def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), target
     for part in results.values():
         part["mechanism_only"] = bool(not_eligible)
     failed = sorted(name for name, part in results.items() if part["result"] == "fail")
-    outcome = "NOT ELIGIBLE" if not_eligible else "FAIL" if failed else "PASS"
+    outcome = "NOT ELIGIBLE" if not_eligible else "FAIL" if failed else QUALIFIED_PASS if bound["tries"] else PASS
     return {
         "result": outcome, "run_set": run_set, "world_hash": listed["world_hash"],
         "targets_sha256": records.sha256(raw), "mechanism_only": bool(not_eligible),
         "not_eligible_because": not_eligible, "failed": failed,
+        "cost_assumption": {"calls_bounded": bound["tries"], "assumption": ASSUMPTION} if bound["tries"] else None,
         "runs": {"completed": sorted(loaded), "valid": valid},
         "targets": results,
         "information": {"injection_citation_differences": pooled["pooled"]["injection"]["citation_differences"],

@@ -1,8 +1,12 @@
-"""W2-02: the agent is written from the rubric, not from the generator (DEC-W2-02-RULES-FIRST). What is checked, and
-no more: each module of triage_agent/ imports only the modules listed for it, so nothing from the generator or the
-framings; no module names importlib, __import__, exec or eval, so no import is made at run time; and no module's
-source holds a generator string of 20 characters or more or a note text of the frozen world. Short fragments, text
-put together from pieces, and notes the generator would write on another seed are not checked. The modules that run
+"""W2-02: the agent is written from the rubric, not from the generator (DEC-W2-02-RULES-FIRST). These are static checks
+of the source text, and only these:
+- every import statement of each module in triage_agent/ names a module on that module's list;
+- no module has a name or attribute spelled importlib, __import__, exec, eval or __builtins__, and none imports
+  importlib;
+- no module's source holds a generator string of 20 characters or more or a note text of the frozen world.
+Nothing is checked at run time, so they do not show that no import happens at run time: code that reaches an import
+another way, not spelled with one of those names, is not caught. Short fragments, text put together from pieces, and
+notes the generator would write on another seed are not checked either. The modules that run
 in the child process keep the baseline's child rules (DEC-T05-PAYLOAD): they open no files and import only the
 standard modules json and time, model_interface and the baseline's own child modules."""
 import ast
@@ -22,7 +26,7 @@ ALLOWED = {  # module -> what it may import; a leading dot is a relative import
                      "baseline_agent.recommend", "model_interface.runner", ".prompt", ".rules"},
     "rules.py": set(),
 }
-DYNAMIC = {"importlib", "__import__", "exec", "eval"}
+DYNAMIC = {"importlib", "__import__", "exec", "eval", "__builtins__"}
 CHILD = ("__init__.py", "child.py", "prompt.py")  # triage_agent.child and what it imports
 CHILD_IMPORTS = {"json", "time", "model_interface", "baseline_agent.agent", "baseline_agent.reply",
                  "baseline_agent.prompt", "prompt"}  # "prompt": the relative import of .prompt
@@ -41,15 +45,15 @@ def imports(source, relative="."):
 
 
 def problems(source, allowed):
-    """What breaks the import rule in one module's source: an import not in `allowed`, or a name or attribute that
-    could import at run time."""
+    """What breaks the import rule in one module's source: an import not in `allowed`, or a name or attribute spelled
+    as one of DYNAMIC."""
     tree = ast.parse(source)
     names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
     names |= {node.attr for node in ast.walk(tree) if isinstance(node, ast.Attribute)}
     return sorted(set(imports(source)) - allowed) + sorted((names | set(imports(source))) & DYNAMIC)
 
 
-def test_every_agent_module_imports_only_its_listed_modules_and_nothing_at_run_time():
+def test_every_agent_module_imports_only_its_listed_modules_and_names_no_dynamic_import():
     assert {path.name for path in AGENT} == set(ALLOWED)
     for path in AGENT:
         assert problems(path.read_text(encoding="utf-8"), ALLOWED[path.name]) == [], path.name
@@ -59,8 +63,9 @@ def test_every_agent_module_imports_only_its_listed_modules_and_nothing_at_run_t
     "import worldgen", "from worldgen import snippets", "from framings.wording import X", "import json, os",
     "import importlib", "importlib.import_module('worldgen')", "__import__('worldgen')", "exec('import worldgen')",
     "eval('1')", "import builtins\nbuiltins.__import__('worldgen')", "from importlib import import_module",
+    "getattr(__builtins__, '__im' + 'port__')('worldgen')", "__builtins__['__import__']('worldgen')",
 ])
-def test_the_import_rule_catches_each_way_round_it(source):
+def test_the_import_rule_catches_each_static_case_it_names(source):
     assert problems(source, {"json"}) != []
 
 

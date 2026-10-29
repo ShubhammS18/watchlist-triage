@@ -223,10 +223,15 @@ def test_a_superseded_run_set(oracle_set, tmp_path):
     assert len(result["not_eligible_because"]) == 1 and result["failed"] == []
 
 
-def test_the_command_exits_0_only_on_pass(oracle_set, tmp_path, capsys):
+def test_the_command_exits_0_only_on_pass(oracle_set, tmp_path, capsys, monkeypatch):
+    from fractions import Fraction
     from harness.__main__ import main
     assert main(["acceptance", str(oracle_set[0]), oracle_set[1]]) == 0
     assert json.loads(capsys.readouterr().out)["result"] == "PASS"
+    monkeypatch.setattr(release_check, "cost_bound", lambda loaded, valid, prices: ({"tries": 1, "main": Fraction(0)}, []))
+    assert main(["acceptance", str(oracle_set[0]), oracle_set[1]]) == 3  # the qualified pass (DEC-W2-01-PASS-LABEL)
+    assert json.loads(capsys.readouterr().out)["result"] == "PASS (cost bounded under a stated assumption)"
+    monkeypatch.undo()
     out, run_set, ids = copy_set(oracle_set, tmp_path)
     rewrite(out, ids[0], dirty=True)
     assert main(["acceptance", str(out), run_set]) == 1

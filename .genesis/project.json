@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-29T11:08:39.977Z"
+    "updated_at": "2026-10-29T13:39:24.154Z"
   },
   "policy": {
     "ponytail": "full",
@@ -1943,6 +1943,18 @@
       ],
       "tags": [],
       "supersedes": "DEC-W2-01-ELIGIBILITY-2"
+    },
+    {
+      "id": "DEC-W2-01-PASS-LABEL",
+      "title": "A pass that rests on the cost assumption is labelled as such",
+      "text": "A pass is reported as a plain pass only when every call reported its usage. When some failed calls were bounded from their successful retries, under the stated billing assumption, the result is a pass with that qualification, giving the number of calls bounded and the assumption, so a reader can see what it rests on. The upgrade's gate accepts such a pass only with my sign-off that the Console total matches the harness's cost. I chose this over making every such set not eligible, because a retried provider error happens in most sets and would make the target unreachable, while the cost target is thousands of times above the actual cost.",
+      "status": "accepted",
+      "source": "Owner, 29 Oct 2026; W2-02-agent-upgrade review round 2, finding 2; clarifies DEC-W2-01-ELIGIBILITY-3",
+      "recorded_at": "2026-10-29T13:39:24.142Z",
+      "paths": [
+        "harness/release_check.py"
+      ],
+      "tags": []
     }
   ],
   "knowledge": [],

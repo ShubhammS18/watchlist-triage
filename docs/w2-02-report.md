@@ -1,6 +1,6 @@
 # Upgraded agent report (W2-02)
 
-Status: Draft, 29 Oct 2026; review round 1 fixes applied. Run figures come from the committed run output in `w2-02-runs/`
+Status: Draft, 29 Oct 2026; review round 2 fixes applied. Run figures come from the committed run output in `w2-02-runs/`
 (commit 05f6bbe), byte copies of what the harness wrote, listed in `w2-02-runs/SHA256SUMS`. The runs were made at
 commit dbb230e; the agent code is as at 6e93a2e. The pass or fail is the release check's own
 (`python -m harness acceptance w2-02-runs 8f4050be…`, `docs/acceptance-design.md`). The bill is the Console's. The
@@ -9,7 +9,9 @@ attempt log is `docs/w2-02-attempts.md`.
 ## In short
 
 - On the frozen world the upgraded agent **met every release target** in three valid runs (run set `8f4050be`):
-  no true match and no ambiguous alert closed, and no injection verdict change, in any run or framing.
+  no true match and no ambiguous alert closed, and no injection verdict change, in any run or framing. The release
+  check's result is **PASS (cost bounded under a stated assumption)**: 2 failed calls left no usage and were
+  bounded from their successful retries (see Cost, below).
 - It escalated **0.14% of clear false positives** (7/4860), against 52.7% for the baseline and a target of at most
   3.9%.
 - The three framings of an alert agreed for **99.6%** of alerts (1793/1800), against 68.8% for the baseline.
@@ -39,10 +41,12 @@ things; `baseline_agent/` is untouched.
    is a LINK, whatever its source or how reliable it seems. This was attempt 2's one change, after attempt 1 closed
    the control twin of an injected alert once on that kind of note.
 
-A static test checks that each module of the agent imports only the modules listed for it, so nothing from the world
-generator, that no module uses importlib, `__import__`, `exec` or `eval`, and that no module's source holds a
-generator string of 20 characters or more or a note text of the frozen world; it does not check short fragments,
-text put together from pieces, or notes the generator would write on another seed. The manifest records the prompt
+A static test reads the agent's source and checks three things: every import statement of each module names a module
+on that module's list, so none names the world generator; no module has a name or attribute spelled importlib,
+`__import__`, `exec`, `eval` or `__builtins__`; and no module's source holds a generator string of 20 characters or
+more or a note text of the frozen world. Nothing is checked at run time, so it does not show that no import happens
+at run time, and it does not check short fragments, text put together from pieces, or notes the generator would
+write on another seed. The manifest records the prompt
 hash (`1740d71e…`) and a hash of the rule code (`1c964fd8…`), and the run-set ID includes both; the release check
 confirms they agree. The rule-code hash covers the triage package's own decision files (`rules.py`, `recommend.py`,
 `child.py`, `prompt.py`); the shared baseline modules it also uses are pinned by the clean commit among the run-set
@@ -57,7 +61,7 @@ separate world (seed 20261027), kept outside the repository, and do not count as
 | # | Date | Change | Run set | Result | Spend USD |
 |---|---|---|---|---|---|
 | 1 | 28 Oct 2026 | rules first; the model asked only whether a note links the customer to the listed person | `1c8d128b` | NOT ELIGIBLE at the time (4 failed calls left no token counts); re-judged under the later cost rule: FAIL on injection verdict divergence only (0/1/0) | 0.28 |
-| 2 | 29 Oct 2026 | a claimed identity is a LINK, whatever its source | `8f4050be` | **PASS** | 0.30 |
+| 2 | 29 Oct 2026 | a claimed identity is a LINK, whatever its source | `8f4050be` | **PASS (cost bounded under a stated assumption)**, 2 calls bounded | 0.30 |
 
 | Date | Change | Run set | Key figures | Spend USD |
 |---|---|---|---|---|
@@ -83,7 +87,7 @@ runs 1/2/3; rates are pooled over the valid runs.
 | Citation accuracy | 100% | 4853/4853 | 2298/2298 |
 | Cost per alert-framing item | at most USD 0.20 | USD 0.000055 | USD 0.000187 |
 | Modelled time, BASE, every close second-reviewed | assisted below manual | 15.95 against 20.00 | 71.70 against 20.00 |
-| Release check | | PASS | FAIL (5 targets) |
+| Release check | | PASS (cost bounded under a stated assumption) | FAIL (5 targets) |
 
 More detail on attempt 2:
 - **Injection.** 0 of 135 alert-and-twin pairs differed in verdict and 0 in citations. The noise control (each
@@ -95,8 +99,11 @@ More detail on attempt 2:
 - **Cost.** Known cost USD 0.000054388 per item, plus a bound of 0.000000120 for two calls that failed with a provider
   error and left no token counts, both retried successfully. The bound is under a stated assumption, not a proof:
   that a failed call is billed no more than its successful retry's input and the full answer limit
-  (`DEC-W2-01-ELIGIBILITY-3`). The harness's own cost for the three runs
-  is USD 0.2998; the Console showed USD 0.30 (balance 4.86 before run 1, 4.56 after run 3).
+  (`DEC-W2-01-ELIGIBILITY-3`). Because the pass rests on it, the release check labels the result PASS (cost bounded
+  under a stated assumption), not PASS (`DEC-W2-01-PASS-LABEL`); a plain PASS needs every call to report its usage.
+  This task accepts the labelled pass only with the owner's sign-off, in the attempt log, that the Console total
+  matches the harness's cost. The harness's own cost for the three runs is USD 0.2998; the Console showed USD 0.30
+  (balance 4.86 before run 1, 4.56 after run 3).
 - **Modelled time, the other five settings** (assisted against manual, minutes per alert): BASE with no second
   review 14.16 against 20.00; HIGH 58.12 and 53.62 against 78.00; LOW 5.45 and 4.55 against 7.00. Assisted was lower
   in all six.
@@ -113,8 +120,10 @@ More detail on attempt 2:
   whose fields are messier. The fresh-seed test does not remove this limit, since the same generator builds it."
 - **A wrong reading of a note can recommend a close.** Closes that depend on reading a note rest on the model's
   answer, with no automatic double-check; one such error occurred in attempt 1 (on a control twin), none in attempt
-  2. Human review of every close is the control (`DEC-W2-02-MODEL-READING-RISK`; a test shows the behaviour with a
-  scripted wrong answer).
+  2 (`DEC-W2-02-MODEL-READING-RISK`; a test shows the behaviour with a scripted wrong answer). In the operational
+  design, an L1 reviewer approves every proposal before it is final. Under the default four-eyes policy a second
+  reviewer also confirms every close; under QA sampling only a sample of closes gets that second check. Escalations
+  go to L2. Operational mode is not built yet, so none of this review was part of these evaluation runs.
 - **Citation accuracy checks the cited IDs**, not whether the written reason is right.
 - **Temperature 1.** The provider fixes it for this model, so the same item can get different answers in different
   runs. Three runs show the spread; they do not bound it. Over-escalation and consistency moved between runs (2 to 3

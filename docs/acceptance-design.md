@@ -9,7 +9,8 @@ decisions of 2026-10-26. The targets are those of
 ## What it is
 
 `python -m harness acceptance OUT RUN_SET` judges one run set's committed output against the release targets on the
-frozen world, and prints the result as JSON. It exits 0 only on PASS. The code is `harness/release_check.py`. It
+frozen world, and prints the result as JSON. It exits 0 on PASS, 3 on PASS (cost bounded under a stated assumption)
+and 1 otherwise. The code is `harness/release_check.py`. It
 reads the run output, the world and the targets file, and writes nothing: the figures are worked out again from the
 item lines by the score step's own functions, never read from a report, and `score_all`, which writes reports, is
 never called.
@@ -59,6 +60,19 @@ making the set not eligible, only when a later try of the same request in the sa
   valid runs, meets it. The result gives the known cost per item, the bound added, how many calls were bounded, and
   that the Console figure is checked at review; the Console total is reconciled against the harness's cost then.
   Failed calls are not assumed to be free.
+
+**A pass that rests on the assumption is labelled** (`DEC-W2-01-PASS-LABEL`, which clarifies
+`DEC-W2-01-ELIGIBILITY-3`). "A pass is reported as a plain pass only when every call reported its usage. When some
+failed calls were bounded from their successful retries, under the stated billing assumption, the result is a pass
+with that qualification, giving the number of calls bounded and the assumption, so a reader can see what it rests
+on."
+- **The results:** PASS, PASS (cost bounded under a stated assumption), FAIL and NOT ELIGIBLE. The qualified pass is
+  given only when the set would otherwise pass and at least one failed call, in any run of the set, was bounded.
+- **Beside it:** `cost_assumption` holds the number of calls bounded and the assumption in words; it is null when no
+  call was bounded.
+- **Who accepts it:** the check does not. The upgrade task's gate (`tests/w2_02_agent/test_attempt_log.py`) accepts
+  a qualified pass only with the owner's sign-off, in `docs/w2-02-attempts.md`, that the Console total matches the
+  harness's cost for that run set.
 
 ## What it judges
 
@@ -131,6 +145,10 @@ framing and by primary family; the citation differences also by label.
   bytes do not change a bound from a retry; the bound uses the requested model's price and the run's answer limit;
   only main items of valid runs add to the target; on the oracle set the target passes with a bound just under it
   and fails just over it. The baseline's judged cost is its known cost, with nothing bounded.
+- **The pass label** (`test_cost_bound.py`, `test_eligibility.py`): the oracle set, every call with its usage, is a
+  plain PASS with no `cost_assumption`; the same set with one failed call bounded from its retry is PASS (cost
+  bounded under a stated assumption), with 1 call bounded and the assumption; a bound that pushes the cost over the
+  target still fails; the command exits 0 on the plain pass and 3 on the qualified one.
 - **Hash binding** (`test_eligibility.py`): on a copy of the oracle set given a prompt record, with the run-set ID
   made to follow its inputs, each of these gives NOT ELIGIBLE: the prompt text changed, the manifest's prompt hash
   changed, the run-set prompt hash changed, a rule-code hash in the manifest only, in the run-set inputs only, or

@@ -2,13 +2,14 @@
 bounded only by a successful retry of the same request: its input is the retry's input tokens, its answer counts at
 the full answer limit, at the requested model's price. A failed call with no successful retry leaves the set not
 eligible, whatever prompt bytes it recorded: they are information only. The cost target is judged on the known cost
-plus the bound."""
+plus the bound. A set that passes with any call bounded is a qualified pass, not a plain one
+(DEC-W2-01-PASS-LABEL)."""
 import json
 from fractions import Fraction
 
 from harness import release_check
 
-from conftest import SOURCED
+from conftest import SOURCED, copy_set, rewrite
 
 PRICES = json.loads(SOURCED["price_table"].read_text(encoding="utf-8"))  # claude-haiku-5-5: 0.10 in, 0.50 out per million
 MANIFEST = {"model": {"requested": "claude-haiku-5-5"}, "decoding": {"max_tokens": 512}}
@@ -71,9 +72,33 @@ def test_the_cost_target_is_judged_on_the_known_cost_plus_the_bound(oracle_set, 
     monkeypatch.setattr(release_check, "cost_bound", lambda loaded, valid, prices: ({"tries": 2, "main": under}, []))
     result = release_check.check(oracle_set[0], oracle_set[1])
     cost = result["targets"]["cost_per_alert"]
-    assert result["result"] == "PASS" and cost["result"] == "pass" and cost["failed_tries_bounded"] == 2
+    assert result["result"] == "PASS (cost bounded under a stated assumption)" and cost["result"] == "pass"
+    assert cost["failed_tries_bounded"] == 2
+    assert result["cost_assumption"] == {"calls_bounded": 2, "assumption": release_check.ASSUMPTION}
     assert cost["known_per_alert"]["numerator"] == 0 and cost["console"] == "the Console figure is checked at review"
     assert Fraction(cost["value"]["numerator"], cost["value"]["denominator"]) == under / main_items
     monkeypatch.setattr(release_check, "cost_bound", lambda loaded, valid, prices: ({"tries": 1, "main": Fraction(1, 5) * main_items + 1}, []))
     over = release_check.check(oracle_set[0], oracle_set[1])
-    assert over["result"] == "FAIL" and over["failed"] == ["cost_per_alert"]
+    assert over["result"] == "FAIL" and over["failed"] == ["cost_per_alert"] and over["cost_assumption"]["calls_bounded"] == 1
+
+
+def test_a_pass_with_every_call_reporting_its_usage_is_a_plain_pass(oracle_result):
+    assert oracle_result["result"] == "PASS" and oracle_result["cost_assumption"] is None
+    assert oracle_result["targets"]["cost_per_alert"]["failed_tries_bounded"] == 0
+
+
+def test_a_pass_with_one_call_bounded_from_its_retry_is_labelled(oracle_set, tmp_path):
+    out, run_set, ids = copy_set(oracle_set, tmp_path)
+    failed = {"error": "ProviderError", "input_tokens": None, "output_tokens": None, "model_id": None}
+    retried = {"error": None, "input_tokens": 600, "output_tokens": 40, "model_id": "claude-haiku-5-5"}
+    def one_retried_call(rows):
+        rows[0]["attempts"] = [failed, retried]
+    rewrite(out, ids[0], one_retried_call)
+    path = out.joinpath(ids[0], "manifest.json")  # the oracle calls no model; this run now asks a priced one
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    manifest["model"]["requested"], manifest["decoding"] = "claude-haiku-5-5", {"max_tokens": 512, "temperature": 1}
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    result = release_check.check(out, run_set)
+    assert result["result"] == "PASS (cost bounded under a stated assumption)", result["not_eligible_because"]
+    assert result["cost_assumption"] == {"calls_bounded": 1, "assumption": release_check.ASSUMPTION}
+    assert "billed no more than a successful call with the same input" in release_check.ASSUMPTION

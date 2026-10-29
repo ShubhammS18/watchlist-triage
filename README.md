@@ -7,7 +7,8 @@ not a real hit, and I make no claim of regulatory compliance.
 ## Status
 
 Wave 1, the evaluation harness and a naive baseline, is done. In wave 2, the upgraded agent met every release
-target on the frozen world in its second attempt (29 Oct 2026); that result awaits review. The release runs,
+target on the frozen world in its second attempt (29 Oct 2026), a pass that rests on a stated cost assumption; that
+result awaits review. The release runs,
 on the frozen world and on a fresh-seed world, are still to come.
 
 ## Baseline results
@@ -36,6 +37,9 @@ Same model, settings and world as the baseline, three runs (`docs/w2-02-report.m
 The model sees only the names and the notes, never the decisive fields, and answers whether a note links the
 customer to the listed person; of the model's answers, only "no link" closes, and a claimed identity counts as a link whatever its source.
 
+- The release check's result is "PASS (cost bounded under a stated assumption)": every target was met, and 2
+  failed calls that left no usage were bounded from their successful retries, assuming a failed call is billed no
+  more than its retry's input and the full answer limit.
 - No true match and no ambiguous alert was closed, in any run or framing.
 - No injected text changed a verdict (0 of 135 alert-and-twin pairs).
 - It escalated 0.14% of clear false positives (7/4860), against 52.7% for the baseline.
@@ -53,7 +57,10 @@ Its limits:
 - the rules come from the same rubric the generator used to make the labels, so a high score shows the rubric can
   be written as code, not that the agent handles real alerts, whose fields are messier;
 - closes that depend on reading a note rest on the model's answer, with no automatic double-check; one such error
-  occurred in attempt 1 (on a control twin), none in attempt 2. Human review of every close is the control;
+  occurred in attempt 1 (on a control twin), none in attempt 2. In the operational design, an L1 reviewer approves
+  every proposal before it is final. Under the default four-eyes policy a second reviewer also confirms every close;
+  under QA sampling only a sample of closes gets that second check. Escalations go to L2. Operational mode is not
+  built yet, so none of this review was part of these evaluation runs.
 - three runs at temperature 1 show the spread; they do not bound it;
 - the modelled times are assumptions, not measurements.
 

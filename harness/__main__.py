@@ -13,7 +13,8 @@
     python -m harness acceptance OUT RUN_SET [--world WORLD]
                                                             judges run set RUN_SET under OUT against the release
                                                             targets; writes nothing, prints the result as JSON, and
-                                                            exits 0 only on PASS
+                                                            exits 0 on PASS, 3 on PASS (cost bounded under a stated
+                                                            assumption), 1 otherwise
 """
 import argparse
 import json
@@ -76,7 +77,7 @@ def main(arguments=None):
             from .release_check import check  # loads the scoring code, like the score command
             result = check(args.out, args.run_set, args.world)
             print(json.dumps(result, indent=2, sort_keys=True))
-            return 0 if result["result"] == "PASS" else 1
+            return {"PASS": 0, "PASS (cost bounded under a stated assumption)": 3}.get(result["result"], 1)
         else:
             records.supersede(args.out, args.old, args.new, args.cause)
             print(f"run set {args.old[:8]} is superseded by {args.new[:8]}")
