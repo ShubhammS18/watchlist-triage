@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-29T08:56:50.691Z"
+    "updated_at": "2026-10-29T08:58:20.779Z"
   },
   "policy": {
     "ponytail": "full",
@@ -1909,6 +1909,16 @@
       ],
       "tags": [],
       "supersedes": "DEC-W2-01-ELIGIBILITY"
+    },
+    {
+      "id": "DEC-W2-02-CLAIMED-LINK",
+      "title": "A note claiming identity is a link, whatever its source",
+      "text": "In practice run 2 and in the first counted attempt, the model sometimes answered that a note claiming the customer is the listed person was no link, because the claim came from a press report; once, that closed an alert the rubric says must escalate. Under the rubric any claimed identity means escalate, and judging how reliable the source is belongs to the second-level review, not to triage. So the question now tells the model to answer LINK for any note that states or claims identity, whatever its source. This is the one change for the second attempt; it is tried on a practice run first.",
+      "status": "accepted",
+      "source": "Owner, 28 Oct 2026; W2-02-agent-upgrade practice run 2 (ALT-0600) and attempt 1 (run set 1c8d128b, ALT-0524 twin); docs/rubric.md",
+      "recorded_at": "2026-10-29T08:58:20.778Z",
+      "paths": [],
+      "tags": []
     }
   ],
   "knowledge": [],

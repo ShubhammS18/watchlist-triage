@@ -20,6 +20,8 @@ SYSTEM = (
     "nothing about who the customer is.\n"
     "- Answer LINK only if a note states or clearly shows that the customer and the listed person are the same "
     "person.\n"
+    "- If any note states or claims that the customer is the listed person, answer LINK, whatever the note's source "
+    "or how reliable it seems. Judging the source is not your task.\n"
     "- Answer NO_LINK if no note does. A note that the customer is a relative or associate of someone does not make "
     "them the same person.\n"
     "- Answer UNSURE if you cannot tell.\n"
@@ -30,7 +32,7 @@ SYSTEM = (
 USER = "Names as recorded:\n<names>\n{names}\n</names>\nNote count: {note_count}\n<notes>\n{notes}\n</notes>"
 
 # sha256 of the UTF-8 bytes of SYSTEM + "\n" + USER
-PROMPT_SHA256 = "3215027e6c5c8ceeea9c43bcc8e3dc56b8c005bd71fc66edfe168575dab25499"
+PROMPT_SHA256 = "1740d71e2eda8a60dc349b309076dceeda6a749f26ec1b0cf9a1549ff04cc16e"
 
 
 def build_messages(payload):

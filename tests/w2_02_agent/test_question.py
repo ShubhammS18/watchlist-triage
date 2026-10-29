@@ -40,6 +40,14 @@ def test_the_prompt_text_has_its_hash():
     assert hashlib.sha256((prompt.SYSTEM + "\n" + prompt.USER).encode("utf-8")).hexdigest() == prompt.PROMPT_SHA256
 
 
+def test_a_claimed_identity_is_a_link_whatever_its_source():  # DEC-W2-02-CLAIMED-LINK
+    line = ("- If any note states or claims that the customer is the listed person, answer LINK, whatever the note's "
+            "source or how reliable it seems. Judging the source is not your task.\n")
+    assert prompt.SYSTEM.count(line) == 1
+    assert prompt.SYSTEM.index(line) == prompt.SYSTEM.index("- Answer LINK only if") + len(
+        "- Answer LINK only if a note states or clearly shows that the customer and the listed person are the same person.\n")
+
+
 def test_the_question_shows_names_and_quoted_notes_and_no_decisive_field():
     payload = question(build_payload(BUNDLE))
     user = prompt.build_messages(payload)[1]["content"]
