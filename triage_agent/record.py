@@ -1,11 +1,12 @@
 """What the harness records for the upgraded agent (DEC-W2-02-LAYOUT): the prompt text and hash it sends, and the hash
-of its rule code: the rules, the parent's verdicts and citations, and the child's reading of the answer. Parent only."""
+of its rule code: the rules, the parent's verdicts and citations, the child's reading of the answer and the building
+of the prompt. Parent only."""
 import hashlib
 from pathlib import Path
 
 from .prompt import PROMPT_SHA256, SYSTEM, USER
 
-RULE_CODE = ("rules.py", "recommend.py", "child.py")
+RULE_CODE = ("rules.py", "recommend.py", "child.py", "prompt.py")
 
 
 def rule_code_sha256(folder=Path(__file__).parent):

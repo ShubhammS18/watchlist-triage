@@ -75,9 +75,18 @@ def test_items_that_cannot_be_read_fail_closed():
     assert result["recommendation"] == "ESCALATE" and result["system_failure"] and result["failure_kind"] == "internal_error"
 
 
-def test_the_rule_code_hash_covers_the_rules_the_verdicts_and_the_answer_reading():
+def test_the_rule_code_hash_covers_the_rules_the_verdicts_the_answer_reading_and_the_prompt_building():
     import hashlib
     digest = hashlib.sha256()
-    for name in ("rules.py", "recommend.py", "child.py"):
+    for name in ("rules.py", "recommend.py", "child.py", "prompt.py"):
         digest.update(name.encode() + b"\0" + REPO.joinpath("triage_agent", name).read_bytes() + b"\0")
     assert record.PROMPT["rule_code_sha256"] == digest.hexdigest() == record.rule_code_sha256()
+
+
+def test_a_change_to_prompt_py_changes_the_rule_code_hash(tmp_path):
+    for name in record.RULE_CODE:
+        tmp_path.joinpath(name).write_bytes(REPO.joinpath("triage_agent", name).read_bytes())
+    assert record.rule_code_sha256(tmp_path) == record.rule_code_sha256()
+    prompt = tmp_path.joinpath("prompt.py")
+    prompt.write_bytes(prompt.read_bytes().replace(b"render_item(item)", b"render_item(dict(item))", 1))
+    assert record.rule_code_sha256(tmp_path) != record.rule_code_sha256()
