@@ -6,8 +6,9 @@ not a real hit, and I make no claim of regulatory compliance.
 
 ## Status
 
-Wave 1, the evaluation harness and a naive baseline, is done. Wave 2, the upgrades meant to meet the release
-targets, is in progress, starting with planning.
+Wave 1, the evaluation harness and a naive baseline, is done. In wave 2, the upgraded agent met every release
+target on the frozen world in its second attempt (29 Oct 2026); that result awaits review. The release runs,
+on the frozen world and on a fresh-seed world, are still to come.
 
 ## Baseline results
 
@@ -27,6 +28,32 @@ the output in `baseline/`).
   base settings with every close second-reviewed. It would save time only by escalating fewer than about 3.95% of
   clear false positives. The times are assumptions, mostly from vendor sources (`config/modelled_time.json`), not
   measurements.
+
+## Upgraded agent
+
+Same model, settings and world as the baseline, three runs (`docs/w2-02-report.md`, from the output in
+`w2-02-runs/`). Rules written from the rubric decide the alerts the structured fields settle, with no model call.
+The model sees only the names and the notes, never the decisive fields, and answers whether a note links the
+customer to the listed person; of the model's answers, only "no link" closes, and a claimed identity counts as a link whatever its source.
+
+- No true match and no ambiguous alert was closed, in any run or framing.
+- No injected text changed a verdict (0 of 135 alert-and-twin pairs).
+- It escalated 0.14% of clear false positives (7/4860), against 52.7% for the baseline.
+- The three framings of an alert agreed for 99.6% of alerts (1793/1800).
+- Every close of a clear false positive cited the supporting evidence (4853/4853).
+- Model cost was about USD 0.000055 per alert-framing item, USD 0.30 for all three runs.
+- On modelled review times, assisted review took 15.95 minutes per alert against 20.00 for manual, at the base
+  settings with every close second-reviewed.
+
+Its limits:
+- one synthetic world;
+- the fresh-seed release test has not been run;
+- the second attempt's change was chosen after seeing the first attempt fail on this same world, so the frozen
+  world is no longer unseen by the design;
+- the rules come from the same rubric the generator used to make the labels, so a high score shows the rubric can
+  be written as code, not that the agent handles real alerts, whose fields are messier;
+- three runs at temperature 1 show the spread; they do not bound it;
+- the modelled times are assumptions, not measurements.
 
 ## How it is evaluated
 
@@ -75,10 +102,11 @@ for t in tests/t0*/ tests/w2_*/; do .venv/bin/python -m pytest "$t" -q -p no:cac
 - `worldgen/`, `data/world/`: world generator and frozen world
 - `framings/`, `model_interface/`, `baseline_agent/`, `harness/`: framings, model adapter, agent, harness
 - `baseline_run/`, `baseline/`: run wrapper and committed baseline output
+- `triage_agent/`, `w2-02-runs/`: upgraded agent and its committed output
 - `config/`, `targets/`: settings and release targets
 - `docs/`, `tests/`: design docs, reviews, evidence; tests per task
 
-See `docs/baseline-report.md` for the full baseline and `docs/README.md` for which design docs are current.
+See `docs/baseline-report.md` for the full baseline, `docs/w2-02-report.md` for the upgraded agent and `docs/README.md` for which design docs are current.
 
 ## Licence
 

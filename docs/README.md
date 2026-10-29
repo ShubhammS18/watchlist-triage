@@ -15,5 +15,6 @@ the baseline, read `baseline-report.md`.
 | `baseline-report.md` | T07-baseline-run | Approved, 22 Oct 2026 (review round 4) | the current doc; its "Supersedes" table repeats the lines above |
 | `isolation-design.md` | W2-07-dns-isolation | Approved, 25 Oct 2026 (review round 3) | the current doc for the name-lookup guard; its "Supersedes" table repeats the `model-interface-design.md` lines `:18-19` and `:94-95` |
 | `acceptance-design.md` | W2-01-harness-acceptance | Approved, 27 Oct 2026 (review round 4) | the current doc for the release check |
+| `w2-02-report.md`, `w2-02-attempts.md` | W2-02-agent-upgrade | Draft, 29 Oct 2026; not yet reviewed | the current doc for the upgraded agent; the attempt log is its record of attempts and spend |
 
 Review reports are in `reviews/`; the evidence behind the T07 report is in `evidence/t07/`.
