@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-29T13:59:01.211Z"
+    "updated_at": "2026-10-29T14:01:58.944Z"
   },
   "policy": {
     "ponytail": "full",
@@ -23,11 +23,11 @@
     }
   },
   "lifecycle": {
-    "phase": "build",
-    "status": "active",
-    "active_task": "W2-02-agent-upgrade",
+    "phase": "verify",
+    "status": "ready",
+    "active_task": null,
     "blocker": null,
-    "next_action": "Run the task pre-flight."
+    "next_action": "Review completed work and choose the next bounded outcome."
   },
   "commands": {},
   "workflow": {
@@ -3874,7 +3874,7 @@
     {
       "id": "W2-02-agent-upgrade",
       "outcome": "An upgraded agent whose committed run set on the frozen world passes the acceptance check: no true match and no ambiguous alert closed in any run or framing, every release target met, assisted review faster than manual on the modelled times, and no verdict changed by injected text in any run or framing. Work runs as limited attempts of one change and one measured run set each. Every attempt, committed or not, is a row in docs/w2-02-attempts.md: the change, the run set ID, the Console spend, a two-line note and the decision to continue, change approach or narrow scope. The log also records the attempt limit set at the pre-flight. The test gate checks the committed files only: every committed run set is in the log, the number of attempts is within the recorded limit, and the logged total spend is below USD 25. Completion also needs the owner's sign-off at independent review that the log lists every attempt, that each attempt made one change, and that the logged total matches the Console's wave-2 spend.",
-      "state": "active",
+      "state": "done",
       "risk": "high",
       "owner": "claude-code",
       "scope": [],
@@ -3899,16 +3899,28 @@
           "kind": "command",
           "command": ".venv/bin/python -m pytest tests/w2_02_agent -q -p no:cacheprovider",
           "mandatory": true,
-          "status": "pending",
-          "evidence": null
+          "status": "pass",
+          "evidence": {
+            "path": ".genesis/evidence/W2-02-agent-upgrade-tests-dff358f1-ae2b-499a-b78e-10daab49b92a.json",
+            "hash": "39fec9df7ca0889e5cc9cb62c5f813338c6924328902289302460ee6e362b699",
+            "source_hash": "7d6dff0cb080d130adc4473fcdaa10d173d837c3716479ec5316db1fbd9e2693",
+            "config_hash": "9adfa200fafea0f5052c59adbd2059e1a14edf3a57cf57b3bea41f884bdec55a",
+            "observed_at": "2026-10-29T14:01:34.918Z"
+          }
         },
         {
           "id": "independent-review",
           "kind": "review",
           "command": "",
           "mandatory": true,
-          "status": "pending",
-          "evidence": null
+          "status": "pass",
+          "evidence": {
+            "path": ".genesis/evidence/W2-02-agent-upgrade-independent-review-c9a57f2e-1830-453f-949c-29b6d239055a.json",
+            "hash": "713fe128820bf942c4859febd5a8a47a01047b8646d51c9ccd7d48c80360b04c",
+            "source_hash": "7d6dff0cb080d130adc4473fcdaa10d173d837c3716479ec5316db1fbd9e2693",
+            "config_hash": "9adfa200fafea0f5052c59adbd2059e1a14edf3a57cf57b3bea41f884bdec55a",
+            "observed_at": "2026-10-29T14:01:54.617Z"
+          }
         }
       ],
       "next_action": "Run the task pre-flight.",
@@ -3917,7 +3929,7 @@
       "failures": [],
       "limitations": [],
       "created_at": "2026-10-24T06:47:07.488Z",
-      "updated_at": "2026-10-24T06:47:07.489Z",
+      "updated_at": "2026-10-29T14:01:58.944Z",
       "base_manifest": {
         ".gitignore": "05272076c15c79ba32ab1d10bbad87ff61436dfd0a365d60c0e0b550edb2e4db",
         ".gitleaks.toml": "489ec169ff171976cb5de02fa66d0134eeac1159058cabbaee71eaa5261c6157",
@@ -4254,6 +4266,15 @@
       "human": "Shubham Suradkar",
       "reason": "Four independent review rounds, the fourth limited to two fixes by decision record: three blockers found and fixed, round 4 clean. Decision record DEC-W2-01-REVIEW.",
       "revision": null
+    },
+    {
+      "id": "c9a57f2e-1830-453f-949c-29b6d239055a",
+      "at": "2026-10-29T14:01:54.617Z",
+      "action": "approve",
+      "task": "W2-02-agent-upgrade",
+      "human": "Shubham Suradkar",
+      "reason": "Three independent review rounds: round 1 found two blockers, one accepted by decision record and one fixed; round 2's three issues fixed; round 3's one small issue fixed after the final round. Decision record DEC-W2-02-REVIEW.",
+      "revision": null
     }
   ],
   "attempts": [
@@ -4568,6 +4589,30 @@
       "cost": null,
       "stop_reason": null,
       "ended_at": "2026-10-27T08:41:29.777Z"
+    },
+    {
+      "id": "dff358f1-ae2b-499a-b78e-10daab49b92a",
+      "task": "W2-02-agent-upgrade",
+      "kind": "gate",
+      "command": ".venv/bin/python -m pytest tests/w2_02_agent -q -p no:cacheprovider",
+      "timeout": 120000,
+      "authorization": null,
+      "pid": 18916,
+      "child_pid": 18959,
+      "started_at": "2026-10-29T14:01:28.064Z",
+      "status": "passed",
+      "before_hash": "7d6dff0cb080d130adc4473fcdaa10d173d837c3716479ec5316db1fbd9e2693",
+      "config_hash": "9adfa200fafea0f5052c59adbd2059e1a14edf3a57cf57b3bea41f884bdec55a",
+      "environment": {
+        "node": "v24.21.0",
+        "platform": "linux",
+        "arch": "x64",
+        "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+        "variables": {}
+      },
+      "cost": null,
+      "stop_reason": null,
+      "ended_at": "2026-10-29T14:01:34.917Z"
     }
   ],
   "authorizations": [],
