@@ -103,10 +103,10 @@ def test_a_price_table_git_cannot_read_at_the_run_commit(oracle_set, monkeypatch
     assert_not_eligible(release_check.check(oracle_set[0], oracle_set[1]), "a run's price table is not")
 
 
-def test_a_cost_that_is_only_a_lower_bound(oracle_set, tmp_path):
+def test_a_call_whose_cost_cannot_be_bounded(oracle_set, tmp_path):
     out, run_set, ids = copy_set(oracle_set, tmp_path)
-    rewrite(out, ids[1], a_call_with_no_token_counts)
-    assert_not_eligible(release_check.check(out, run_set), "some cost is only a lower bound")
+    rewrite(out, ids[1], a_call_with_no_token_counts)  # no retry and no recorded prompt size (DEC-W2-01-ELIGIBILITY-2)
+    assert_not_eligible(release_check.check(out, run_set), "1 calls left no token counts, no successful retry")
 
 
 def test_a_run_that_cannot_be_loaded(oracle_set, tmp_path):

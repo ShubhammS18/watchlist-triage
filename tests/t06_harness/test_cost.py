@@ -312,7 +312,8 @@ def test_a_retry_that_succeeds_is_two_attempts_and_the_first_has_no_cost():
     harness_run.hand_off(items, fake_model.inprocess, fake_model.FailsOnce(), Settings("fake-1", 0, 512, 30), done)
     for line in done:
         first, second = line["attempts"]
-        assert first == call(None, None, None, "ProviderError") and second["error"] is None and second["input_tokens"] > 0
+        assert first == {**call(None, None, None, "ProviderError"), "prompt_bytes": second["prompt_bytes"]}  # W2-02
+        assert second["error"] is None and second["input_tokens"] > 0 and second["prompt_bytes"] > 0
         assert line["result"]["recommendation"] == "CLOSE" and line["result"]["system_failure"] is False
         assert line["result"]["log"]["attempts"] == 2 and len(line["result"]["log"]["attempt_log"]) == 2
         assert line["wall_s"] >= line["result"]["log"]["latency_s"] > 0  # the item's time covers both attempts

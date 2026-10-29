@@ -17,7 +17,7 @@ Load Genesis and official Ponytail full, then run `genesis brief .` for the curr
 Fetch full records with `genesis context . --id ID` only when needed. Do not load project.json or historical proof wholesale.
 Ask the index before reading code: `genesis query . search|scope|callers|callees|impact|path` (`--json` for parsing). Run `genesis query . impact PATH` before editing shared code. Answers are advisory static analysis; `ambiguous` means candidates were not ruled out, so confirm in source.
 Run `genesis serve .` for a live map of the repository when structure is unclear; it reindexes on save and is read-only. Run `genesis index .` if the index is stale and nothing is watching.
-Context fingerprint: 842642c06e702816d610c9541d68d9a7636d566f489eb369b7e09c83fb58a25a. Use --since only after receiving that full packet; kickoff is not the packet.
+Context fingerprint: c1d72ce294ddb1ea4b7d0b502363a9d30c527a32ab4ae99708153703f70c8e90. Use --since only after receiving that full packet; kickoff is not the packet.
 - DEC-W2-02-ATTEMPTS: At most six measured attempts; practice runs are logged but not counted
 - DEC-W2-PLAN: Plan wave 2 in steps; the agent upgrade decides the rest
 - DEC-W2-01-TIME-RULE: The time saving is judged on the strictest of the six settings

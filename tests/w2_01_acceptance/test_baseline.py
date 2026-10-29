@@ -45,6 +45,9 @@ def test_the_baseline_counts_and_rates(result):
     assert value("verdict_consistency") == (1239, 1800) and targets["verdict_consistency"]["result"] == "pass"
     assert value("citation_accuracy") == (2298, 2298) and targets["citation_accuracy"]["result"] == "pass"
     assert value("cost_per_alert") == (3371461, 18000000000) and targets["cost_per_alert"]["result"] == "pass"
+    # no call left its token counts out, so nothing is bounded and the judged cost is the known cost (W2-02)
+    assert targets["cost_per_alert"]["failed_tries_bounded"] == 0
+    assert targets["cost_per_alert"]["known_per_alert"]["numerator"] == 3371461
     assert targets["modelled_review_time"]["assisted_per_alert"]["decimal"] == "71.697037"
 
 

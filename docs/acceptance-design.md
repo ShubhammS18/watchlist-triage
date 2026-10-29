@@ -1,7 +1,8 @@
 # Release acceptance check for W2-01-harness-acceptance
 
 Requirements: FR-20, AC-3, AC-4, AC-6 and AC-12. Decision records: `DEC-W2-01-DESIGN`, `DEC-W2-01-TIME-RULE`,
-`DEC-W2-01-RUN-RULE` and `DEC-W2-01-ELIGIBILITY`, owner decisions of 2026-10-26. The targets are those of
+`DEC-W2-01-RUN-RULE` and `DEC-W2-01-ELIGIBILITY` (superseded on 2026-10-29 by `DEC-W2-01-ELIGIBILITY-2`), owner
+decisions of 2026-10-26. The targets are those of
 `DEC-T07-TARGETS`, in `targets/release-targets.json`; the injection rule is `DEC-W2-AC12-RULE`.
 
 ## What it is
@@ -32,10 +33,25 @@ every close second-reviewed, the default review policy; the other five combinati
 zero in every run that produced output, valid or not, and in every framing." "Rates are judged pooled over the valid
 runs, as the targets were set, with each run's value shown beside them."
 
-**Eligibility** (`DEC-W2-01-ELIGIBILITY`). "The check has three results: pass, fail and not eligible. A run set is
-not eligible if the targets file is not the committed one, if it is not on the frozen world, if it has fewer than
-three valid runs, if the price or time file is not the sourced one, or if any cost is only a lower bound. A run set
-that is not eligible never passes; its per-target results are shown marked as mechanism only."
+**Eligibility** (`DEC-W2-01-ELIGIBILITY-2`, which supersedes `DEC-W2-01-ELIGIBILITY`). "The check has three results:
+pass, fail and not eligible. A run set is not eligible if the targets file is not the committed one, if it is not on
+the frozen world, if it has fewer than three valid runs, or if the price or time file is not the sourced one. A run
+set that is not eligible never passes; its per-target results are shown marked as mechanism only, and the
+clarification for a world that is not the frozen one still holds. Cost is judged on what can be proven."
+
+**Cost on a proven bound.** A model call that failed and left no token counts is bounded instead of making the set
+not eligible:
+- **Its input:** the input tokens of the successful retry of the same request, in the same item. With no successful
+  retry, its recorded prompt bytes at one token per byte. The harness notes `prompt_bytes` on every call from W2-02 on;
+  earlier runs, the committed baseline among them, have no such field and still validate.
+- **Trust in the bytes:** a bound that rests on prompt bytes is trusted only if no successful call in the set used
+  more input tokens than its prompt bytes, and every successful call recorded its size. Otherwise the set is not
+  eligible.
+- **Its answer:** the run's full answer limit (`max_tokens`).
+- **Not eligible:** a call that can be bounded neither way, or a call without a price.
+- **The target:** the cost target passes only if the known cost plus the bound, pooled over the main items of the
+  valid runs, meets it. The result gives the known cost per item, the bound added, how many calls were bounded, and
+  that the Console figure is checked at review. Failed calls are not assumed to be free.
 
 ## What it judges
 
@@ -98,11 +114,16 @@ framing and by primary family; the citation differences also by label.
   invalid run; an ambiguous alert closed; a twin escalated; a twin failure that says CLOSE; 190 of 4860 clear false
   positives escalated (189 passes); a close citing no supporting evidence; a close citing an ID outside its bundle;
   one call over the cost target.
+- **The cost bound** (`test_cost_bound.py`): a failed call bounded by its successful retry; one with no retry bounded
+  by its prompt bytes; the bytes bound untrusted when a successful call used more tokens than bytes or recorded no
+  size; a call bounded neither way leaves the set not eligible; only main items of valid runs add to the target; on
+  the oracle set the target passes with a bound just under it and fails just over it. The baseline's judged cost is
+  its known cost, with nothing bounded.
 - **Consistency and time cannot fail alone on a run set:** losing either needs escalated clear false positives,
   which fail over-escalation first. Each is shown failing alone on the judging step instead.
 - **Each eligibility case** gives NOT ELIGIBLE, never PASS: a changed targets file, a world that is not the frozen
   one, two valid runs, a fixture price table, a fixture time file, a sourced price table that is not the committed
-  one, a price table git cannot read at the run's commit, a call without token counts, a run whose items do not
+  one, a price table git cannot read at the run's commit, a call without token counts that cannot be bounded, a run whose items do not
   match its manifest, a run with one true match removed in every framing, a run with one injection pair removed,
   a run with one twin flag flipped (each with its manifest's hash and counts made consistent), and a superseded run
   set, and a world copy with one alert removed from its public alert list or one twin from its twin list (the runs

@@ -218,10 +218,10 @@ def test_the_token_wrapper_notes_every_attempt_and_passes_errors_on():
     with pytest.raises(ModelTimeout):
         tokens(None)
     assert tokens(None).input_tokens == 7 and tokens(None).input_tokens is None
-    assert tokens.attempts == [
-        {"error": "ModelTimeout", "input_tokens": None, "output_tokens": None, "model_id": None},
-        {"error": None, "input_tokens": 7, "output_tokens": 3, "model_id": "m-1"},
-        {"error": None, "input_tokens": None, "output_tokens": None, "model_id": "m-1"}]
+    assert tokens.attempts == [  # prompt_bytes: W2-02; None here, since the request carries no messages
+        {"error": "ModelTimeout", "input_tokens": None, "output_tokens": None, "model_id": None, "prompt_bytes": None},
+        {"error": None, "input_tokens": 7, "output_tokens": 3, "model_id": "m-1", "prompt_bytes": None},
+        {"error": None, "input_tokens": None, "output_tokens": None, "model_id": "m-1", "prompt_bytes": None}]
     assert harness_run._calls(tokens.attempts) == {"attempts": 3, "without_token_counts": 2, "input_tokens": 7,
                                                    "output_tokens": 3}
 

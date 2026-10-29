@@ -40,9 +40,9 @@ BREAKAGES = (
      "(verdicts, verdict(alert) != verdict(twin)),",
      '(verdicts, alert["result"]["recommendation"] != twin["result"]["recommendation"]),',
      W + "test_oracle.py::test_one_change_fails_exactly_one_named_target", ASSERTS),
-    ("the lower bound is checked on main items only", "harness/release_check.py",
-     'for part in ("main", "twin", "total")', 'for part in ("main",)',
-     W + "test_eligibility.py::test_a_cost_that_is_only_a_lower_bound", ASSERTS),
+    ("a call whose cost cannot be bounded is let through", "harness/release_check.py",
+     "    if unbounded:\n", "    if False:\n",
+     W + "test_eligibility.py::test_a_call_whose_cost_cannot_be_bounded", ASSERTS),
 )
 
 def make_copy(folder, mutation=None):

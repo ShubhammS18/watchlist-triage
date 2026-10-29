@@ -83,19 +83,30 @@ NOT_REAL = frozenset(("stub",))  # providers that are no real model; a run with 
 UNFINISHED = "Unfinished"  # the error name of a model call that had not returned when its item did
 
 
+def _prompt_bytes(request):
+    """The UTF-8 bytes of a request's messages, or None for anything that is not such a request."""
+    try:
+        return sum(len(message.content.encode("utf-8")) for message in request.messages)
+    except (AttributeError, TypeError):
+        return None
+
+
 class Tokens:
     """Wraps the model for ONE item and notes every attempt, failed ones included (DEC-T06-COST).
 
     A call is noted when it STARTS, as unfinished, and filled in when it returns or raises. So a call that is
     still under way when its item returns, as after a child timeout, is counted as a call without token counts
     and makes the cost a lower bound. `snapshot` is what an item keeps: later changes do not reach it.
+    Every call also notes `prompt_bytes`, the UTF-8 bytes of its messages, so that a call that left no token counts
+    can still be bounded (DEC-W2-01-ELIGIBILITY-2); it is null for a request that carries no messages.
     """
 
     def __init__(self, model):
         self._model, self.attempts = model, []
 
     def __call__(self, request):
-        attempt = {"error": UNFINISHED, "input_tokens": None, "output_tokens": None, "model_id": None}
+        attempt = {"error": UNFINISHED, "input_tokens": None, "output_tokens": None, "model_id": None,
+                   "prompt_bytes": _prompt_bytes(request)}
         self.attempts.append(attempt)
         try:
             result = self._model(request)

@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-27T09:29:26.122Z"
+    "updated_at": "2026-10-29T08:56:50.691Z"
   },
   "policy": {
     "ponytail": "full",
@@ -1801,11 +1801,12 @@
       "id": "DEC-W2-01-ELIGIBILITY",
       "title": "The check passes only on inputs it can verify",
       "text": "The check has three results: pass, fail and not eligible. A run set is not eligible if the targets file is not the committed one, if it is not on the frozen world, if it has fewer than three valid runs, if the price or time file is not the sourced one, or if any cost is only a lower bound. A run set that is not eligible never passes; its per-target results are shown marked as mechanism only, so tests can exercise the pass path without it counting. I chose three results over two so that a wrong input is not reported as the agent failing a target.",
-      "status": "accepted",
+      "status": "superseded",
       "source": "Owner, 26 Oct 2026; W2-01-harness-acceptance pre-flight points (b), (d), (e); targets/release-targets.json",
       "recorded_at": "2026-10-26T14:10:30.937Z",
       "paths": [],
-      "tags": []
+      "tags": [],
+      "superseded_by": "DEC-W2-01-ELIGIBILITY-2"
     },
     {
       "id": "DEC-W2-01-REVIEW-BUDGET",
@@ -1895,6 +1896,19 @@
       "recorded_at": "2026-10-27T09:29:26.122Z",
       "paths": [],
       "tags": []
+    },
+    {
+      "id": "DEC-W2-01-ELIGIBILITY-2",
+      "title": "The check passes only on inputs it can verify, with cost judged on a proven bound",
+      "text": "The check has three results: pass, fail and not eligible. A run set is not eligible if the targets file is not the committed one, if it is not on the frozen world, if it has fewer than three valid runs, or if the price or time file is not the sourced one. A run set that is not eligible never passes; its per-target results are shown marked as mechanism only, and the clarification for a world that is not the frozen one still holds. Cost is judged on what can be proven. When a call that failed and was retried left no token counts, its input is taken from the successful retry of the same request, and its answer is counted at the full answer limit. If no retry succeeded, its input is counted at one token per byte of its recorded prompt, trusted only if no successful call in the set used more tokens than bytes; if neither is known, the set is not eligible. The cost target passes only if the known cost plus that bound meets it. The report gives the known cost and the bound, and the Console figure is checked at review. This replaces my earlier rule that any lower-bound cost made a set not eligible: in the first counted attempt, two of the three runs had a retried provider error, so that rule would have made almost every set not eligible whatever the agent did. I did not assume that failed calls are free, because I could not confirm it from a source.",
+      "status": "accepted",
+      "source": "Owner, 28 Oct 2026; supersedes DEC-W2-01-ELIGIBILITY; W2-02-agent-upgrade attempt 1, run set 1c8d128b",
+      "recorded_at": "2026-10-29T08:56:50.680Z",
+      "paths": [
+        "harness/release_check.py"
+      ],
+      "tags": [],
+      "supersedes": "DEC-W2-01-ELIGIBILITY"
     }
   ],
   "knowledge": [],

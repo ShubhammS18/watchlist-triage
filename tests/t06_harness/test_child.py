@@ -118,6 +118,11 @@ def assert_parent_built(line, kind, error_name):
     assert kind not in harness_run.TRANSIENT and score.verdict(line) == "ESCALATE"  # an ordinary failure, not transient
 
 
+def plain(attempts):
+    """The attempt records without the prompt size that W2-02 added to each."""
+    return [{key: value for key, value in attempt.items() if key != "prompt_bytes"} for attempt in attempts]
+
+
 def test_the_real_margin_is_ten_seconds():
     assert baseline_recommend.MARGIN_S == 10
 
@@ -129,7 +134,8 @@ def test_a_child_timeout_is_fast_with_the_margin_patched_and_its_unfinished_call
     assert time.monotonic() - begun < 2.0  # not the 10 seconds of the real margin
     assert_parent_built(line, "child_timeout", "ChildTimeout")
     # the model call had started and had not returned: it is counted, without token counts
-    assert line["attempts"] == [{"error": "Unfinished", "input_tokens": None, "output_tokens": None, "model_id": None}]
+    assert plain(line["attempts"]) == [{"error": "Unfinished", "input_tokens": None, "output_tokens": None, "model_id": None}]
+    assert line["attempts"][0]["prompt_bytes"] > 0  # noted when the call started (W2-02)
     block = money.cost(line["attempts"], PRICES)
     assert block["at_least"] is True and block["attempts_without_token_counts"] == 1
     assert block["statement"] == "at least 0 USD; 1 attempts without token counts"
@@ -138,7 +144,7 @@ def test_a_child_timeout_is_fast_with_the_margin_patched_and_its_unfinished_call
 def test_a_child_whose_result_the_parent_refuses_is_a_child_crash():
     line = through_the_child(lambda request: Result("not json", 123, 1, 1, 0.0))  # a model id that is not text
     assert_parent_built(line, "child_crash", "BadResult")
-    assert line["attempts"] == [{"error": None, "input_tokens": 1, "output_tokens": 1, "model_id": 123}]
+    assert plain(line["attempts"]) == [{"error": None, "input_tokens": 1, "output_tokens": 1, "model_id": 123}]
 
 
 def test_a_fault_inside_the_model_object_is_an_internal_error():
@@ -147,7 +153,7 @@ def test_a_fault_inside_the_model_object_is_an_internal_error():
 
     line = through_the_child(broken)
     assert_parent_built(line, "internal_error", "RuntimeError")
-    assert line["attempts"] == [{"error": "RuntimeError", "input_tokens": None, "output_tokens": None, "model_id": None}]
+    assert plain(line["attempts"]) == [{"error": "RuntimeError", "input_tokens": None, "output_tokens": None, "model_id": None}]
 
 
 def test_the_parent_built_kinds_are_scored_as_escalations_and_never_as_transient():
@@ -182,10 +188,12 @@ def test_a_call_is_noted_when_it_starts_and_an_item_keeps_its_own_snapshot():
     worker.start()
     assert entered.wait(5)
     kept = tokens.snapshot()  # what the item keeps when it returns while the call is under way
-    assert kept == [{"error": "Unfinished", "input_tokens": None, "output_tokens": None, "model_id": None}]
+    assert kept == [{"error": "Unfinished", "input_tokens": None, "output_tokens": None, "model_id": None,
+                     "prompt_bytes": None}]  # a request with no messages has no size (W2-02)
     assert harness_run._calls(kept) == {"attempts": 1, "without_token_counts": 1, "input_tokens": 0, "output_tokens": 0}
     assert money.cost(kept, PRICES)["at_least"] is True  # unknown, and never a cost of 0 that looks complete
     release.set()
     worker.join(5)
-    assert tokens.attempts == [{"error": None, "input_tokens": 7, "output_tokens": 3, "model_id": "fake-1"}]
-    assert kept == [{"error": "Unfinished", "input_tokens": None, "output_tokens": None, "model_id": None}]  # unchanged
+    assert tokens.attempts == [{"error": None, "input_tokens": 7, "output_tokens": 3, "model_id": "fake-1", "prompt_bytes": None}]
+    assert kept == [{"error": "Unfinished", "input_tokens": None, "output_tokens": None, "model_id": None,
+                     "prompt_bytes": None}]  # unchanged

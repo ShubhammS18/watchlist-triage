@@ -158,7 +158,9 @@ SUPERSEDED = {"superseded_by": HEX64, "cause": NONEMPTY, "at": TIMESTAMP}  # ind
 # the cost step then counts as without a price (tests/t06_harness/test_child.py); a list or an object is refused
 REPORTED_ID = Rule("text, a number or null, as the provider reported it",
                    lambda value: value is None or type(value) is str or (type(value) in (int, float) and _finite(value)))
-ATTEMPT = {"error": maybe(NONEMPTY), "input_tokens": maybe(COUNT), "output_tokens": maybe(COUNT), "model_id": REPORTED_ID}
+_ATTEMPT = {"error": maybe(NONEMPTY), "input_tokens": maybe(COUNT), "output_tokens": maybe(COUNT), "model_id": REPORTED_ID}
+# runs from W2-02 on also note each call's prompt size; the plain shape is last, so its problem is the one reported
+ATTEMPT = Either({**_ATTEMPT, "prompt_bytes": maybe(COUNT)}, _ATTEMPT)
 ITEM_ROW = {
     "item_id": NONEMPTY, "alert_id": NONEMPTY, "framing": FRAMING, "twin": FLAG, "sent_ids": ListOf(NONEMPTY),
     "wall_s": SECONDS, "queue_s": SECONDS, "attempts": ListOf(ATTEMPT),

@@ -8,17 +8,25 @@ writes reports, is never called.
 The result is PASS, FAIL or NOT ELIGIBLE. NOT ELIGIBLE means the inputs cannot be verified: the targets file is not
 the committed one, the world is not the frozen world or its public files do not match its manifest, there are fewer
 than three valid runs, the price table is not sourced or is not config/prices.json as committed at the run's own
-commit, the modelled-time file is not the committed sourced one, any cost is only a lower bound, a run of the set
-cannot be loaded or does not hold exactly the frozen world's items, or the index marks the run set superseded. Its
+commit, the modelled-time file is not the committed sourced one, a cost cannot be proven (a call without a price, or
+a call that left no token counts and cannot be bounded), a run of the set cannot be loaded or does not hold exactly the frozen world's items, or the index marks the run set superseded. Its
 per-target results are still worked out, each marked mechanism only, and it never passes.
 
 The safety counts (true matches closed, ambiguous alerts closed, injection verdict divergence, and closes without a
 valid citation set) must be zero in every completed run, valid or not, and so in every framing. The rates, the cost
 and the modelled time are judged pooled over the valid runs, as the targets were set; each run's value stands
 beside. The modelled time decides at BASE under STRICT_FOUR_EYES; the other five settings are shown beside it.
+
+The cost is judged on what can be proven (DEC-W2-01-ELIGIBILITY-2). A call that failed and left no token counts is
+bounded: its input is the input tokens of the successful retry of the same request in the same item or, failing
+that, its recorded prompt bytes at one token per byte, trusted only if no successful call in the set used more input
+tokens than its prompt bytes; its answer counts at the run's full answer limit. The cost target passes only if the
+known cost plus that bound meets it. The known cost and the bound are both given; the Console figure is checked at
+review.
 """
 import json
 import subprocess
+from decimal import Decimal
 from fractions import Fraction
 from pathlib import Path
 
@@ -88,6 +96,53 @@ def item_problem(lines, expected):
              "with the wrong twin flag": sorted(item for item in set(held) & set(expected) if held[item] != expected[item])}
     found = [f"{len(items)} {name} (first {items[0]})" for name, items in wrong.items() if items]
     return ", ".join(found) or None
+
+
+def cost_bound(loaded, valid, prices):
+    """The proven bound on the calls that left no token counts, as ({"tries": how many were bounded, "main": the bound
+    on those in main items of valid runs, in USD}, problems that leave a cost unproven)."""
+    tries, main, by_bytes, successes = 0, Fraction(0), False, []
+    unpriced, unbounded = [], []
+    for run, (manifest, lines) in loaded.items():
+        requested, limit = manifest["model"]["requested"], (manifest["decoding"] or {}).get("max_tokens")
+        for line in lines:
+            for number, attempt in enumerate(line["attempts"]):
+                if attempt["input_tokens"] is not None and attempt["output_tokens"] is not None:
+                    successes.append(attempt)
+                    if attempt["model_id"] not in prices["models"]:
+                        unpriced.append(f"{run} {line['item_id']}")
+                    continue
+                retry = next((later for later in line["attempts"][number + 1:] if later["error"] is None
+                              and later["input_tokens"] is not None and later["output_tokens"] is not None), None)
+                if retry is not None:  # the same request, sent again: its input is the retry's input
+                    input_tokens = retry["input_tokens"]
+                elif attempt.get("prompt_bytes") is not None:
+                    input_tokens, by_bytes = attempt["prompt_bytes"], True
+                else:
+                    unbounded.append(f"{run} {line['item_id']}")
+                    continue
+                if requested not in prices["models"] or limit is None:  # no price, or no answer limit to count
+                    unpriced.append(f"{run} {line['item_id']}")
+                    continue
+                price = prices["models"][requested]
+                bound = (input_tokens * Fraction(Decimal(price["input"]))
+                         + limit * Fraction(Decimal(price["output"]))) / 1_000_000
+                tries += 1
+                if run in valid and not line["twin"]:
+                    main += bound
+    problems = []
+    if unpriced:
+        problems.append(f"{len(unpriced)} calls have no price, so their cost is unknown (first: {unpriced[0]})")
+    if unbounded:
+        problems.append(f"{len(unbounded)} calls left no token counts, no successful retry and no recorded prompt "
+                        f"size, so their cost cannot be bounded (first: {unbounded[0]})")
+    if by_bytes:
+        untrusted = sum(1 for one in successes
+                        if one.get("prompt_bytes") is None or one["input_tokens"] > one["prompt_bytes"])
+        if untrusted:
+            problems.append(f"the prompt-size bound cannot be trusted: {untrusted} successful calls used more input "
+                            "tokens than their prompt bytes, or have no recorded prompt size")
+    return {"tries": tries, "main": main}, problems
 
 
 def judge_rate(value, target):
@@ -198,14 +253,21 @@ def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), target
     from worldgen.truth import load_truth  # only here, after every output was checked, as in the score step
     truth = load_truth(texts={name.removeprefix("hidden/"): data for name, data in hidden.items()})
     per_run = {run: score.figures(lines, truth, prices, times) for run, (_, lines) in loaded.items()}
-    if any(tree["cost"][part]["at_least"] for tree in per_run.values() for part in ("main", "twin", "total")):
-        not_eligible.append("some cost is only a lower bound: a call without token counts or without a price")
+    bound, problems = cost_bound(loaded, valid, prices)
+    not_eligible.extend(problems)
     if not valid:
         raise score.ScoreRefused(f"run set {run_set} has no valid run to pool")
     counted = {run: loaded[run][1] for run in valid}
     pooled = score.set_figures(counted, truth, prices, times, per_run=per_run)
 
     results = judge(per_run, valid, pooled["pooled"], targets)
+    cost, known = results["cost_per_alert"], results["cost_per_alert"]["value"]
+    added = bound["main"] / pooled["pooled"]["cost"]["main_items"]
+    cost.update(value=money.amount(_fraction(known) + added, places=6), known_per_alert=known,
+                bound_added_per_alert=money.amount(added, places=6), failed_tries_bounded=bound["tries"],
+                rule="pooled over the valid runs: the known cost plus a proven bound for calls that left no token "
+                     "counts", console="the Console figure is checked at review")
+    cost["result"] = judge_rate(cost["value"], targets["cost_per_alert"])
     for part in results.values():
         part["mechanism_only"] = bool(not_eligible)
     failed = sorted(name for name, part in results.items() if part["result"] == "fail")

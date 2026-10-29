@@ -107,7 +107,8 @@ def test_one_token_calls_sum_exactly_under_the_stress_workers():
     for line in done:  # every item has its own calls and its own log, and nobody else's
         assert len(line["attempts"]) == times_for(line["item_id"]) and line["result"]["log"] == {"item": line["item_id"]}
         assert line["sent_ids"] == [f"E-{line['item_id'][2:]}"]
-        assert all(one == {"error": None, "input_tokens": 1, "output_tokens": 1, "model_id": "one-token"} for one in line["attempts"])
+        assert all(one == {"error": None, "input_tokens": 1, "output_tokens": 1, "model_id": "one-token",
+                           "prompt_bytes": None} for one in line["attempts"])  # prompt_bytes: W2-02; no messages here
     expected = sum(times_for(item["item_id"]) for item in items)
     assert expected == 3 * STRESS_ITEMS
     assert harness_run._calls([one for line in done for one in line["attempts"]]) == {
@@ -290,7 +291,8 @@ def test_after_a_fault_nothing_more_is_handed_off_and_the_calls_in_flight_are_wa
     returned.set()
     assert time.monotonic() - begun >= 0.25  # it did wait for the calls in flight
     assert caught.value.item_id == "10" and str(caught.value.cause) == "boom at ten"
-    assert caught.value.attempts == [{"error": None, "input_tokens": 1, "output_tokens": 1, "model_id": "one-token"}]
+    assert caught.value.attempts == [{"error": None, "input_tokens": 1, "output_tokens": 1, "model_id": "one-token",
+                                      "prompt_bytes": None}]  # prompt_bytes: W2-02; no messages here
     assert sorted(started, key=int) == [str(number) for number in range(14)]  # the ten before it, itself, and
     #                                                                          the three other workers' calls
     assert sorted(finished + ["10"]) == sorted(started)  # every call that was started was waited for
