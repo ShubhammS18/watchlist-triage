@@ -1,0 +1,98 @@
+{
+  "runs": [
+    {
+      "calls": {
+        "attempts": 889,
+        "input_tokens": 599704,
+        "output_tokens": 79810,
+        "without_token_counts": 1
+      },
+      "cause": null,
+      "cost": {
+        "at_least": true,
+        "attempts": 889,
+        "attempts_without_price": 0,
+        "attempts_without_token_counts": 1,
+        "currency": "USD",
+        "known_cost": {
+          "decimal": "0.0998754",
+          "denominator": 5000000,
+          "not_applicable": false,
+          "numerator": 499377,
+          "rounded": false
+        },
+        "statement": "at least 0.0998754 USD; 1 attempts without token counts"
+      },
+      "dirty": false,
+      "infra_invalid": false,
+      "rerun_cause": null,
+      "run_id": "20261029T093303629564Z-8f4050be",
+      "run_set": "8f4050be0f28031f8ec64da2d193ecf12d9c5cb7aee868b4adda84e22c76f33e",
+      "started_at": "2026-10-29T09:33:03.629564+00:00",
+      "state": "completed"
+    },
+    {
+      "calls": {
+        "attempts": 888,
+        "input_tokens": 599704,
+        "output_tokens": 79726,
+        "without_token_counts": 0
+      },
+      "cause": null,
+      "cost": {
+        "at_least": false,
+        "attempts": 888,
+        "attempts_without_price": 0,
+        "attempts_without_token_counts": 0,
+        "currency": "USD",
+        "known_cost": {
+          "decimal": "0.0998334",
+          "denominator": 5000000,
+          "not_applicable": false,
+          "numerator": 499167,
+          "rounded": false
+        },
+        "statement": "0.0998334 USD"
+      },
+      "dirty": false,
+      "infra_invalid": false,
+      "rerun_cause": null,
+      "run_id": "20261029T094930864886Z-8f4050be",
+      "run_set": "8f4050be0f28031f8ec64da2d193ecf12d9c5cb7aee868b4adda84e22c76f33e",
+      "started_at": "2026-10-29T09:49:30.864886+00:00",
+      "state": "completed"
+    },
+    {
+      "calls": {
+        "attempts": 889,
+        "input_tokens": 599704,
+        "output_tokens": 80217,
+        "without_token_counts": 1
+      },
+      "cause": null,
+      "cost": {
+        "at_least": true,
+        "attempts": 889,
+        "attempts_without_price": 0,
+        "attempts_without_token_counts": 1,
+        "currency": "USD",
+        "known_cost": {
+          "decimal": "0.1000789",
+          "denominator": 10000000,
+          "not_applicable": false,
+          "numerator": 1000789,
+          "rounded": false
+        },
+        "statement": "at least 0.1000789 USD; 1 attempts without token counts"
+      },
+      "dirty": false,
+      "infra_invalid": false,
+      "rerun_cause": null,
+      "run_id": "20261029T100617652206Z-8f4050be",
+      "run_set": "8f4050be0f28031f8ec64da2d193ecf12d9c5cb7aee868b4adda84e22c76f33e",
+      "started_at": "2026-10-29T10:06:17.652206+00:00",
+      "state": "completed"
+    }
+  ],
+  "sets": {}
+}
