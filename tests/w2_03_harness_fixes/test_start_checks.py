@@ -70,3 +70,19 @@ def test_every_committed_manifest_still_passes_the_schema_the_start_check_uses(f
     for path in manifests:
         manifest = json.loads(path.read_text(encoding="utf-8"))
         assert schema.problem(schema.MANIFEST, manifest) is None, path
+
+
+@pytest.mark.parametrize("value", ["1.5", "-0.1", "NaN", "Infinity", "not a number", 0.05])
+def test_a_threshold_the_schema_refuses_is_refused_before_any_call(tmp_path, monkeypatch, value):
+    """load_config refuses these too; here it is made to hand one over, as if its own check had drifted, to show
+    that the start check stops the run anyway."""
+    real = harness_run.load_config
+    monkeypatch.setattr(harness_run, "load_config", lambda path: {**real(path), "threshold": value})
+    monkeypatch.setitem(harness_run.providers.PROVIDERS, "fake", NeverCalled)
+    message = refused(write_config(tmp_path), tmp_path.joinpath("out"))
+    assert "threshold" in message
+
+
+def test_the_manifest_records_the_threshold_that_was_checked(tmp_path):
+    manifest = harness_run.run(write_config(tmp_path, infra_invalid_threshold="0.25"), tmp_path.joinpath("out"))
+    assert manifest["infra_invalid"]["threshold"] == manifest["run_set_inputs"]["infra_invalid_threshold"] == "0.25"

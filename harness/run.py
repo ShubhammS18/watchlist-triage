@@ -333,13 +333,14 @@ def run(config_path, out_dir, rerun_cause=None):
     listed = _json(config["world"].joinpath("MANIFEST.json"))
     settings = config["settings"]
     started, begun = datetime.now(timezone.utc), time.monotonic()
+    threshold = config["threshold"]  # the one value checked below and written everywhere it appears
     commit, dirty = records.git_state(records.REPO, out)
     price_hash = records.content_hash(config["price_table"])
     time_hash = records.content_hash(config["modelled_time"])
     inputs = {"agent": config["agent"], "commit": commit, "world_hash": listed["world_hash"],
               "prompt_hash": PROMPTS.get(config["agent"], PROMPTS["baseline"])["sha256"],
               "model_config": records.content_hash(config["model_config"]), "workers": config["workers"],
-              "pacer_per_minute": config["pacer_per_minute"], "infra_invalid_threshold": config["threshold"],
+              "pacer_per_minute": config["pacer_per_minute"], "infra_invalid_threshold": threshold,
               "price_table": price_hash, "modelled_time": time_hash}
     rule_code = PROMPTS.get(config["agent"], {}).get("rule_code_sha256")
     if rule_code is not None:  # only an agent with rule code: every other agent's run-set ID stays as it was
@@ -372,8 +373,11 @@ def run(config_path, out_dir, rerun_cause=None):
         "python_version": platform.python_version(), "workers": config["workers"],
         "pacer_per_minute": config["pacer_per_minute"],
     }
-    for key, value in from_inputs.items():
-        found = schema.problem(schema.MANIFEST.specs["completed"][key], value, f"manifest.{key}")
+    checks = [(schema.MANIFEST.specs["completed"][key], value, f"manifest.{key}") for key, value in from_inputs.items()]
+    checks.append((schema.MANIFEST.specs["completed"]["infra_invalid"]["threshold"], threshold,
+                   "manifest.infra_invalid.threshold"))  # the one input among the outputs of that block
+    for spec, value, where in checks:
+        found = schema.problem(spec, value, where)
         if found:  # refused before any call: no run folder, no index entry
             raise ConfigError(f"the score step would refuse this run: {found}")
     run_dir = out.joinpath(run_id)
@@ -400,7 +404,7 @@ def run(config_path, out_dir, rerun_cause=None):
     attempts = [one for line in done for one in line["attempts"]] + extra
     transient = sum(1 for line in done if line["result"]["failure_kind"] in TRANSIENT)
     # over all items, main and twin; an aborted run is not judged
-    marked = None if aborted or not done else infra_invalid(transient, len(done), config["threshold"])
+    marked = None if aborted or not done else infra_invalid(transient, len(done), threshold)
     outputs = None
     if aborted is None:
         text = "".join(json.dumps(line, sort_keys=True, ensure_ascii=False) + "\n" for line in done)
@@ -416,7 +420,7 @@ def run(config_path, out_dir, rerun_cause=None):
     manifest = {
         **from_inputs, "model": {**from_inputs["model"], "reported": dict(reported)},
         "state": "completed" if aborted is None else "aborted", "aborted": aborted, "outputs": outputs,
-        "infra_invalid": {"threshold": config["threshold"], "transient_items": transient,
+        "infra_invalid": {"threshold": threshold, "transient_items": transient,
                           "transient_share": str(Decimal(transient) / Decimal(len(done))) if done else None,
                           "marked": marked},
         "started_at": started.isoformat(), "ended_at": datetime.now(timezone.utc).isoformat(),

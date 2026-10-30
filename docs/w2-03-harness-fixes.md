@@ -23,7 +23,8 @@ issues 2 to 5 (`docs/harness-design.md:708-724`). Choices: `DEC-W2-03-CHOICES`. 
    reported (`DEC-T06-MANIFEST-9`). The committed manifests report text IDs only, so nothing about them changes.
 2. **The start check** (`harness/run.py`). The manifest's input-derived part is built once, before any call:
    - what it includes: run and run-set IDs and inputs, the re-run cause, the agent, the world's hash and versions,
-     the model, prompt, decoding and retry settings, both tables, git, the hashes and the worker settings;
+     the model, prompt, decoding and retry settings, both tables, git, the hashes and the worker settings, and
+     the infra-invalid threshold, the one input in the manifest's `infra_invalid` block (review round 1);
    - each of its fields is checked against the schema's own spec for that field;
    - a field that fails raises `ConfigError` before the run folder or the index entry exists;
    - at the end, the outputs are added to that same part, so the two can no longer disagree.
@@ -55,7 +56,9 @@ each there with the code as it is now (as if by the commit that wrote the commit
   - the order of its runs;
   - which tied fraction a spread minimum or maximum shows (for example 0/2 against 0/3).
 
-  There, minima and maxima are compared by value and every run's own value exactly.
+  Every run's own value must be equal exactly. A minimum or maximum may differ from the committed one only when
+  both are among those runs' own values and equal in value; otherwise the whole rate object must be equal (review
+  round 1).
 - **`baseline/` (run set `f2e614d2`):** it was scored in T07, before W2-01 added injection figures and rewrote one
   placeholder text. So the keys added since are left out of the new report, the notes are not compared, and the
   AC-6 text `"not determined: no AC-16 target exists yet"` is mapped to its W2-01 wording. Every other value the
@@ -70,14 +73,14 @@ The `w2-02` gate still shows the release check giving PASS (cost bounded under a
 `docs/evidence/w2-03/`:
 
 - `before.txt`: the new suite on a `git archive` copy of `f030aba` (code as at `fdb4fd6`), with only the new tests
-  copied in. 9 failed, 4 errors, 18 passed. Each failure or error is a fix's own test:
+  copied in. 15 failed, 4 errors, 19 passed. Each failure or error is a fix's own test:
   - the `TypeError` above, in the 4 model-ID tests;
-  - "DID NOT RAISE ConfigError" in the 8 start-check cases;
+  - "DID NOT RAISE ConfigError" in the 8 start-check cases and the 6 threshold cases;
   - the fixture-price case of the `mechanism_only` test.
 
-  The 18 passes are the positive controls, the adapter test and the re-score checks, which pass before and after
+  The 19 passes are the positive controls, the adapter test and the re-score checks, which pass before and after
   because nothing they compare changed.
-- `after.txt`: the same suite on the build. 31 passed.
+- `after.txt`: the same suite on the build. 38 passed.
 - `issue5-break-old-assertion.txt` and `issue5-break-new-assertion.txt`: a copy of the build in which
   `harness/score.py` counts every reference-agent pair whose citations agree as divergent. The old assertion (as at
   `f030aba`) still passes. The new one fails: 45 divergent against 0 expected.
@@ -85,10 +88,10 @@ The `w2-02` gate still shows the release check giving PASS (cost bounded under a
 
   | Suite | Result | Time | Peak memory |
   |---|---|---|---|
-  | w2_03 | 31 passed | 3.7 s | 1622 MB |
-  | t06 | 340 passed, 6 skipped | 58.9 s | 1862 MB |
-  | w2_01 | 68 passed | 65.1 s | 1783 MB |
-  | w2_02 | 68 passed | 5.4 s | 1641 MB |
+  | w2_03 | 38 passed | 4.2 s | 1994 MB |
+  | t06 | 340 passed, 6 skipped | 59.5 s | 2171 MB |
+  | w2_01 | 68 passed | 65.3 s | 2120 MB |
+  | w2_02 | 68 passed | 5.5 s | 2016 MB |
 
   Every suite is below the 120-second gate limit.
 
@@ -97,5 +100,7 @@ The `w2-02` gate still shows the release check giving PASS (cost bounded under a
 - A provider reporting the text `"number:123"` and the number `123` in one run would have them counted under one key.
   No real adapter reports numbers.
 - The start check covers the manifest's input-derived part. Item rows are checked when they are scored, as before.
+- The run configuration's own check already refuses every threshold the schema refuses, so no real input reaches the
+  new threshold check. Its test makes the configuration hand a bad value over, as if that check had drifted.
 - The re-score test compares reports as JSON values, not as bytes, because of T07 known issue 3.
 - The issue-5 break and the before run were made by hand, outside the gate. Only their output is kept.

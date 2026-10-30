@@ -49,18 +49,34 @@ def committed_set(folder):
 
 
 def without_order(report):
-    """A set report as far as it does not depend on which command scored last (docs/evidence/t07/known-issues.md,
-    issue 3): its runs in run-ID order, and each minimum and maximum of the spread as its value, since where runs
-    tie the fraction shown is the first tied run's (0/2 against 0/3, both 0). Each run's own value stays exact."""
-    def value(amount):
-        return None if amount["not_applicable"] else Fraction(amount["numerator"], amount["denominator"])
+    """A set report with its runs in run-ID order: which command scored last changes that order
+    (docs/evidence/t07/known-issues.md, issue 3)."""
+    return {**report, "runs": sorted(report["runs"], key=lambda run: run["run_id"])}
 
-    def ties(tree):
-        if isinstance(tree, dict) and "per_run" in tree and "min" in tree and isinstance(tree["min"], dict) \
-                and "numerator" in tree["min"]:
-            return {**tree, "min": value(tree["min"]), "max": value(tree["max"])}
-        return {key: ties(inner) for key, inner in tree.items()} if isinstance(tree, dict) else tree
-    return {**report, "runs": sorted(report["runs"], key=lambda run: run["run_id"]), "spread": ties(report["spread"])}
+
+def value(amount):
+    return None if amount["not_applicable"] else Fraction(amount["numerator"], amount["denominator"])
+
+
+def assert_same_spread(new, committed, path="spread"):
+    """The spread as committed. Each run's own value must be equal exactly, and so must every other entry, with one
+    exception from the same known issue: where runs tie, a minimum or maximum shows the first tied run's fraction
+    (0/2 against 0/3, both 0). So a minimum or maximum may differ from the committed one only when both are among
+    the runs' own values and equal in value; otherwise the whole rate object must be equal."""
+    if isinstance(new, dict) and "per_run" in new and isinstance(new.get("min"), dict) and "numerator" in new["min"]:
+        assert set(new) == set(committed) and new["per_run"] == committed["per_run"], path
+        for end in ("min", "max"):
+            shown, kept, runs = new[end], committed[end], list(committed["per_run"].values())
+            assert shown == kept or (shown in runs and kept in runs and value(shown) == value(kept)), \
+                f"{path}.{end}: {shown} against {kept}"
+        assert {key: one for key, one in new.items() if key not in ("min", "max", "per_run")} == \
+               {key: one for key, one in committed.items() if key not in ("min", "max", "per_run")}, path
+    elif isinstance(new, dict):
+        assert isinstance(committed, dict) and set(new) == set(committed), path
+        for key in new:
+            assert_same_spread(new[key], committed[key], f"{path}.{key}")
+    else:
+        assert new == committed, path
 
 
 @pytest.fixture(scope="module", params=sorted(FOLDERS))
@@ -97,4 +113,7 @@ def test_the_set_report_rescores_to_the_committed_one_acceptance_included(rescor
     new = json.loads(copy.joinpath("sets", f"{committed['run_set']}.json").read_text(encoding="utf-8"))
     assert new["acceptance"] == committed["acceptance"] and new["acceptance"]["mechanism_only"] is False
     assert new["mechanism_only"] == committed["mechanism_only"] == {"cost": False, "modelled_time": False}
-    assert as_committed(without_order(new), without_order(committed), folder) == drop_notes(without_order(committed), folder)
+    new, committed = as_committed(without_order(new), without_order(committed), folder), drop_notes(without_order(committed), folder)
+    assert {key: one for key, one in new.items() if key != "spread"} == \
+           {key: one for key, one in committed.items() if key != "spread"}
+    assert_same_spread(new["spread"], committed["spread"])

@@ -1,9 +1,9 @@
-W2-03 before: the new tests/w2_03_harness_fixes suite on the pre-fix code
+W2-03 before: the new tests/w2_03_harness_fixes suite on the pre-fix code (refreshed after review round 1)
 tree: git archive f030aba (harness/ as at fdb4fd6), with only tests/w2_03_harness_fixes/ copied in from the build
 command, run in that copy: .venv/bin/python -m pytest tests/w2_03_harness_fixes -q -p no:cacheprovider -rfE --tb=line
-date: 2026-10-30T09:32:00Z
+date: 2026-10-30T09:49:44Z
 
-.F..EEEE............FFFFFFFF...                                          [100%]
+.F..EEEE............FFFFFFFF...FFFFFF.                                   [100%]
 ==================================== ERRORS ====================================
 _ ERROR at setup of test_a_run_whose_model_reports_numbers_and_text_writes_its_manifest _
 E   TypeError: '<' not supported between instances of 'int' and 'str'
@@ -32,6 +32,18 @@ E   Failed: DID NOT RAISE ConfigError
 <copy>/tests/w2_03_harness_fixes/test_start_checks.py:32: Failed: DID NOT RAISE ConfigError
 E   Failed: DID NOT RAISE ConfigError
 <copy>/tests/w2_03_harness_fixes/test_start_checks.py:32: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+<copy>/tests/w2_03_harness_fixes/test_start_checks.py:32: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+<copy>/tests/w2_03_harness_fixes/test_start_checks.py:32: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+<copy>/tests/w2_03_harness_fixes/test_start_checks.py:32: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+<copy>/tests/w2_03_harness_fixes/test_start_checks.py:32: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+<copy>/tests/w2_03_harness_fixes/test_start_checks.py:32: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+<copy>/tests/w2_03_harness_fixes/test_start_checks.py:32: Failed: DID NOT RAISE ConfigError
 =========================== short test summary info ============================
 FAILED tests/w2_03_harness_fixes/test_mechanism_only.py::test_acceptance_is_mechanism_only_when_either_table_is_a_fixture[fixture-sourced]
 FAILED tests/w2_03_harness_fixes/test_start_checks.py::test_an_input_the_schema_refuses_is_refused_before_any_call[a blank re-run cause]
@@ -42,9 +54,15 @@ FAILED tests/w2_03_harness_fixes/test_start_checks.py::test_an_input_the_schema_
 FAILED tests/w2_03_harness_fixes/test_start_checks.py::test_an_input_the_schema_refuses_is_refused_before_any_call[an infinite timeout]
 FAILED tests/w2_03_harness_fixes/test_start_checks.py::test_a_world_manifest_field_the_schema_refuses_is_refused_before_any_call[rubric_version-1.2]
 FAILED tests/w2_03_harness_fixes/test_start_checks.py::test_a_world_manifest_field_the_schema_refuses_is_refused_before_any_call[generator_version-None]
+FAILED tests/w2_03_harness_fixes/test_start_checks.py::test_a_threshold_the_schema_refuses_is_refused_before_any_call[1.5]
+FAILED tests/w2_03_harness_fixes/test_start_checks.py::test_a_threshold_the_schema_refuses_is_refused_before_any_call[-0.1]
+FAILED tests/w2_03_harness_fixes/test_start_checks.py::test_a_threshold_the_schema_refuses_is_refused_before_any_call[NaN]
+FAILED tests/w2_03_harness_fixes/test_start_checks.py::test_a_threshold_the_schema_refuses_is_refused_before_any_call[Infinity]
+FAILED tests/w2_03_harness_fixes/test_start_checks.py::test_a_threshold_the_schema_refuses_is_refused_before_any_call[not a number]
+FAILED tests/w2_03_harness_fixes/test_start_checks.py::test_a_threshold_the_schema_refuses_is_refused_before_any_call[0.05]
 ERROR tests/w2_03_harness_fixes/test_model_ids.py::test_a_run_whose_model_reports_numbers_and_text_writes_its_manifest
 ERROR tests/w2_03_harness_fixes/test_model_ids.py::test_the_summary_keys_numbers_apart_from_text_and_counts_every_reported_attempt
 ERROR tests/w2_03_harness_fixes/test_model_ids.py::test_each_attempt_keeps_its_model_id_as_reported
 ERROR tests/w2_03_harness_fixes/test_model_ids.py::test_a_run_holding_a_non_finite_model_id_is_still_refused_when_scored
-9 failed, 18 passed, 4 errors in 4.06s
-exit=1  memory used: before 1546 MB, peak 1617 MB (limit for stopping 3000 MB)
+15 failed, 19 passed, 4 errors in 4.94s
+exit=1  memory used: before 2022 MB, peak 2090 MB (limit for stopping 3000 MB)

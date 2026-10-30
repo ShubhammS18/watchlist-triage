@@ -1,27 +1,27 @@
 W2-03 gate suites, each run alone through tools/timed_run.sh (charger check, fixed benchmark, then tools/memory_guard.sh)
-tree: the build, on top of f030aba; date: 2026-10-30
+tree: the build after review round 1, on top of 67b2f93; date: 2026-10-30
 
 == tests/w2_03_harness_fixes
 Power: plugged in
-benchmark: 0.834 s (N=12000000, result 983797)
-31 passed in 3.72s
-exit=0  memory used: before 1558 MB, peak 1622 MB (limit for stopping 3000 MB)
+benchmark: 0.825 s (N=12000000, result 983797)
+38 passed in 4.19s
+exit=0  memory used: before 1930 MB, peak 1994 MB (limit for stopping 3000 MB)
 exit 0
 == tests/t06_harness
 Power: plugged in
-benchmark: 0.839 s (N=12000000, result 983797)
-340 passed, 6 skipped in 58.89s
-exit=0  memory used: before 1541 MB, peak 1862 MB (limit for stopping 3000 MB)
+benchmark: 0.824 s (N=12000000, result 983797)
+340 passed, 6 skipped in 59.50s
+exit=0  memory used: before 1934 MB, peak 2171 MB (limit for stopping 3000 MB)
 exit 0
 == tests/w2_01_acceptance
 Power: plugged in
-benchmark: 0.855 s (N=12000000, result 983797)
-68 passed in 65.10s (0:01:05)
-exit=0  memory used: before 1592 MB, peak 1783 MB (limit for stopping 3000 MB)
+benchmark: 0.829 s (N=12000000, result 983797)
+68 passed in 65.25s (0:01:05)
+exit=0  memory used: before 1938 MB, peak 2120 MB (limit for stopping 3000 MB)
 exit 0
 == tests/w2_02_agent
 Power: plugged in
-benchmark: 0.845 s (N=12000000, result 983797)
-68 passed in 5.40s
-exit=0  memory used: before 1554 MB, peak 1641 MB (limit for stopping 3000 MB)
+benchmark: 0.824 s (N=12000000, result 983797)
+68 passed in 5.51s
+exit=0  memory used: before 1927 MB, peak 2016 MB (limit for stopping 3000 MB)
 exit 0
