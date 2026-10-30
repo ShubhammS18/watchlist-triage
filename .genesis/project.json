@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-30T09:23:12.020Z"
+    "updated_at": "2026-10-30T10:01:23.627Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2010,6 +2010,19 @@
       "source": "Owner, 30 Oct 2026; W2-03-harness-fixes pre-flight, section 4; follows DEC-W2-01-REVIEW-BUDGET",
       "recorded_at": "2026-10-30T09:23:12.020Z",
       "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-03-REVIEW",
+      "title": "Independent review of the harness fixes: two rounds, the last clean",
+      "text": "An independent reviewer, GPT-6 Sol at medium effort, in a fresh read-only session started inside the repository, reviewed the harness fixes in two rounds and ran the four gate suites each time. Round one found no blocker and two smaller issues: the start-up check left out the infra-invalid threshold, so it did not yet cover every input-derived field as my record says, and the attempt-2 re-score test compared only the value of a spread's minimum and maximum, not the figure the report displays. Both were fixed. Round two found both resolved and no new issues. It also confirmed that the reference-agent check now builds its expected values from the world rather than the scorer, that only one earlier harness test file changed, and that the model settings code is untouched. The deliberate-break evidence is kept as output from a run made by hand, so the reviewer could check it for consistency but not re-run it. The reports are kept in docs/reviews.",
+      "status": "accepted",
+      "source": "Owner, 30 Oct 2026; W2-03-harness-fixes review rounds 1-2; DEC-W2-03-REVIEW-BUDGET",
+      "recorded_at": "2026-10-30T10:01:23.616Z",
+      "paths": [
+        "docs/reviews/W2-03-harness-fixes-review-round-1.md",
+        "docs/reviews/W2-03-harness-fixes-review-round-2.md"
+      ],
       "tags": []
     }
   ],

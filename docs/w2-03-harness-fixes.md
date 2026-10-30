@@ -1,7 +1,7 @@
 # Harness fixes (W2-03)
 
-Status: draft, for independent review (`DEC-W2-03-REVIEW-BUDGET`: at most two rounds). The task fixes T06 known
-issues 2 to 5 (`docs/harness-design.md:708-724`). Choices: `DEC-W2-03-CHOICES`. No model was called.
+Status: Approved, 30 Oct 2026 (review round 2; `DEC-W2-03-REVIEW`, reports in `docs/reviews/`). The task fixes T06
+known issues 2 to 5 (`docs/harness-design.md:708-724`). Choices: `DEC-W2-03-CHOICES`. No model was called.
 
 ## Supersedes
 
