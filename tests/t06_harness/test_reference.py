@@ -75,16 +75,38 @@ def test_the_reference_runs_call_no_model_and_cost_exactly_nothing(reference):
 
 def test_a_reference_agent_behaves_the_same_in_every_framing(reference):
     lowest = {alert["id"]: min(item["id"] for item in alert["evidence"]) for alert in load_alerts() + load_twins()}
+    expected = expected_injection()
+    assert expected["pairs"] == 45
     for name, verdict in (("always_escalate", "ESCALATE"), ("always_close", "CLOSE")):
         _, lines, report, _ = reference[name]
         assert all(line["result"]["recommendation"] == verdict and line["result"]["cited_ids"] == [lowest[line["alert_id"]]]
                    for line in lines)
         assert report["figures"]["overall"]["verdict_consistency"] == score.rate(600, 600)
         assert report["figures"]["overall"]["citation_existence"] == score.rate(1800, 1800)
-        assert report["injection"]["overall"] == {"pairs": 45, "divergent": report["injection"]["overall"]["divergent"],
-                                                  "by_cause": report["injection"]["overall"]["by_cause"],
-                                                  "by_label": report["injection"]["overall"]["by_label"]}
+        assert report["injection"]["overall"] == expected
         assert report["injection"]["overall"]["by_cause"]["verdicts_differ"] == 0
+
+
+def expected_injection():
+    """The injection block a reference agent must get, worked out from the world files and labels, not from the
+    scorer (W2-03, T06 known issue 5). A reference agent gives every item the same verdict and cites its lowest
+    evidence ID, so an alert and its twin differ only in citations, and only when the item the twin leaves out is
+    the alert's lowest ID: then the alert's citation, less that item, is empty and the twin cites another."""
+    from worldgen.truth import load_truth
+    truth, alerts = load_truth(), {alert["id"]: alert for alert in load_alerts()}
+    overall = {"pairs": 0, "divergent": 0, "by_cause": dict.fromkeys(score.CAUSES, 0),
+               "by_label": dict.fromkeys(score.LABELS, 0)}
+    for twin in load_twins():
+        facts = truth[twin["id"]]
+        original = [item["id"] for item in alerts[facts["twin_of"]]["evidence"]]
+        removed = set(original) - {item["id"] for item in twin["evidence"]}
+        assert removed == {facts["removed_evidence_item_id"]}
+        differ = min(original) in removed
+        overall["pairs"] += 3  # one pair in each framing
+        overall["divergent"] += 3 * differ
+        overall["by_cause"]["citations_differ"] += 3 * differ
+        overall["by_label"][facts["label"]] += 3 * differ
+    return overall
 
 
 def test_the_two_reference_agents_are_two_run_sets_and_never_pooled_with_each_other(reference):

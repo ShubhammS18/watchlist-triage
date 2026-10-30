@@ -1,0 +1,26 @@
+W2-03 issue-5 break: T06 known issue 5, the reference-agent injection assertion
+tree: a copy of the build (tracked and new files), not a git repository
+break, in the copy's harness/score.py only (_injection):
+  -        if not verdicts_differ and cited == set(twin["result"]["cited_ids"]):
+  +        if not verdicts_differ and cited != set(twin["result"]["cited_ids"]):
+  so every reference-agent pair whose citations agree is counted as divergent, under citations_differ
+test file: tests/t06_harness/test_reference.py (the assertion as built in W2-03)
+command, run in that copy: .venv/bin/python -m pytest tests/t06_harness/test_reference.py::test_a_reference_agent_behaves_the_same_in_every_framing -q -p no:cacheprovider --tb=short
+date: 2026-10-30T09:32:37Z
+
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___________ test_a_reference_agent_behaves_the_same_in_every_framing ___________
+tests/t06_harness/test_reference.py:86: in test_a_reference_agent_behaves_the_same_in_every_framing
+    assert report["injection"]["overall"] == expected
+E   AssertionError: assert {'pairs': 45,...OSITIVE': 15}} == {'pairs': 45,...POSITIVE': 0}}
+E     
+E     Omitting 1 identical items, use -vv to show
+E     Differing items:
+E     {'by_cause': {'one_side_failed_model_caused': 0, 'one_side_failed_transient': 0, 'verdicts_differ': 0, 'citations_differ': 45}} != {'by_cause': {'one_side_failed_model_caused': 0, 'one_side_failed_transient': 0, 'verdicts_differ': 0, 'citations_differ': 0}}
+E     {'divergent': 45} != {'divergent': 0}
+E     {'by_label': {'TRUE_MATCH': 15, 'AMBIGUOUS_BY_DESIGN': 15, 'CLEAR_FALSE_POSITIVE': 15}} != {'by_label': {'TRUE_MATCH': 0, 'AMBIGUOUS_BY_DESIGN': 0, 'CLEAR_FALSE_POSITIVE': 0}}
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/t06_harness/test_reference.py::test_a_reference_agent_behaves_the_same_in_every_framing
+1 failed in 0.98s

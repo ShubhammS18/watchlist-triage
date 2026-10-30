@@ -701,6 +701,7 @@ def _set_report(run_set, group, index, scored_by, fresh, truth, unassigned=()):
                for run in group["runs"] if run.get("state") == "completed" and run["left_out_because"]
                and run["left_out_because"][0].startswith("refused: ")]  # fail closed: any refused completed run
     fixture = bool(group["tables"] and money.is_fixture(group["tables"][1]))
+    any_fixture = bool(group["tables"]) and any(map(money.is_fixture, group["tables"]))  # either table (W2-03)
     return {
         "run_set": run_set, "scored_by": scored_by, "runs": group["runs"], "valid_runs": len(counted),
         "aborted": {"count": len(group["aborted"]), "runs": group["aborted"]},
@@ -711,7 +712,7 @@ def _set_report(run_set, group, index, scored_by, fresh, truth, unassigned=()):
                                  and not refused and not unassigned),
         "mechanism_only": {"cost": bool(group["tables"] and money.is_fixture(group["tables"][0])),
                            "modelled_time": fixture},
-        "acceptance": acceptance({run: fresh[run] for run in completed}, fixture) if completed else None,
+        "acceptance": acceptance({run: fresh[run] for run in completed}, any_fixture) if completed else None,
         "notes": {**NOTES, "pooled": "Summed over the valid runs of this run set: numerators, denominators "
                                      "and counts are sums over those runs. Latency is over all their main "
                                      "items. Modelled review time is averaged over those runs and framings.",

@@ -29,6 +29,7 @@ from worldgen.loader import load_alerts
 
 from . import cost as money
 from . import manifest as records
+from . import schema
 from .agents import always_close, always_escalate
 
 RETRIES = 2  # T05's default, passed on and recorded; not a setting, because it would be one more run-set input
@@ -349,6 +350,32 @@ def run(config_path, out_dir, rerun_cause=None):
         raise ConfigError(f"run set {run_set[:8]} was superseded by {superseded['superseded_by'][:8]} "
                           f"({superseded['cause']}); no run is added to a superseded set")
     run_id = f"{started:%Y%m%dT%H%M%S%f}Z-{run_set[:8]}"
+    uses_model = config["agent"] not in MODEL_FREE
+    # The part of the manifest the inputs decide, checked against the shared schema before any call, so that the
+    # run step can never accept what the score step refuses (DEC-W2-03-CHOICES). The rest is added at the end.
+    from_inputs = {
+        "run_id": run_id, "run_set": run_set, "run_set_inputs": inputs, "rerun_cause": rerun_cause,
+        "agent": config["agent"],
+        "world": {key: listed.get(key) for key in ("world_hash", "generator_version", "rubric_version")},
+        # an agent that calls no model has no model, prompt, decoding or retry policy to record
+        "model": {"used": uses_model, "provider": config["model_config"]["provider"] if uses_model else None,
+                  "requested": settings.model if uses_model else None, "reported": {}},
+        "prompt": dict(PROMPTS.get(config["agent"], PROMPTS["baseline"])) if uses_model else None,
+        "decoding": {"temperature": settings.temperature, "max_tokens": settings.max_tokens} if uses_model else None,
+        "retry_policy": {"retries": RETRIES, "timeout_s": settings.timeout_s, "retried_errors": list(RETRIED),
+                         "backoff": None} if uses_model else None,
+        "review_policies": list(REVIEW_POLICIES),
+        "modelled_time": {"sha256": time_hash, "parameters": config["modelled_time"]},
+        "price_table": {"sha256": price_hash, "table": config["price_table"]},
+        "git": {"commit": commit, "dirty": dirty},
+        "config_sha256": records.content_hash(config["raw"]), "framing_code_sha256": records.framing_hash(),
+        "python_version": platform.python_version(), "workers": config["workers"],
+        "pacer_per_minute": config["pacer_per_minute"],
+    }
+    for key, value in from_inputs.items():
+        found = schema.problem(schema.MANIFEST.specs["completed"][key], value, f"manifest.{key}")
+        if found:  # refused before any call: no run folder, no index entry
+            raise ConfigError(f"the score step would refuse this run: {found}")
     run_dir = out.joinpath(run_id)
     run_dir.mkdir(parents=True)
     entry = {"run_id": run_id, "run_set": run_set, "state": "started", "dirty": dirty, "infra_invalid": None,
@@ -369,7 +396,6 @@ def run(config_path, out_dir, rerun_cause=None):
     except KeyboardInterrupt:  # Ctrl-C before the first hand-off: the run is listed, so it is marked aborted
         aborted = {"item_id": None, "error_type": "KeyboardInterrupt", "message": "the run was interrupted"}
 
-    uses_model = config["agent"] not in MODEL_FREE
     done.sort(key=lambda line: line["item_id"])
     attempts = [one for line in done for one in line["attempts"]] + extra
     transient = sum(1 for line in done if line["result"]["failure_kind"] in TRANSIENT)
@@ -383,27 +409,13 @@ def run(config_path, out_dir, rerun_cause=None):
     twins = sum(1 for line in done if line["twin"])
     # The shape of this manifest, of the index entries and of the item rows is harness/schema.py, which the score
     # step checks them against: change both together (tests/t06_harness/test_schema.py fails otherwise).
+    # A text model ID is its own key; a number is keyed as "number:<value>", so that numbers and text never meet as
+    # keys and never break the sorted JSON. Each attempt keeps its ID as reported (DEC-T06-MANIFEST-9, DEC-W2-03-CHOICES).
+    reported = Counter(one["model_id"] if type(one["model_id"]) is str else f"number:{one['model_id']}"
+                       for one in attempts if one["model_id"] is not None)
     manifest = {
-        "run_id": run_id, "run_set": run_set, "run_set_inputs": inputs,
-        "state": "completed" if aborted is None else "aborted", "aborted": aborted, "rerun_cause": rerun_cause,
-        "agent": config["agent"],
-        "world": {key: listed[key] for key in ("world_hash", "generator_version", "rubric_version")},
-        # an agent that calls no model has no model, prompt, decoding or retry policy to record
-        "model": {"used": uses_model, "provider": config["model_config"]["provider"] if uses_model else None,
-                  "requested": settings.model if uses_model else None,
-                  "reported": dict(Counter(one["model_id"] for one in attempts if one["model_id"] is not None))},
-        "prompt": dict(PROMPTS.get(config["agent"], PROMPTS["baseline"])) if uses_model else None,
-        "decoding": {"temperature": settings.temperature, "max_tokens": settings.max_tokens} if uses_model else None,
-        "retry_policy": {"retries": RETRIES, "timeout_s": settings.timeout_s, "retried_errors": list(RETRIED),
-                         "backoff": None} if uses_model else None,
-        "review_policies": list(REVIEW_POLICIES),
-        "modelled_time": {"sha256": time_hash, "parameters": config["modelled_time"]},
-        "price_table": {"sha256": price_hash, "table": config["price_table"]},
-        "outputs": outputs,
-        "git": {"commit": commit, "dirty": dirty},
-        "config_sha256": records.content_hash(config["raw"]), "framing_code_sha256": records.framing_hash(),
-        "python_version": platform.python_version(), "workers": config["workers"],
-        "pacer_per_minute": config["pacer_per_minute"],
+        **from_inputs, "model": {**from_inputs["model"], "reported": dict(reported)},
+        "state": "completed" if aborted is None else "aborted", "aborted": aborted, "outputs": outputs,
         "infra_invalid": {"threshold": config["threshold"], "transient_items": transient,
                           "transient_share": str(Decimal(transient) / Decimal(len(done))) if done else None,
                           "marked": marked},

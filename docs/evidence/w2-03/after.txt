@@ -1,0 +1,7 @@
+W2-03 after: the same suite on the build (working tree on top of f030aba)
+command: .venv/bin/python -m pytest tests/w2_03_harness_fixes -q -p no:cacheprovider -rfE --tb=line
+date: 2026-10-30T09:32:16Z
+
+...............................                                          [100%]
+31 passed in 3.71s
+exit=0  memory used: before 1546 MB, peak 1613 MB (limit for stopping 3000 MB)
