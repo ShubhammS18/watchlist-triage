@@ -1,0 +1,30 @@
+{
+  "task": "W2-03-harness-fixes",
+  "gate": "w2-01",
+  "kind": "command",
+  "attempt": "236bbb2f-e886-441d-bd08-24ae7602d1b3",
+  "command": ".venv/bin/python -m pytest tests/w2_01_acceptance -q -p no:cacheprovider",
+  "started_at": "2026-10-30T10:02:46.171Z",
+  "observed_at": "2026-10-30T10:03:49.883Z",
+  "exit_code": 0,
+  "signal": null,
+  "stdout": "....................................................................     [100%]\n68 passed in 64.33s (0:01:04)\n",
+  "stderr": "",
+  "failure": null,
+  "receipt": null,
+  "revision": {
+    "commit": "e8974166a8d194cb9e8922d46c47536323ad2766",
+    "dirty": true
+  },
+  "source_hash": "319abf48de3f69dc40de7d748171b023f062cb7526e57de587ce03cddea87042",
+  "before_hash": "319abf48de3f69dc40de7d748171b023f062cb7526e57de587ce03cddea87042",
+  "config_hash": "91a0b7663dd161392816d1b18d352e7515589ac8e76bdf8cee003222f08510a5",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "arch": "x64",
+    "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+    "variables": {}
+  },
+  "hash": "633a3bb191a4cca8bd3a2361593bf73461f33f6da225f07e8c8284fa5b5c03b4"
+}

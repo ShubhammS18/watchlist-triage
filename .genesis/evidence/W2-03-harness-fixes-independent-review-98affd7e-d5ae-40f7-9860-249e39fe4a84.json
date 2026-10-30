@@ -1,0 +1,13 @@
+{
+  "task": "W2-03-harness-fixes",
+  "gate": "independent-review",
+  "kind": "review",
+  "attempt": "98affd7e-d5ae-40f7-9860-249e39fe4a84",
+  "human": "Shubham Suradkar",
+  "reason": "Two independent review rounds: round 1 found two smaller issues, both fixed; round 2 clean. Decision record DEC-W2-03-REVIEW.",
+  "observed_at": "2026-10-30T10:04:15.316Z",
+  "source_hash": "319abf48de3f69dc40de7d748171b023f062cb7526e57de587ce03cddea87042",
+  "config_hash": "91a0b7663dd161392816d1b18d352e7515589ac8e76bdf8cee003222f08510a5",
+  "reviewed_proofs": "373d5383008c77500a73f81bfdc89cddce6bbcb37324116b7ca5f4e91edcdd10",
+  "hash": "e248f305a15486b40a77eaf7e0c9243cd18c03b89751a090eec2a58244d0bf97"
+}

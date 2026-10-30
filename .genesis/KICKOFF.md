@@ -4,11 +4,11 @@
 
 - objective: Triage sanctions/PEP name-match alerts from a frozen synthetic world: recommend close or escalate with cited evidence, human-approved, measured on zero missed planted true matches.
 - phase/status: build/active
-- active task: W2-03-harness-fixes — The four known issues carried from T06 are fixed. A manifest whose reported model IDs mix numbers and text is written and hashed without error, or refused with a clear message. The run step refuses at start every input the shared schema refuses: a blank re-run cause, a model name of only spaces, a non-finite temperature or timeout, and a non-finite reported model ID, so no run is written and then refused at scoring. A run set's acceptance is marked mechanism only when either the price table or the modelled-time file is a fixture. The reference-agent assertion on the injection block checks values computed independently of the report it checks. Re-scoring the committed baseline and W2-02 run output gives the same figures as before, and the release check still gives PASS (cost bounded under a stated assumption) on run set 8f4050be.
+- active task: W2-04-ci-drift — A CI workflow runs on every push and pull request, regenerates the frozen world from its seed and fails if any file differs from the committed world or the world hash is not b77a6804a52b1d41650e250a31ff64a701b1d315a674a1f1242d93cb6b15c9b0. The workflow and the gate test call the same script, so what the gate checks locally is what CI runs. A static test checks that the workflow triggers on push and pull request and calls that script. The gate cannot see GitHub: a green Actions run is the owner's check at review, and pushing the workflow is the owner's step.
 - blocker: none
 - next action: Run the task pre-flight.
 - phase instruction: Implement only the active task and prove it against current sources. Check `genesis query . impact PATH` before editing shared code.
-- gates: tests:pending, t06:pending, w2-01:pending, w2-02:pending, independent-review:pending
+- gates: tests:pending, t02:pending, independent-review:pending
 - recent failures: none
 
 ## Resume
@@ -17,9 +17,9 @@ Load Genesis and official Ponytail full, then run `genesis brief .` for the curr
 Fetch full records with `genesis context . --id ID` only when needed. Do not load project.json or historical proof wholesale.
 Ask the index before reading code: `genesis query . search|scope|callers|callees|impact|path` (`--json` for parsing). Run `genesis query . impact PATH` before editing shared code. Answers are advisory static analysis; `ambiguous` means candidates were not ruled out, so confirm in source.
 Run `genesis serve .` for a live map of the repository when structure is unclear; it reindexes on save and is read-only. Run `genesis index .` if the index is stale and nothing is watching.
-Context fingerprint: 6ae766929e6931168759d62d81fcc71b1ffb0ec135aa5fdabc14b245661c0cd9. Use --since only after receiving that full packet; kickoff is not the packet.
+Context fingerprint: 0432c6beb70433352be96979c5cadef221d454518209c5934c2bee42d34141e2. Use --since only after receiving that full packet; kickoff is not the packet.
+- DEC-W2-SCOPE: Release the evaluation half with an audit log; the operational half waits
 - DEC-W2-RELEASE-RULES: Release rules, fixed before the freeze
-- DEC-W2-PLAN: Plan wave 2 in steps; the agent upgrade decides the rest
-- DEC-W2-02-ATTEMPTS: At most six measured attempts; practice runs are logged but not counted
+- DEC-W2-02-RULES-FIRST: Rubric rules decide what the fields settle; the model reads only snippets
 Applicable invariants, active rules, authorization and proof references are in the packet. Truncated summaries are retrieval pointers, not the full evidence.
 Reuse fresh gates with --reuse. Reconcile interrupted attempts before replaying commands. Report state → evidence → blocker → next action; checkpoint before stopping.

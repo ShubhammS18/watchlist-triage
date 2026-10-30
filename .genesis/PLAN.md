@@ -98,15 +98,15 @@
 
 ### W2-03-harness-fixes — The four known issues carried from T06 are fixed. A manifest whose reported model IDs mix numbers and text is written and hashed without error, or refused with a clear message. The run step refuses at start every input the shared schema refuses: a blank re-run cause, a model name of only spaces, a non-finite temperature or timeout, and a non-finite reported model ID, so no run is written and then refused at scoring. A run set's acceptance is marked mechanism only when either the price table or the modelled-time file is a fixture. The reference-agent assertion on the injection block checks values computed independently of the report it checks. Re-scoring the committed baseline and W2-02 run output gives the same figures as before, and the release check still gives PASS (cost bounded under a stated assumption) on run set 8f4050be.
 
-- state/risk: active / medium
+- state/risk: done / medium
 - requirements: NFR-3, FR-20, AC-7
 - scope: not bounded
-- gates: tests: .venv/bin/python -m pytest tests/w2_03_harness_fixes -q -p no:cacheprovider, t06: .venv/bin/python -m pytest tests/t06_harness -q -p no:cacheprovider, w2-01: .venv/bin/python -m pytest tests/w2_01_acceptance -q -p no:cacheprovider, w2-02: .venv/bin/python -m pytest tests/w2_02_agent -q -p no:cacheprovider, independent-review: pending
+- gates: tests: .venv/bin/python -m pytest tests/w2_03_harness_fixes -q -p no:cacheprovider, t06: .venv/bin/python -m pytest tests/t06_harness -q -p no:cacheprovider, w2-01: .venv/bin/python -m pytest tests/w2_01_acceptance -q -p no:cacheprovider, w2-02: .venv/bin/python -m pytest tests/w2_02_agent -q -p no:cacheprovider, independent-review: pass
 - next: Run the task pre-flight.
 
 ### W2-04-ci-drift — A CI workflow runs on every push and pull request, regenerates the frozen world from its seed and fails if any file differs from the committed world or the world hash is not b77a6804a52b1d41650e250a31ff64a701b1d315a674a1f1242d93cb6b15c9b0. The workflow and the gate test call the same script, so what the gate checks locally is what CI runs. A static test checks that the workflow triggers on push and pull request and calls that script. The gate cannot see GitHub: a green Actions run is the owner's check at review, and pushing the workflow is the owner's step.
 
-- state/risk: queued / medium
+- state/risk: active / medium
 - requirements: NFR-2, AC-10
 - scope: not bounded
 - gates: tests: .venv/bin/python -m pytest tests/w2_04_ci -q -p no:cacheprovider, t02: .venv/bin/python -m pytest tests/t02_world -q -p no:cacheprovider, independent-review: pending

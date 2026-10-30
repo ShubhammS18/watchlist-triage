@@ -1,0 +1,30 @@
+{
+  "task": "W2-03-harness-fixes",
+  "gate": "tests",
+  "kind": "command",
+  "attempt": "81b51e1d-25c9-4541-893c-18518fdb43a7",
+  "command": ".venv/bin/python -m pytest tests/w2_03_harness_fixes -q -p no:cacheprovider",
+  "started_at": "2026-10-30T10:01:39.111Z",
+  "observed_at": "2026-10-30T10:01:44.950Z",
+  "exit_code": 0,
+  "signal": null,
+  "stdout": "......................................                                   [100%]\n38 passed in 4.23s\n",
+  "stderr": "",
+  "failure": null,
+  "receipt": null,
+  "revision": {
+    "commit": "e8974166a8d194cb9e8922d46c47536323ad2766",
+    "dirty": true
+  },
+  "source_hash": "319abf48de3f69dc40de7d748171b023f062cb7526e57de587ce03cddea87042",
+  "before_hash": "319abf48de3f69dc40de7d748171b023f062cb7526e57de587ce03cddea87042",
+  "config_hash": "91a0b7663dd161392816d1b18d352e7515589ac8e76bdf8cee003222f08510a5",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "arch": "x64",
+    "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+    "variables": {}
+  },
+  "hash": "fbb25676feff6d8aa37530ab7f7c3e50d45b2f1cc962a00c0fca5dd7961b65ac"
+}
