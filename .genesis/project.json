@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-30T09:12:56.785Z"
+    "updated_at": "2026-10-30T09:23:12.020Z"
   },
   "policy": {
     "ponytail": "full",
@@ -1987,6 +1987,28 @@
       "status": "accepted",
       "source": "Owner, 30 Oct 2026; wave-2 replan, section 3; FR-23, AC-1, AC-2, AC-5, AC-12, AC-19; DEC-W2-01-RUN-RULE, DEC-T06-INFRA-INVALID, DEC-T07-RUN-SET, DEC-W2-01-PASS-LABEL; amends DEC-W2-01-ELIGIBILITY-3 for release runs",
       "recorded_at": "2026-10-30T09:08:01.504Z",
+      "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-03-CHOICES",
+      "title": "Harness fixes: what is checked at start, and one case left to the adapter",
+      "text": "The run step checks the input-derived part of the manifest against the shared schema once, before any call, so the two can no longer disagree; this covers every field by construction instead of a fixed list. The model settings code is left as it is. A reported model ID that is a number is counted in the manifest summary under a tagged text key, so numbers and text no longer break the summary, while each attempt keeps its ID exactly as reported. A non-finite reported model ID cannot be refused at start, because it arrives from the provider during the run; the only real adapter turns every reported ID into text, so no real run can produce one. A test now shows that, and such a run is still refused when it is scored. The task's outcome lists that case under refusals at start; this record says how it is actually handled.",
+      "status": "accepted",
+      "source": "Owner, 30 Oct 2026; W2-03-harness-fixes pre-flight, sections 0 and 1; DEC-T06-MANIFEST-9; model_interface/anthropic_api.py",
+      "recorded_at": "2026-10-30T09:23:10.566Z",
+      "paths": [
+        "harness/run.py"
+      ],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-03-REVIEW-BUDGET",
+      "title": "Review budget for the harness fixes",
+      "text": "The harness fixes get at most two review rounds from a fresh read-only Codex session started inside the repository, which runs the gates. A third round happens only if the second finds a blocker, and is limited to that fix. Anything the final round finds is fixed and recorded without another round. The reviewer sees the diff, the before-and-after test runs, the deliberate break that shows the new reference-agent assertion catches what the old one missed, and a gate run.",
+      "status": "accepted",
+      "source": "Owner, 30 Oct 2026; W2-03-harness-fixes pre-flight, section 4; follows DEC-W2-01-REVIEW-BUDGET",
+      "recorded_at": "2026-10-30T09:23:12.020Z",
       "paths": [],
       "tags": []
     }
