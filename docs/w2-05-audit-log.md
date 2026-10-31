@@ -1,8 +1,10 @@
 # Audit log (W2-05)
 
-Status: Draft, for review; review rounds 1 and 2 fixed. The task gives every evaluation run a hash-chained audit log and a checkpoint (FR-14,
-AC-9), with structured fields that hold no customer values (FR-15, AC-22). Choices: `DEC-W2-05-CHOICES`. The fault:
-`DEC-W2-05-AUDIT-FAULT`. Review budget: `DEC-W2-05-REVIEW-BUDGET`. No model was called.
+Status: Approved, 31 Oct 2026 (review round 2; `DEC-W2-05-REVIEW`, reports in `docs/reviews/`; round 2's two smaller
+issues fixed after the final round). The task gives every evaluation run a hash-chained audit log and a checkpoint
+(FR-14, AC-9), with structured fields that hold no customer values (FR-15, AC-22). Choices: `DEC-W2-05-CHOICES`. The
+fault: `DEC-W2-05-AUDIT-FAULT`. Model names: `DEC-W2-05-MODEL-ID`. Review budget: `DEC-W2-05-REVIEW-BUDGET`. No model
+was called.
 
 ## What a run writes
 

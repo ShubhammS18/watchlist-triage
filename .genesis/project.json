@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-31T12:13:00.246Z"
+    "updated_at": "2026-10-31T12:32:08.185Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2099,6 +2099,19 @@
       "recorded_at": "2026-10-31T12:13:00.233Z",
       "paths": [
         "harness/audit.py"
+      ],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-05-REVIEW",
+      "title": "Independent review of the audit log: two rounds, no blocker left open",
+      "text": "An independent reviewer, GPT-6 Sol at medium effort, in a fresh read-only session started inside the repository, reviewed the audit log in two rounds and ran the four gate suites and the harness-fixes re-score suite each time. Round one found two blockers. The verify command could crash on an edited record whose event was not text, instead of naming it; that was fixed and tested. Model names in the log could in principle match a customer value; I kept readable names as the specification allows and stored any odd name as a hash, by decision record, with the full check against customer values left to the boundary-checks task. It also found that a name with a space aborted the run, that some write errors escaped the audit fault, and that a checkpoint version of true passed as one; all three were fixed. Round two found every finding resolved, and two smaller new issues: a model name that is not valid text was hashed in the log but crashed the step that writes the results, and a real name could look like one of the log's hashes. I fixed both after the final round without another review: a name that is not valid text is now treated as a provider fault before anything is logged, and any real name that looks like a hash is hashed too. The re-score suite showed the committed baseline and upgrade figures did not move. The reports are kept in docs/reviews.",
+      "status": "accepted",
+      "source": "Owner, 31 Oct 2026; W2-05-audit-log review rounds 1-2; DEC-W2-05-REVIEW-BUDGET, DEC-W2-05-MODEL-ID",
+      "recorded_at": "2026-10-31T12:32:08.134Z",
+      "paths": [
+        "docs/reviews/W2-05-audit-log-review-round-1.md",
+        "docs/reviews/W2-05-audit-log-review-round-2.md"
       ],
       "tags": []
     }
