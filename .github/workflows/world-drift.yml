@@ -1,0 +1,15 @@
+# The world drift check (W2-04, DEC-W2-04-CHOICES). It runs the same script, with the same command, as the gate
+# test tests/w2_04_ci. tests/w2_04_ci/test_workflow.py checks this file line by line, so keep it flat.
+name: world drift
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  drift:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - run: python3 tools/check_world_drift.py

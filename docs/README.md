@@ -17,5 +17,6 @@ the baseline, read `baseline-report.md`.
 | `acceptance-design.md` | W2-01-harness-acceptance | Approved, 27 Oct 2026 (review round 4); revised in W2-02, approved 29 Oct 2026 (review round 3) | the current doc for the release check; W2-02 changed the cost bound (`DEC-W2-01-ELIGIBILITY-3`), added the labelled pass (`DEC-W2-01-PASS-LABEL`) and the prompt and rule-code hash binding |
 | `w2-02-report.md`, `w2-02-attempts.md` | W2-02-agent-upgrade | Approved, 29 Oct 2026 (review round 3) | the current doc for the upgraded agent; the attempt log is its record of attempts and spend |
 | `w2-03-harness-fixes.md` | W2-03-harness-fixes | Approved, 30 Oct 2026 (review round 2) | the current doc for T06 known issues 2 to 5; its "Supersedes" table lists `harness-design.md:708-724`, where those issues are listed as not fixed |
+| `w2-04-ci-drift.md` | W2-04-ci-drift | Draft, for review | the current doc for the world drift check and its GitHub workflow |
 
 Review reports are in `reviews/`; the evidence behind the T07 report is in `evidence/t07/`.
