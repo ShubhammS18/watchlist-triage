@@ -1,0 +1,30 @@
+{
+  "task": "W2-04-ci-drift",
+  "gate": "tests",
+  "kind": "command",
+  "attempt": "e6bca379-e043-4869-ac6d-6a15a3b65ef1",
+  "command": ".venv/bin/python -m pytest tests/w2_04_ci -q -p no:cacheprovider",
+  "started_at": "2026-10-31T06:34:59.986Z",
+  "observed_at": "2026-10-31T06:35:10.752Z",
+  "exit_code": 0,
+  "signal": null,
+  "stdout": "........................................                                 [100%]\n40 passed in 9.41s\n",
+  "stderr": "",
+  "failure": null,
+  "receipt": null,
+  "revision": {
+    "commit": "922486e61bae1628e3872c58ab98ea7237667fc4",
+    "dirty": true
+  },
+  "source_hash": "9a3ab02970f39c9541ebe17e790659469e3781828ac18f590d6bd04a98d3660d",
+  "before_hash": "9a3ab02970f39c9541ebe17e790659469e3781828ac18f590d6bd04a98d3660d",
+  "config_hash": "c46ae26f5b8649486437ea11085cb2fd0b4d9cfe4e5136e2234c1b2b17616428",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "arch": "x64",
+    "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+    "variables": {}
+  },
+  "hash": "aab3193be0ca0b13fe7e71fc8b9dc1c1bc21c15ca2549d6ad424205ae4fa1c9d"
+}

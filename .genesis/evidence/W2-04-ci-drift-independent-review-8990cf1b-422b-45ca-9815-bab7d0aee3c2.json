@@ -1,0 +1,13 @@
+{
+  "task": "W2-04-ci-drift",
+  "gate": "independent-review",
+  "kind": "review",
+  "attempt": "8990cf1b-422b-45ca-9815-bab7d0aee3c2",
+  "human": "Shubham Suradkar",
+  "reason": "Two independent review rounds: round 1 found one blocker and one smaller issue, both fixed; round 2 clean; GitHub runs checked by me. Decision record DEC-W2-04-REVIEW.",
+  "observed_at": "2026-10-31T06:36:00.024Z",
+  "source_hash": "9a3ab02970f39c9541ebe17e790659469e3781828ac18f590d6bd04a98d3660d",
+  "config_hash": "c46ae26f5b8649486437ea11085cb2fd0b4d9cfe4e5136e2234c1b2b17616428",
+  "reviewed_proofs": "9c48738d516e40a6b16caf73ac5b99c57dc56b6baf7845853ba282e873386c7d",
+  "hash": "e587bfc18f36cc682c01afbeaeb675a1f37b6a62b07cc0e628c542052f6bd70d"
+}

@@ -4,11 +4,11 @@
 
 - objective: Triage sanctions/PEP name-match alerts from a frozen synthetic world: recommend close or escalate with cited evidence, human-approved, measured on zero missed planted true matches.
 - phase/status: build/active
-- active task: W2-04-ci-drift — A CI workflow runs on every push and pull request, regenerates the frozen world from its seed and fails if any file differs from the committed world or the world hash is not b77a6804a52b1d41650e250a31ff64a701b1d315a674a1f1242d93cb6b15c9b0. The workflow and the gate test call the same script, so what the gate checks locally is what CI runs. A static test checks that the workflow triggers on push and pull request and calls that script. The gate cannot see GitHub: a green Actions run is the owner's check at review, and pushing the workflow is the owner's step.
+- active task: W2-05-audit-log — Every evaluation run writes its lifecycle events to an append-only log in a canonical serialisation, each record holding the hash of the previous record, and after each run a checkpoint holding the latest hash and the record count is written for committing to git. A verify command passes on an untouched log with its checkpoint and, given the same checkpoint, fails and names the first bad record for an edited record, a deleted middle record, a reordered pair and a deleted last record. If an audit write fails during a run, the run is marked failed and never counts toward the three valid runs. Structured fields of log records hold only identifiers, hashes, enumerated values, numbers, timestamps, cited IDs, decisions and model identifiers; the free-text reason is the one exception, and that is disclosed. Runs made before this task, in baseline and w2-02-runs, are not chained, and the docs say so. There are no operational sessions, so the operational half of the checkpoint rule never applies. Tests use the fake model and never call a real one.
 - blocker: none
 - next action: Run the task pre-flight.
 - phase instruction: Implement only the active task and prove it against current sources. Check `genesis query . impact PATH` before editing shared code.
-- gates: tests:pending, t02:pending, independent-review:pending
+- gates: tests:pending, t06:pending, w2-01:pending, w2-02:pending, secrets:pending, independent-review:pending
 - recent failures: none
 
 ## Resume
@@ -17,9 +17,9 @@ Load Genesis and official Ponytail full, then run `genesis brief .` for the curr
 Fetch full records with `genesis context . --id ID` only when needed. Do not load project.json or historical proof wholesale.
 Ask the index before reading code: `genesis query . search|scope|callers|callees|impact|path` (`--json` for parsing). Run `genesis query . impact PATH` before editing shared code. Answers are advisory static analysis; `ambiguous` means candidates were not ruled out, so confirm in source.
 Run `genesis serve .` for a live map of the repository when structure is unclear; it reindexes on save and is read-only. Run `genesis index .` if the index is stale and nothing is watching.
-Context fingerprint: 2ace67ad3dbedc98defe4c9457dd2aea5c80366de10164d2a37e0322d042760c. Use --since only after receiving that full packet; kickoff is not the packet.
-- DEC-W2-04-CHOICES: The drift check: one standard-library script and a locked-down workflow
-- DEC-W2-SCOPE: Release the evaluation half with an audit log; the operational half waits
+Context fingerprint: 5e989aae68acc87dd641a1178ef6a95fcd10152534710c52d6ed68abd523df2e. Use --since only after receiving that full packet; kickoff is not the packet.
 - DEC-W2-RELEASE-RULES: Release rules, fixed before the freeze
+- DEC-W2-02-RULES-FIRST: Rubric rules decide what the fields settle; the model reads only snippets
+- DEC-W2-SCOPE: Release the evaluation half with an audit log; the operational half waits
 Applicable invariants, active rules, authorization and proof references are in the packet. Truncated summaries are retrieval pointers, not the full evidence.
 Reuse fresh gates with --reuse. Reconcile interrupted attempts before replaying commands. Report state → evidence → blocker → next action; checkpoint before stopping.

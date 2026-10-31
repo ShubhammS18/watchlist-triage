@@ -106,15 +106,15 @@
 
 ### W2-04-ci-drift — A CI workflow runs on every push and pull request, regenerates the frozen world from its seed and fails if any file differs from the committed world or the world hash is not b77a6804a52b1d41650e250a31ff64a701b1d315a674a1f1242d93cb6b15c9b0. The workflow and the gate test call the same script, so what the gate checks locally is what CI runs. A static test checks that the workflow triggers on push and pull request and calls that script. The gate cannot see GitHub: a green Actions run is the owner's check at review, and pushing the workflow is the owner's step.
 
-- state/risk: active / medium
+- state/risk: done / medium
 - requirements: NFR-2, AC-10
 - scope: not bounded
-- gates: tests: .venv/bin/python -m pytest tests/w2_04_ci -q -p no:cacheprovider, t02: .venv/bin/python -m pytest tests/t02_world -q -p no:cacheprovider, independent-review: pending
+- gates: tests: .venv/bin/python -m pytest tests/w2_04_ci -q -p no:cacheprovider, t02: .venv/bin/python -m pytest tests/t02_world -q -p no:cacheprovider, independent-review: pass
 - next: Run the task pre-flight.
 
 ### W2-05-audit-log — Every evaluation run writes its lifecycle events to an append-only log in a canonical serialisation, each record holding the hash of the previous record, and after each run a checkpoint holding the latest hash and the record count is written for committing to git. A verify command passes on an untouched log with its checkpoint and, given the same checkpoint, fails and names the first bad record for an edited record, a deleted middle record, a reordered pair and a deleted last record. If an audit write fails during a run, the run is marked failed and never counts toward the three valid runs. Structured fields of log records hold only identifiers, hashes, enumerated values, numbers, timestamps, cited IDs, decisions and model identifiers; the free-text reason is the one exception, and that is disclosed. Runs made before this task, in baseline and w2-02-runs, are not chained, and the docs say so. There are no operational sessions, so the operational half of the checkpoint rule never applies. Tests use the fake model and never call a real one.
 
-- state/risk: queued / medium
+- state/risk: active / medium
 - requirements: FR-14, AC-9
 - scope: not bounded
 - gates: tests: .venv/bin/python -m pytest tests/w2_05_audit -q -p no:cacheprovider, t06: .venv/bin/python -m pytest tests/t06_harness -q -p no:cacheprovider, w2-01: .venv/bin/python -m pytest tests/w2_01_acceptance -q -p no:cacheprovider, w2-02: .venv/bin/python -m pytest tests/w2_02_agent -q -p no:cacheprovider, secrets: pre-commit run gitleaks --all-files, independent-review: pending
