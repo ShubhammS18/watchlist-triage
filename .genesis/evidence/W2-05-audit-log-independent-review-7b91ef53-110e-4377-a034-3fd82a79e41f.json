@@ -1,0 +1,13 @@
+{
+  "task": "W2-05-audit-log",
+  "gate": "independent-review",
+  "kind": "review",
+  "attempt": "7b91ef53-110e-4377-a034-3fd82a79e41f",
+  "human": "Shubham Suradkar",
+  "reason": "Two independent review rounds: round 1 found two blockers, one fixed and one handled by decision record, plus three smaller issues fixed; round 2's two smaller issues fixed after the final round. Decision record DEC-W2-05-REVIEW.",
+  "observed_at": "2026-10-31T12:35:32.365Z",
+  "source_hash": "b09671a3183c94ffcc645d847597dddc887719cf6758de9f242a7ebf62836d8f",
+  "config_hash": "040f8e4afabef1fa3a2739a959f3ee124a1694a874ebf692ff9b591ff60aa335",
+  "reviewed_proofs": "0fa0eddefa4f835c743033c96a7e2f83d7c2cdcea93f3f65d3e430db3b2f1ee2",
+  "hash": "99e4145b24e4dd342e78506eabf08b9fcd654489b5f765f8010298d53dac3288"
+}

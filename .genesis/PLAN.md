@@ -114,15 +114,15 @@
 
 ### W2-05-audit-log — Every evaluation run writes its lifecycle events to an append-only log in a canonical serialisation, each record holding the hash of the previous record, and after each run a checkpoint holding the latest hash and the record count is written for committing to git. A verify command passes on an untouched log with its checkpoint and, given the same checkpoint, fails and names the first bad record for an edited record, a deleted middle record, a reordered pair and a deleted last record. If an audit write fails during a run, the run is marked failed and never counts toward the three valid runs. Structured fields of log records hold only identifiers, hashes, enumerated values, numbers, timestamps, cited IDs, decisions and model identifiers; the free-text reason is the one exception, and that is disclosed. Runs made before this task, in baseline and w2-02-runs, are not chained, and the docs say so. There are no operational sessions, so the operational half of the checkpoint rule never applies. Tests use the fake model and never call a real one.
 
-- state/risk: active / medium
+- state/risk: done / medium
 - requirements: FR-14, AC-9
 - scope: not bounded
-- gates: tests: .venv/bin/python -m pytest tests/w2_05_audit -q -p no:cacheprovider, t06: .venv/bin/python -m pytest tests/t06_harness -q -p no:cacheprovider, w2-01: .venv/bin/python -m pytest tests/w2_01_acceptance -q -p no:cacheprovider, w2-02: .venv/bin/python -m pytest tests/w2_02_agent -q -p no:cacheprovider, secrets: pre-commit run gitleaks --all-files, independent-review: pending
+- gates: tests: .venv/bin/python -m pytest tests/w2_05_audit -q -p no:cacheprovider, t06: .venv/bin/python -m pytest tests/t06_harness -q -p no:cacheprovider, w2-01: .venv/bin/python -m pytest tests/w2_01_acceptance -q -p no:cacheprovider, w2-02: .venv/bin/python -m pytest tests/w2_02_agent -q -p no:cacheprovider, secrets: pre-commit run gitleaks --all-files, independent-review: pass
 - next: Run the task pre-flight.
 
 ### W2-06-boundary-checks — Automated checks show that a capability allowlist check finds no interface, configuration or credential for account actions or regulator reporting; that closing without a written reason is rejected, for the triage agent as well as the baseline agent; that structured fields of audit-log records, run reports and typed error records hold no customer-record field values, checked against every customer-record value in the frozen world; that the only persistent stores are the world store and the audit log; and that an evaluation run writes only to its own run folder and log and creates no L2 queue record and no final disposition. With no L2 queue or dispositions in the code, that last check shows that none is written, not that one would be refused. The network part of AC-11 is unchanged.
 
-- state/risk: queued / medium
+- state/risk: active / medium
 - requirements: FR-10, FR-15, FR-18, AC-11, AC-20, AC-22
 - scope: not bounded
 - gates: tests: .venv/bin/python -m pytest tests/w2_06_boundary -q -p no:cacheprovider, t04: .venv/bin/python -m pytest tests/t04_model_interface -q -p no:cacheprovider, t05: .venv/bin/python -m pytest tests/t05_agent -q -p no:cacheprovider, independent-review: pending

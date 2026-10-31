@@ -4,11 +4,11 @@
 
 - objective: Triage sanctions/PEP name-match alerts from a frozen synthetic world: recommend close or escalate with cited evidence, human-approved, measured on zero missed planted true matches.
 - phase/status: build/active
-- active task: W2-05-audit-log — Every evaluation run writes its lifecycle events to an append-only log in a canonical serialisation, each record holding the hash of the previous record, and after each run a checkpoint holding the latest hash and the record count is written for committing to git. A verify command passes on an untouched log with its checkpoint and, given the same checkpoint, fails and names the first bad record for an edited record, a deleted middle record, a reordered pair and a deleted last record. If an audit write fails during a run, the run is marked failed and never counts toward the three valid runs. Structured fields of log records hold only identifiers, hashes, enumerated values, numbers, timestamps, cited IDs, decisions and model identifiers; the free-text reason is the one exception, and that is disclosed. Runs made before this task, in baseline and w2-02-runs, are not chained, and the docs say so. There are no operational sessions, so the operational half of the checkpoint rule never applies. Tests use the fake model and never call a real one.
+- active task: W2-06-boundary-checks — Automated checks show that a capability allowlist check finds no interface, configuration or credential for account actions or regulator reporting; that closing without a written reason is rejected, for the triage agent as well as the baseline agent; that structured fields of audit-log records, run reports and typed error records hold no customer-record field values, checked against every customer-record value in the frozen world; that the only persistent stores are the world store and the audit log; and that an evaluation run writes only to its own run folder and log and creates no L2 queue record and no final disposition. With no L2 queue or dispositions in the code, that last check shows that none is written, not that one would be refused. The network part of AC-11 is unchanged.
 - blocker: none
 - next action: Run the task pre-flight.
 - phase instruction: Implement only the active task and prove it against current sources. Check `genesis query . impact PATH` before editing shared code.
-- gates: tests:pending, t06:pending, w2-01:pending, w2-02:pending, secrets:pending, independent-review:pending
+- gates: tests:pending, t04:pending, t05:pending, independent-review:pending
 - recent failures: none
 
 ## Resume
@@ -17,9 +17,9 @@ Load Genesis and official Ponytail full, then run `genesis brief .` for the curr
 Fetch full records with `genesis context . --id ID` only when needed. Do not load project.json or historical proof wholesale.
 Ask the index before reading code: `genesis query . search|scope|callers|callees|impact|path` (`--json` for parsing). Run `genesis query . impact PATH` before editing shared code. Answers are advisory static analysis; `ambiguous` means candidates were not ruled out, so confirm in source.
 Run `genesis serve .` for a live map of the repository when structure is unclear; it reindexes on save and is read-only. Run `genesis index .` if the index is stale and nothing is watching.
-Context fingerprint: 8357724f1bb98c20ed67865c92e1cd92f263c9369c1d9b6b14500bf6765e3871. Use --since only after receiving that full packet; kickoff is not the packet.
+Context fingerprint: d80d5568d1f4a84416bd9d72d5fac723f9fb561b4dcbd3fed5a441b2b5ed5591. Use --since only after receiving that full packet; kickoff is not the packet.
 - DEC-W2-05-CHOICES: The audit log: one chain per run, checkpoints committed by me
-- DEC-W2-RELEASE-RULES: Release rules, fixed before the freeze
 - DEC-W2-02-RULES-FIRST: Rubric rules decide what the fields settle; the model reads only snippets
+- DEC-W2-PLAN: Plan wave 2 in steps; the agent upgrade decides the rest
 Applicable invariants, active rules, authorization and proof references are in the packet. Truncated summaries are retrieval pointers, not the full evidence.
 Reuse fresh gates with --reuse. Reconcile interrupted attempts before replaying commands. Report state → evidence → blocker → next action; checkpoint before stopping.

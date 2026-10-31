@@ -1,0 +1,30 @@
+{
+  "task": "W2-05-audit-log",
+  "gate": "t06",
+  "kind": "command",
+  "attempt": "38a8fae8-0f1c-4f3f-84ca-dbe518824232",
+  "command": ".venv/bin/python -m pytest tests/t06_harness -q -p no:cacheprovider",
+  "started_at": "2026-10-31T12:32:31.348Z",
+  "observed_at": "2026-10-31T12:33:37.532Z",
+  "exit_code": 0,
+  "signal": null,
+  "stdout": "........................................................................ [ 20%]\n.........................................................ssssss......... [ 41%]\n........................................................................ [ 62%]\n........................................................................ [ 83%]\n..........................................................               [100%]\n340 passed, 6 skipped in 65.94s (0:01:05)\n",
+  "stderr": "",
+  "failure": null,
+  "receipt": null,
+  "revision": {
+    "commit": "79cc152f5081afb434252bef0c9167fb3511f973",
+    "dirty": true
+  },
+  "source_hash": "b09671a3183c94ffcc645d847597dddc887719cf6758de9f242a7ebf62836d8f",
+  "before_hash": "b09671a3183c94ffcc645d847597dddc887719cf6758de9f242a7ebf62836d8f",
+  "config_hash": "040f8e4afabef1fa3a2739a959f3ee124a1694a874ebf692ff9b591ff60aa335",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "arch": "x64",
+    "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+    "variables": {}
+  },
+  "hash": "02c75b4e080e362f5a343d2057b80b2ab9bbb8bac32a994f47b689ec42fddcb5"
+}
