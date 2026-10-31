@@ -1,6 +1,6 @@
 # Audit log (W2-05)
 
-Status: Draft, for review. The task gives every evaluation run a hash-chained audit log and a checkpoint (FR-14,
+Status: Draft, for review; review round 1 fixed. The task gives every evaluation run a hash-chained audit log and a checkpoint (FR-14,
 AC-9), with structured fields that hold no customer values (FR-15, AC-22). Choices: `DEC-W2-05-CHOICES`. The fault:
 `DEC-W2-05-AUDIT-FAULT`. Review budget: `DEC-W2-05-REVIEW-BUDGET`. No model was called.
 
@@ -36,9 +36,15 @@ What each event holds besides those fields:
 - **`run_ended.items_sha256`** is the SHA-256 of the `items.jsonl` the run then writes. So a committed checkpoint
   vouches for the log, and through it for the exact items that are scored.
 - **Typed fields.** Every field has a type (`audit.FIELDS`): an ID pattern, a 64-hex hash, an enumerated value, a
-  whole number, a boolean, a UTC time, or a model identifier with no spaces. A record that does not fit is refused
-  before it is written.
+  whole number, a boolean, a UTC time, or a model identifier in the safe pattern (letters, digits and `._:@/+-`, no
+  spaces). A record that does not fit is refused before it is written.
   - `reason` is the one free-text field, and it may contain synthetic customer values.
+- **Model names** (`audit.model_name`, `DEC-W2-05-MODEL-ID`, review round 1). A requested or reported model name that
+  fits the safe pattern is logged as it is, so an auditor can see which model ran. Any other name, one with a space
+  included, is logged as `sha256:` and the hash of its text, so it can neither abort a run nor put raw text in the
+  log. A number is first written as `number:<value>`, as in the manifest. The safe pattern does not by itself rule
+  out every customer value: checking every structured field against every customer value of the frozen world is the
+  boundary-checks task's, planned next.
 - **Cited IDs.** Cited IDs outside the item's bundle can be any text a model returned, so they are logged only as a
   count and the SHA-256 of their list. The full result stays in `items.jsonl`.
 - **What is not logged:**
@@ -51,6 +57,10 @@ A failure to write the log is a harness fault (`DEC-W2-05-AUDIT-FAULT`). This co
 - creating the log or writing any record;
 - the final sync, or writing the checkpoint;
 - a record that does not fit its types.
+
+Building a record (its body included), checking its types, hashing it, encoding it and writing it are one guarded step
+in `Log.write`: any failure there, such as text a model returned that cannot be encoded as UTF-8, is an
+`AuditWriteError` (review round 1).
 
 What happens then:
 - No item is handed off after that.
@@ -77,14 +87,16 @@ It prints `OK: <n> records, head <hash>` and exits 0, or prints `FAILED: record 
 record that cannot be vouched for, counted from 0.
 
 For each record, in this order, it checks:
-1. the line is canonical JSON;
-2. the record fits its types;
+1. the line is canonical JSON. A line that is not JSON, or whose text cannot be encoded as UTF-8, is named, never a
+   crash;
+2. the record fits its types. An event that is not text, such as a list, is named (review round 1);
 3. `seq` is its position;
 4. `prev` is the previous record's hash;
 5. `hash` matches its content;
 6. it belongs to the checkpoint's run.
 
-Then it compares the record count and the last hash with the checkpoint.
+Then it compares the record count and the last hash with the checkpoint. The checkpoint's version must be exactly
+the whole number 1: `true` or `1.0` is refused (review round 1).
 
 | Case (AC-9) | Named |
 |---|---|
@@ -156,14 +168,22 @@ Runs made before this task, in `baseline/` and `w2-02-runs/`, are not chained an
   - an edit with its own hash re-computed, and with every later record re-hashed (the stated limit);
   - the last two records deleted;
   - a record in another form, a torn last line, an empty log, a record beyond the checkpoint;
-  - a checkpoint of another run or of no known form;
-  - a float in place of a whole number.
+  - a checkpoint of another run or of no known form, and one whose version is `true`, `1.0`, `"1"` or 2, the first
+    through the command too;
+  - a float in place of a whole number;
+  - an event edited to a list, through the command, and a record holding a lone surrogate (review round 1).
 - `test_fault.py`, with a model that counts its calls:
   - a failed write mid-run, on the sequential path and with four workers. With four workers, no call is still
     running when the run returns, and every call made is in the cost;
   - a failed first write, a failed last write, and a failed sync, which leaves no checkpoint;
   - a log-aborted run beside a good one in one run set: one valid run, and the aborted one listed;
-  - a record of the wrong type refused, with the log stopped.
+  - a record of the wrong type refused, with the log stopped;
+  - text that cannot be encoded as UTF-8, given as a field and as a cited ID hashed while the body is made: both an
+    `AuditWriteError`, with nothing written (review round 1).
+- `test_model_names.py` (review round 1):
+  - safe names are kept; names with a space, empty or too long, or with a lone surrogate are hashed;
+  - a whole run whose requested model name has a space, and one whose model reports a name with a space: both
+    complete and verify, the log holds the hash and never the name.
 - `test_fields.py`:
   - no structured string of the run's log contains any name, address, date of birth, ID number or nationality of
     the world's customers;
@@ -186,23 +206,25 @@ The owner agreed to the first two at the pre-flight, and to the other two during
 
 `docs/evidence/w2-05/`:
 
-- `breaks.txt`: three deliberate breaks made by hand and then undone. Each is caught by the new tests:
+- `breaks.txt`: five deliberate breaks made by hand and then undone. Each is caught by the new tests:
   - verify without its `seq` check: the deleted-middle and reordered-pair tests fail;
   - the parallel hand-off without `_keep`: the in-flight test fails;
-  - `run_ended` without the items hash: the events test fails.
+  - `run_ended` without the items hash: the events test fails;
+  - review round 1: the event check without its text check, and the checkpoint version compared with `!=`: the
+    list-event test and the checkpoint-version test fail.
 - `gate-timings.txt`: the four gate suites and the W2-03 re-score suite, each run alone through
   `tools/timed_run.sh` on the charger.
 
   | Suite | Result | Time | Peak memory (whole machine) | At W2-03 |
   |---|---|---|---|---|
-  | w2_05_audit | 38 passed | 7.4 s | 1602 MB | new |
-  | t06 | 340 passed, 6 skipped | 67.1 s | 1764 MB | 59.5 s |
-  | w2_01 | 68 passed | 70.5 s | 1736 MB | 65.3 s |
-  | w2_02 | 68 passed | 6.2 s | 1637 MB | 5.5 s |
-  | w2_03 (evidence) | 38 passed | 5.5 s | 1618 MB | 4.2 s |
+  | w2_05_audit | 45 passed | 9.1 s | 1569 MB | new |
+  | t06 | 340 passed, 6 skipped | 68.1 s | 1727 MB | 59.5 s |
+  | w2_01 | 68 passed | 70.4 s | 1697 MB | 65.3 s |
+  | w2_02 | 68 passed | 6.2 s | 1593 MB | 5.5 s |
+  | w2_03 (evidence) | 38 passed | 5.4 s | 1593 MB | 4.2 s |
 
-  Every suite is below the 120-second gate limit. t06 and w2_01 took about 8 and 5 seconds longer than at W2-03,
-  with the fixed benchmark the same, 0.82 s. Writing the log costs about 0.08 s per whole run (1,845 records and
+  These are the runs after review round 1. Every suite is below the 120-second gate limit. t06 and w2_01 took about
+  9 and 5 seconds longer than at W2-03, with the fixed benchmark about the same, 0.80 to 0.87 s. Writing the log costs about 0.08 s per whole run (1,845 records and
   the close, timed alone), so most of that difference is not explained; it was not measured further.
 
   `tests/w2_03_harness_fixes` is not one of this task's gates. It is run as evidence that the committed `baseline/`
@@ -210,8 +232,8 @@ The owner agreed to the first two at the pre-flight, and to the other two during
 
 ## Limits
 
-- **Model identifiers.** One with a space or other unusual character does not fit its type, so a run whose provider
-  reported one would be aborted. The only real adapter reports IDs such as `claude-haiku-5-5`.
+- **Model names.** A name in the safe pattern is logged as it is. The pattern admits some strings that could equal a
+  customer value, such as a date; the boundary-checks task checks that (`DEC-W2-05-MODEL-ID`).
 - **Completed log, aborted run.** If closing the log fails after `run_ended` was written, the run is aborted with no
   checkpoint while the log says completed (see Faults).
 - **Aborted runs and the safety counts.** An aborted run writes no items, so the release check never sees its

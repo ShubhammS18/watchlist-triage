@@ -150,3 +150,21 @@ def test_a_record_that_does_not_fit_its_types_is_refused_and_the_log_stops(tmp_p
         log.write("run_ended", state="completed", items=1, items_sha256=None, aborted_item_id=None, error_type=None)
     log.close()
     assert tmp_path.joinpath(audit.LOG).read_bytes() == b""
+
+
+def test_a_string_that_cannot_be_encoded_is_an_audit_write_error(tmp_path):
+    """Review round 1: building, hashing and encoding a record are one guarded step, the body made inside it too."""
+    lone = "\ud800"  # a lone surrogate: valid in a Python string, not encodable as UTF-8
+    for folder in ("a", "b"):
+        tmp_path.joinpath(folder).mkdir()
+    log = audit.Log(tmp_path.joinpath("a"), "20261031T000000000000Z-abcdef01")
+    with pytest.raises(audit.AuditWriteError, match="UnicodeEncodeError"):   # a field given directly
+        log.write("run_ended", state="aborted", items=0, items_sha256=None, aborted_item_id=None, error_type=lone)
+    log = audit.Log(tmp_path.joinpath("b"), "20261031T000000000000Z-abcdef01")
+    line = {"item_id": "ALT-0001/1", "alert_id": "ALT-0001", "framing": 1, "twin": False, "sent_ids": ["EVD-00001"],
+            "attempts": [], "result": {"recommendation": "ESCALATE", "reason": "r", "cited_ids": [lone],
+                                       "system_failure": False, "failure_kind": None, "citation_invalid": True}}
+    with pytest.raises(audit.AuditWriteError, match="UnicodeEncodeError"):   # a cited ID, hashed while the body is made
+        log.write("recommendation", make=lambda: audit.recommendation(line, "a" * 64))
+    for folder in ("a", "b"):
+        assert tmp_path.joinpath(folder, audit.LOG).read_bytes() == b""

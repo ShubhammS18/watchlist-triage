@@ -234,7 +234,7 @@ class _Logged(list):
         self.log, self.input_hashes = log, input_hashes
 
     def append(self, line):
-        self.log.write("recommendation", **audit.recommendation(line, self.input_hashes[line["item_id"]]))
+        self.log.write("recommendation", make=lambda: audit.recommendation(line, self.input_hashes[line["item_id"]]))
         super().append(line)
 
 
@@ -428,7 +428,8 @@ def run(config_path, out_dir, rerun_cause=None):
         log = audit.Log(run_dir, run_id)
         log.write("run_started", run_set=run_set, commit=commit, dirty=dirty, world_hash=listed["world_hash"],
                   agent=config["agent"], provider=from_inputs["model"]["provider"],
-                  requested_model=from_inputs["model"]["requested"],
+                  requested_model=None if from_inputs["model"]["requested"] is None else
+                  audit.model_name(from_inputs["model"]["requested"]),
                   prompt_sha256=from_inputs["prompt"]["sha256"] if from_inputs["prompt"] else None,
                   rule_code_sha256=rule_code, config_sha256=from_inputs["config_sha256"],
                   framing_code_sha256=from_inputs["framing_code_sha256"], review_policy="none")

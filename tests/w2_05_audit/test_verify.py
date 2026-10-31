@@ -149,3 +149,26 @@ def test_a_record_of_the_wrong_shape_is_caught_even_with_its_hash_right(log_byte
     record["framing"] = 1.0
     assert audit.verify(joined([*lines[:MIDDLE], canonical(rehashed(record)), *lines[MIDDLE + 1:]]), trusted) == \
            f"record {MIDDLE}: these fields do not have their type: ['framing']"
+
+
+def test_an_event_edited_to_a_list_is_named_through_the_command(tmp_path, log_bytes, trusted):
+    """Review round 1: an event that is not text was a crash, not a named record."""
+    assert verify_command(tmp_path, joined(edited(split(log_bytes), MIDDLE, event=[])), trusted) == (
+        1, f"FAILED: record {MIDDLE}: unknown event []\n")
+
+
+def test_a_record_holding_a_lone_surrogate_is_named(log_bytes, trusted):
+    """Valid JSON whose text cannot be encoded as UTF-8: named, never a crash."""
+    lines = split(log_bytes)
+    bad = lines[MIDDLE].replace(b'"reason":"', b'"reason":"\\ud800', 1)
+    assert audit.verify(joined([*lines[:MIDDLE], bad, *lines[MIDDLE + 1:]]), trusted) == \
+           f"record {MIDDLE}: not in the canonical form"
+
+
+def test_a_checkpoint_whose_version_is_not_exactly_1_is_refused(tmp_path, log_bytes, trusted):
+    """Review round 1: True and 1.0 equal 1 in Python, but are not version 1."""
+    for version in (True, 1.0, "1", 2):
+        assert audit.verify(log_bytes, {**trusted, "v": version}) == \
+               "the checkpoint is not a checkpoint of this log format", version
+    assert verify_command(tmp_path, log_bytes, {**trusted, "v": True}) == (
+        1, "FAILED: the checkpoint is not a checkpoint of this log format\n")

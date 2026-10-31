@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-31T09:30:12.747Z"
+    "updated_at": "2026-10-31T12:13:00.246Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2088,6 +2088,18 @@
       "source": "Owner, 31 Oct 2026; W2-05-audit-log pre-flight; follows DEC-W2-04-REVIEW-BUDGET",
       "recorded_at": "2026-10-31T09:30:12.746Z",
       "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-05-MODEL-ID",
+      "title": "Model names stay readable in the log; odd ones are stored as a hash",
+      "text": "The log stores the model's name as readable text when it fits the safe pattern, because the specification lists the model identifier among the fields a log record may hold, and an auditor needs to see which model ran. Any other name, including one with a space, is stored as its hash, so a strange provider label can neither abort a run nor put raw text into the log. The review asked for every model name to be stored as a hash, in case a name matched a customer value. I did not do that, because it would hide which model ran. Checking every structured field, model names included, against every customer-record value in the frozen world is the job of the boundary-checks task, which is planned next.",
+      "status": "accepted",
+      "source": "Owner, 31 Oct 2026; W2-05-audit-log review round 1, findings 2 and 3; FR-15, AC-22; W2-06-boundary-checks",
+      "recorded_at": "2026-10-31T12:13:00.233Z",
+      "paths": [
+        "harness/audit.py"
+      ],
       "tags": []
     }
   ],

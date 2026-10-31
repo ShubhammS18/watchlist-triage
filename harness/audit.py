@@ -11,7 +11,8 @@ checkpoint, committed to git by the owner, is what a log is verified against; th
 Every field is typed (`FIELDS`), and a record that does not fit is refused, so structured fields hold only IDs,
 hashes, enumerated values, numbers, timestamps, cited evidence IDs, decisions and model identifiers. The agent's
 `reason` is the one free-text field, and it may contain synthetic customer values. Cited IDs outside the item's
-bundle can be any text a model returned, so only their number and a hash of them are logged.
+bundle can be any text a model returned, so only their number and a hash of them are logged. A model name is logged
+as it is when it fits the safe pattern, and as its hash otherwise (`model_name`, DEC-W2-05-MODEL-ID).
 """
 import hashlib
 import json
@@ -68,7 +69,7 @@ ITEM = _match(r"[A-Z]{3}-[0-9]{2,6}/[0-9]")              # an alert or twin in o
 RUN = _match(r"[0-9]{8}T[0-9]{12}Z-[0-9a-f]{8}")
 NAME = _match(r"[a-z][a-z0-9_]{0,63}")                   # an agent or provider name, as configured
 ERROR = _match(r"[A-Za-z_][A-Za-z0-9_]{0,99}")           # an exception's type name, never its message
-MODEL = _match(r"[A-Za-z0-9._:@/+-]{1,200}")             # a model identifier, as requested or reported; no spaces
+MODEL = _match(r"[A-Za-z0-9._:@/+-]{1,200}")             # the safe pattern of a model name: no spaces
 AT = _match(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{6}\+00:00")
 BOOL = lambda value: isinstance(value, bool)
 TEXT = lambda value: value is None or isinstance(value, str)  # free text: the agent's reason only
@@ -103,7 +104,7 @@ def problem(record):
     if not isinstance(record, dict):
         return "not a JSON object"
     event = record.get("event")
-    if event not in FIELDS:
+    if not isinstance(event, str) or event not in FIELDS:
         return f"unknown event {event!r}"
     expected = {**COMMON, **FIELDS[event]}
     if set(record) != set(expected):
@@ -111,6 +112,14 @@ def problem(record):
                f"unknown {sorted(set(record) - set(expected))}"
     wrong = sorted(key for key, check in expected.items() if not check(record[key]))
     return f"these fields do not have their type: {wrong}" if wrong else None
+
+
+def model_name(value):
+    """A model identifier, requested or reported, as the log holds it (DEC-W2-05-MODEL-ID): as it is when it fits
+    the safe pattern, otherwise "sha256:" and the hash of its text, so an odd label can neither abort a run nor put
+    raw text in the log. A number is first written as "number:<value>", as in the manifest (DEC-T06-MANIFEST-9)."""
+    text = value if type(value) is str else f"number:{value}"
+    return text if MODEL(text) else "sha256:" + sha256(text.encode("utf-8", "surrogatepass"))
 
 
 def recommendation(line, input_sha256):
@@ -124,8 +133,7 @@ def recommendation(line, input_sha256):
             "citation_invalid": result["citation_invalid"],
             "cited_ids": [cited for cited in result["cited_ids"] if cited in sent],
             "cited_outside_bundle": len(outside), "cited_outside_bundle_sha256": sha256(canonical(outside)) if outside else None,
-            # as in the manifest: a number is written as "number:<value>" (DEC-T06-MANIFEST-9)
-            "model_ids": sorted({one if type(one) is str else f"number:{one}" for one in reported}),
+            "model_ids": sorted({model_name(one) for one in reported}),
             "attempts": len(line["attempts"]), "reason": result["reason"]}
 
 
@@ -146,18 +154,21 @@ class Log:
         self._file.write(data)
         self._file.flush()
 
-    def write(self, event, **body):
+    def write(self, event, make=dict, **body):
+        """Append one record of `event`: the fields `make()` returns, and `body`. Building, checking, hashing,
+        encoding and writing it are one step, and any failure in it raises AuditWriteError (DEC-W2-05-AUDIT-FAULT)."""
         if self.broken:
             raise AuditWriteError(f"the audit log failed earlier: {self.broken}")
-        record = {"v": VERSION, "run_id": self.run_id, "seq": self.seq, "event": event,
-                  "at": datetime.now(timezone.utc).isoformat(timespec="microseconds"), "prev": self.head, **body}
-        record["hash"] = record_hash(record)
-        refused = problem(record)
         try:
+            record = {"v": VERSION, "run_id": self.run_id, "seq": self.seq, "event": event,
+                      "at": datetime.now(timezone.utc).isoformat(timespec="microseconds"), "prev": self.head,
+                      **make(), **body}
+            record["hash"] = record_hash(record)
+            refused = problem(record)
             if refused:
                 raise ValueError(f"record {self.seq} ({event}) is refused: {refused}")
             self._emit(canonical(record) + b"\n")
-        except (OSError, ValueError) as error:
+        except Exception as error:
             self.broken = f"{type(error).__name__}: {error}"
             raise AuditWriteError(self.broken) from error
         self.seq, self.head = self.seq + 1, record["hash"]
@@ -185,7 +196,7 @@ def checkpoint(run_id, records, head):
 def verify(log, trusted):
     """None if `log` (bytes) is the log that the checkpoint `trusted` vouches for; otherwise the first problem,
     naming the first record that cannot be vouched for, counted from 0."""
-    if not isinstance(trusted, dict) or set(trusted) != set(checkpoint(0, 0, 0)) or trusted["v"] != VERSION \
+    if not isinstance(trusted, dict) or set(trusted) != set(checkpoint(0, 0, 0)) or not COMMON["v"](trusted["v"]) \
             or not RUN(trusted["run_id"]) or not _count(trusted["records"]) or not HEX64(trusted["head"]):
         return "the checkpoint is not a checkpoint of this log format"
     *lines, tail = log.split(b"\n")
@@ -193,9 +204,13 @@ def verify(log, trusted):
     for seq, line in enumerate(lines):
         try:
             record = json.loads(line.decode("utf-8"))
-        except ValueError:
+        except (ValueError, RecursionError):
             return f"record {seq}: not a JSON line"
-        if not isinstance(record, dict) or canonical(record) != line:
+        try:
+            same = isinstance(record, dict) and canonical(record) == line
+        except (ValueError, RecursionError):  # a lone surrogate cannot be encoded: UnicodeEncodeError is a ValueError
+            same = False
+        if not same:
             return f"record {seq}: not in the canonical form"
         found = problem(record)
         if found:

@@ -13,3 +13,11 @@ FAILED tests/w2_05_audit/test_fault.py::test_in_a_parallel_run_the_calls_in_flig
    with: "items_sha256": None,
 FAILED tests/w2_05_audit/test_log.py::test_the_events_are_one_start_one_per_item_and_one_end
 1 failed, 8 passed in 1.17s
+== break 4 (review round 1): in harness/audit.py, replace:     if not isinstance(event, str) or event not in FIELDS:
+   with:     if event not in FIELDS:
+FAILED tests/w2_05_audit/test_verify.py::test_an_event_edited_to_a_list_is_named_through_the_command
+1 failed, 18 passed in 2.19s
+== break 5 (review round 1): in harness/audit.py, replace: or not COMMON["v"](trusted["v"])
+   with: or trusted["v"] != VERSION
+FAILED tests/w2_05_audit/test_verify.py::test_a_checkpoint_whose_version_is_not_exactly_1_is_refused
+1 failed, 18 passed in 2.26s
