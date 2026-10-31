@@ -116,10 +116,13 @@ def problem(record):
 
 def model_name(value):
     """A model identifier, requested or reported, as the log holds it (DEC-W2-05-MODEL-ID): as it is when it fits
-    the safe pattern, otherwise "sha256:" and the hash of its text, so an odd label can neither abort a run nor put
-    raw text in the log. A number is first written as "number:<value>", as in the manifest (DEC-T06-MANIFEST-9)."""
+    the safe pattern, otherwise "sha256:" and the hash of its text, so an odd label can neither abort the log nor put
+    raw text in it. A number is first written as "number:<value>", as in the manifest (DEC-T06-MANIFEST-9). A real
+    name that starts with "sha256:" is hashed too, so it can never be mistaken for the hash of another name (W2-05
+    review round 2)."""
     text = value if type(value) is str else f"number:{value}"
-    return text if MODEL(text) else "sha256:" + sha256(text.encode("utf-8", "surrogatepass"))
+    keep = MODEL(text) and not text.startswith("sha256:")
+    return text if keep else "sha256:" + sha256(text.encode("utf-8", "surrogatepass"))
 
 
 def recommendation(line, input_sha256):

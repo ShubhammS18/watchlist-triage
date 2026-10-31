@@ -1,39 +1,39 @@
 W2-05 gate suites and the W2-03 re-score suite, each run alone through tools/timed_run.sh (charger check, fixed benchmark, then tools/memory_guard.sh with MEMORY_GUARD_MAX_SECONDS=150)
-tree: the build after review round 1, before its commit, on top of 11ed28c; date: 2026-10-31
+tree: the build after the round-2 fixes, before their commit, on top of ad871a2; date: 2026-10-31
 == tests/w2_05_audit
 Power: plugged in
-benchmark: 0.807 s (N=12000000, result 983797)
-.............................................                            [100%]
-45 passed in 9.08s
-exit=0  memory used: before 1492 MB, peak 1569 MB (limit for stopping 3000 MB)
+benchmark: 0.821 s (N=12000000, result 983797)
+...............................................                          [100%]
+47 passed in 9.84s
+exit=0  memory used: before 1728 MB, peak 1823 MB (limit for stopping 3000 MB)
 exit 0
 == tests/t06_harness
 Power: plugged in
-benchmark: 0.872 s (N=12000000, result 983797)
+benchmark: 0.832 s (N=12000000, result 983797)
 ........................................................................ [ 20%]
 ........................................................................ [ 62%]
 ..........................................................               [100%]
-340 passed, 6 skipped in 68.10s (0:01:08)
-exit=0  memory used: before 1490 MB, peak 1727 MB (limit for stopping 3000 MB)
+340 passed, 6 skipped in 65.96s (0:01:05)
+exit=0  memory used: before 1773 MB, peak 1958 MB (limit for stopping 3000 MB)
 exit 0
 == tests/w2_01_acceptance
 Power: plugged in
-benchmark: 0.801 s (N=12000000, result 983797)
+benchmark: 0.828 s (N=12000000, result 983797)
 ....................................................................     [100%]
-68 passed in 70.44s (0:01:10)
-exit=0  memory used: before 1520 MB, peak 1697 MB (limit for stopping 3000 MB)
+68 passed in 70.91s (0:01:10)
+exit=0  memory used: before 1724 MB, peak 1913 MB (limit for stopping 3000 MB)
 exit 0
 == tests/w2_02_agent
 Power: plugged in
-benchmark: 0.835 s (N=12000000, result 983797)
+benchmark: 0.826 s (N=12000000, result 983797)
 ....................................................................     [100%]
-68 passed in 6.24s
-exit=0  memory used: before 1502 MB, peak 1593 MB (limit for stopping 3000 MB)
+68 passed in 6.38s
+exit=0  memory used: before 1705 MB, peak 1793 MB (limit for stopping 3000 MB)
 exit 0
 == tests/w2_03_harness_fixes
 Power: plugged in
-benchmark: 0.831 s (N=12000000, result 983797)
+benchmark: 0.820 s (N=12000000, result 983797)
 ......................................                                   [100%]
-38 passed in 5.37s
-exit=0  memory used: before 1539 MB, peak 1593 MB (limit for stopping 3000 MB)
+38 passed in 5.62s
+exit=0  memory used: before 1736 MB, peak 1798 MB (limit for stopping 3000 MB)
 exit 0

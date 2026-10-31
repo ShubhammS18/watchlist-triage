@@ -58,3 +58,35 @@ def test_a_reported_name_with_a_space_is_logged_as_its_hash(tmp_path, monkeypatc
     assert records[0]["requested_model"] == "fake-1"
     assert {name for r in records[1:-1] for name in r["model_ids"]} == {hashed("fake model 2")}
     assert b"fake model 2" not in data and len(records) == 1847
+
+
+def test_a_real_name_that_looks_like_a_hash_is_hashed_too():
+    """Review round 2: the literal name "sha256:<hash of x>" and the odd name x must not log the same."""
+    odd = "fake model 2"
+    literal = hashed(odd)
+    assert audit.MODEL(literal)                                   # it fits the safe pattern, so it was kept before
+    assert audit.model_name(literal) == hashed(literal) != audit.model_name(odd) == literal
+
+
+class NotText(fake_model.Fake):
+    """The fake model, reporting a model name that is not valid text: a lone surrogate cannot be encoded as UTF-8."""
+
+    def __call__(self, request):
+        result = super().__call__(request)
+        return Result(result.text, "fake-\ud800", result.input_tokens, result.output_tokens, result.latency_s)
+
+
+def test_a_reported_name_that_is_not_text_is_a_provider_fault_and_the_run_completes(tmp_path, monkeypatch):
+    """Review round 2: before, the log hashed such a name and the run then crashed writing items.jsonl."""
+    monkeypatch.setitem(harness_run.providers.PROVIDERS, "not_text", NotText)
+    monkeypatch.setattr(harness_run, "NOT_REAL", harness_run.NOT_REAL | {"not_text"})
+    records, _ = run_with(tmp_path, monkeypatch, provider="not_text")
+    folder = tmp_path.joinpath("out", records[0]["run_id"])
+    manifest = json.loads(folder.joinpath("manifest.json").read_text(encoding="utf-8"))
+    lines = [json.loads(line) for line in folder.joinpath("items.jsonl").read_text(encoding="utf-8").split("\n") if line]
+    attempts = [one for line in lines for one in line["attempts"]]
+    assert manifest["state"] == "completed" and manifest["model"]["reported"] == {} and len(lines) == 1845
+    assert all(one["model_id"] is None for one in attempts)       # no such name reaches items.jsonl or the manifest
+    assert "ProviderError" in {one["error"] for one in attempts}  # every answered call became a provider fault
+    assert all(line["result"]["recommendation"] == "ESCALATE" and line["result"]["system_failure"] for line in lines)
+    assert all(r["model_ids"] == [] for r in records[1:-1])

@@ -22,7 +22,7 @@ from baseline_agent import prompt
 from baseline_agent.agent import RETRIED
 from baseline_agent.recommend import recommend
 from framings import FRAMINGS, frame
-from model_interface import providers
+from model_interface import ProviderError, providers
 from triage_agent.record import PROMPT as TRIAGE_PROMPT
 from triage_agent.recommend import recommend as triage_recommend
 from worldgen.harness_twins import load_twins
@@ -94,6 +94,14 @@ def _prompt_bytes(request):
         return None
 
 
+def _is_text(value):
+    try:
+        value.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return True
+
+
 class Tokens:
     """Wraps the model for ONE item and notes every attempt, failed ones included (DEC-T06-COST).
 
@@ -102,6 +110,10 @@ class Tokens:
     and makes the cost a lower bound. `snapshot` is what an item keeps: later changes do not reach it.
     Every call also notes `prompt_bytes`, the UTF-8 bytes of its messages, for information only: it bounds no cost
     (DEC-W2-01-ELIGIBILITY-3); it is null for a request that carries no messages.
+
+    A reported model name that is not valid text (it cannot be encoded as UTF-8) is a bad provider answer: the call is
+    turned into a ProviderError before anything is logged, so the agent retries it or escalates the item as a system
+    failure, like any other provider error (W2-05 review round 2).
     """
 
     def __init__(self, model):
@@ -113,6 +125,9 @@ class Tokens:
         self.attempts.append(attempt)
         try:
             result = self._model(request)
+            reported = getattr(result, "model_id", None)
+            if isinstance(reported, str) and not _is_text(reported):
+                raise ProviderError("the provider reported a model name that is not valid text")
         except BaseException as error:
             attempt["error"] = type(error).__name__
             raise

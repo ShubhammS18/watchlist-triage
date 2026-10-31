@@ -21,3 +21,11 @@ FAILED tests/w2_05_audit/test_verify.py::test_an_event_edited_to_a_list_is_named
    with: or trusted["v"] != VERSION
 FAILED tests/w2_05_audit/test_verify.py::test_a_checkpoint_whose_version_is_not_exactly_1_is_refused
 1 failed, 18 passed in 2.26s
+== break 6 (after review round 2): in harness/run.py, replace:             if isinstance(reported, str) and not _is_text(reported):
+   with:             if False:
+FAILED tests/w2_05_audit/test_model_names.py::test_a_reported_name_that_is_not_text_is_a_provider_fault_and_the_run_completes
+1 failed, 4 passed in 1.91s
+== break 7 (after review round 2): in harness/audit.py, replace:     keep = MODEL(text) and not text.startswith("sha256:")
+   with:     keep = MODEL(text)
+FAILED tests/w2_05_audit/test_model_names.py::test_a_real_name_that_looks_like_a_hash_is_hashed_too
+1 failed, 4 passed in 2.17s

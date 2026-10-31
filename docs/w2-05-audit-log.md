@@ -1,6 +1,6 @@
 # Audit log (W2-05)
 
-Status: Draft, for review; review round 1 fixed. The task gives every evaluation run a hash-chained audit log and a checkpoint (FR-14,
+Status: Draft, for review; review rounds 1 and 2 fixed. The task gives every evaluation run a hash-chained audit log and a checkpoint (FR-14,
 AC-9), with structured fields that hold no customer values (FR-15, AC-22). Choices: `DEC-W2-05-CHOICES`. The fault:
 `DEC-W2-05-AUDIT-FAULT`. Review budget: `DEC-W2-05-REVIEW-BUDGET`. No model was called.
 
@@ -40,11 +40,16 @@ What each event holds besides those fields:
   spaces). A record that does not fit is refused before it is written.
   - `reason` is the one free-text field, and it may contain synthetic customer values.
 - **Model names** (`audit.model_name`, `DEC-W2-05-MODEL-ID`, review round 1). A requested or reported model name that
-  fits the safe pattern is logged as it is, so an auditor can see which model ran. Any other name, one with a space
-  included, is logged as `sha256:` and the hash of its text, so it can neither abort a run nor put raw text in the
-  log. A number is first written as `number:<value>`, as in the manifest. The safe pattern does not by itself rule
-  out every customer value: checking every structured field against every customer value of the frozen world is the
-  boundary-checks task's, planned next.
+  fits the safe pattern is logged as it is, so an auditor can see which model ran. Any other name that is valid text,
+  one with a space included, is logged as `sha256:` and the hash of its text, so it neither aborts the run nor puts
+  raw text in the log. A real name that itself starts with `sha256:` is hashed too, so it can never be mistaken for
+  the hash of another name (review round 2). A number is first written as `number:<value>`, as in the manifest. The
+  safe pattern does not by itself rule out every customer value: checking every structured field against every
+  customer value of the frozen world is the boundary-checks task's, planned next.
+- **A reported name that is not valid text** (it cannot be encoded as UTF-8) is not logged at all. The harness's model
+  wrapper (`Tokens` in `harness/run.py`) turns that answer into a `ProviderError` before anything is logged, so the
+  agent retries the call and, if it keeps happening, escalates the item as a system failure, like any other provider
+  error (review round 2). Such a run completes with those items escalated; it does not complete with the name.
 - **Cited IDs.** Cited IDs outside the item's bundle can be any text a model returned, so they are logged only as a
   count and the SHA-256 of their list. The full result stays in `items.jsonl`.
 - **What is not logged:**
@@ -183,7 +188,10 @@ Runs made before this task, in `baseline/` and `w2-02-runs/`, are not chained an
 - `test_model_names.py` (review round 1):
   - safe names are kept; names with a space, empty or too long, or with a lone surrogate are hashed;
   - a whole run whose requested model name has a space, and one whose model reports a name with a space: both
-    complete and verify, the log holds the hash and never the name.
+    complete and verify, the log holds the hash and never the name;
+  - review round 2: a real name that looks like the hash of another name is hashed, so the two differ; and a whole run
+    whose model reports a name that is not valid text completes, with every answered call a provider fault, every
+    item escalated as a system failure, and no model name in the items, the manifest or the log.
 - `test_fields.py`:
   - no structured string of the run's log contains any name, address, date of birth, ID number or nationality of
     the world's customers;
@@ -206,25 +214,27 @@ The owner agreed to the first two at the pre-flight, and to the other two during
 
 `docs/evidence/w2-05/`:
 
-- `breaks.txt`: five deliberate breaks made by hand and then undone. Each is caught by the new tests:
+- `breaks.txt`: seven deliberate breaks made by hand and then undone. Each is caught by the new tests:
   - verify without its `seq` check: the deleted-middle and reordered-pair tests fail;
   - the parallel hand-off without `_keep`: the in-flight test fails;
   - `run_ended` without the items hash: the events test fails;
   - review round 1: the event check without its text check, and the checkpoint version compared with `!=`: the
-    list-event test and the checkpoint-version test fail.
+    list-event test and the checkpoint-version test fail;
+  - after review round 2: the model wrapper without its text check, and `model_name` keeping names that start with
+    `sha256:`: the whole-run test and the look-alike test fail.
 - `gate-timings.txt`: the four gate suites and the W2-03 re-score suite, each run alone through
   `tools/timed_run.sh` on the charger.
 
   | Suite | Result | Time | Peak memory (whole machine) | At W2-03 |
   |---|---|---|---|---|
-  | w2_05_audit | 45 passed | 9.1 s | 1569 MB | new |
-  | t06 | 340 passed, 6 skipped | 68.1 s | 1727 MB | 59.5 s |
-  | w2_01 | 68 passed | 70.4 s | 1697 MB | 65.3 s |
-  | w2_02 | 68 passed | 6.2 s | 1593 MB | 5.5 s |
-  | w2_03 (evidence) | 38 passed | 5.4 s | 1593 MB | 4.2 s |
+  | w2_05_audit | 47 passed | 9.8 s | 1823 MB | new |
+  | t06 | 340 passed, 6 skipped | 66.0 s | 1958 MB | 59.5 s |
+  | w2_01 | 68 passed | 70.9 s | 1913 MB | 65.3 s |
+  | w2_02 | 68 passed | 6.4 s | 1793 MB | 5.5 s |
+  | w2_03 (evidence) | 38 passed | 5.6 s | 1798 MB | 4.2 s |
 
-  These are the runs after review round 1. Every suite is below the 120-second gate limit. t06 and w2_01 took about
-  9 and 5 seconds longer than at W2-03, with the fixed benchmark about the same, 0.80 to 0.87 s. Writing the log costs about 0.08 s per whole run (1,845 records and
+  These are the runs after the round-2 fixes. Every suite is below the 120-second gate limit. t06 and w2_01 took
+  about 7 and 6 seconds longer than at W2-03, with the fixed benchmark about the same, 0.82 to 0.83 s. Writing the log costs about 0.08 s per whole run (1,845 records and
   the close, timed alone), so most of that difference is not explained; it was not measured further.
 
   `tests/w2_03_harness_fixes` is not one of this task's gates. It is run as evidence that the committed `baseline/`
@@ -234,6 +244,8 @@ The owner agreed to the first two at the pre-flight, and to the other two during
 
 - **Model names.** A name in the safe pattern is logged as it is. The pattern admits some strings that could equal a
   customer value, such as a date; the boundary-checks task checks that (`DEC-W2-05-MODEL-ID`).
+- **Names that are not valid text.** Only a reported name is checked. A requested name in the run configuration that
+  is not valid text is the owner's own input and is not checked by this task.
 - **Completed log, aborted run.** If closing the log fails after `run_ended` was written, the run is aborted with no
   checkpoint while the log says completed (see Faults).
 - **Aborted runs and the safety counts.** An aborted run writes no items, so the release check never sees its
