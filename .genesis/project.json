@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-31T05:48:21.366Z"
+    "updated_at": "2026-10-31T06:34:45.258Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2043,6 +2043,19 @@
       "source": "Owner, 31 Oct 2026; W2-04-ci-drift pre-flight; follows DEC-W2-03-REVIEW-BUDGET",
       "recorded_at": "2026-10-31T05:48:21.365Z",
       "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-04-REVIEW",
+      "title": "Independent review of the drift check: two rounds, the last clean",
+      "text": "An independent reviewer, GPT-6 Sol at medium effort, in a fresh read-only session started inside the repository, reviewed the drift check in two rounds and ran both gate suites each time. Round one found a blocker: the test guarding the workflow file checked only for the lines it expected, so adding a condition that skips the check, or a setting that turns its failure green, would have passed every gate. The test now pins the workflow's exact text, so any change fails the gate until the test is deliberately updated, and it rejects those two settings by name. Round one also found that the Python-version test did not prove the guard runs before the world generator is imported; a test now shows that, and the wording says exactly that. Round two found both resolved and no new issues. I checked the GitHub runs myself for a push and a pull request, on both the first commit and the fixed one: the job token had read-only repository access, the checkout ran from the pinned commit, and the script printed Python 3.12.3, the frozen world's hash and no drift. The reports are kept in docs/reviews.",
+      "status": "accepted",
+      "source": "Owner, 31 Oct 2026; W2-04-ci-drift review rounds 1-2; DEC-W2-04-REVIEW-BUDGET; GitHub runs 41174790366, 41174791438, 41176539722, 41176543510",
+      "recorded_at": "2026-10-31T06:34:45.221Z",
+      "paths": [
+        "docs/reviews/W2-04-ci-drift-review-round-1.md",
+        "docs/reviews/W2-04-ci-drift-review-round-2.md"
+      ],
       "tags": []
     }
   ],

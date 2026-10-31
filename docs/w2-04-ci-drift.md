@@ -1,8 +1,9 @@
 # CI drift check (W2-04)
 
-Status: Draft, for review. The task adds the check that the frozen world regenerates byte-identically on every push
-and pull request (NFR-2, AC-10), deferred to wave 2 by `DEC-CI-DRIFT-WAVE2`. Choices: `DEC-W2-04-CHOICES`. Review
-budget: `DEC-W2-04-REVIEW-BUDGET`. No model was called.
+Status: Approved, 31 Oct 2026 (review round 2; `DEC-W2-04-REVIEW`, reports in `docs/reviews/`). The task adds the
+check that the frozen world regenerates byte-identically on every push and pull request (NFR-2, AC-10), deferred to
+wave 2 by `DEC-CI-DRIFT-WAVE2`. Choices: `DEC-W2-04-CHOICES`. Review budget: `DEC-W2-04-REVIEW-BUDGET`. No model was
+called.
 
 ## What was added
 
