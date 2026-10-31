@@ -9,7 +9,7 @@ budget: `DEC-W2-04-REVIEW-BUDGET`. No model was called.
 1. **The script, `tools/check_world_drift.py`.** It uses only the standard library and is run from the repository root
    as `python3 tools/check_world_drift.py`, with no arguments.
    - It refuses to run on any Python but 3.12: it prints `unsupported Python X.Y.Z: this check supports Python 3.12
-     only. It did not run; this is not drift.` and exits with 2. It does this before importing `worldgen`.
+     only. It did not run; this is not drift.` and exits with 2. It does this before `worldgen` is imported.
    - It regenerates the world from the seed in `worldgen/config.json` with `worldgen.build.generate` and `write`, into
      a temporary folder outside the repository. It refuses a temporary folder inside the repository.
    - It compares every file both ways with `data/world`: a file regenerated but not committed, a file committed but
@@ -49,20 +49,27 @@ budget: `DEC-W2-04-REVIEW-BUDGET`. No model was called.
        folder outside the repository:
        - one flipped world byte fails the copied script with exit 1;
        - so does a re-seeded world: the copy's seed is changed to 1, and its world regenerated and written in place;
-     - Python 3.11 and 3.13 are refused with the message above and exit 2. The test replaces `sys.version_info`
-       before the script runs, because only 3.12 is installed here.
+     - Python 3.11 and 3.13 are refused with the message above and exit 2, before `worldgen` is imported: the test
+       lists the `worldgen` modules loaded when the script stops, and requires none. Only 3.12 is installed here, so
+       the test replaces `sys.version_info` before the script runs. As the positive control, the same probe on
+       Python 3.12 sees `worldgen.build` imported and the script reach `OK` (review round 1).
    - `test_workflow.py`, the static test:
-     - exactly one workflow file;
-     - the top-level keys are `name`, `on`, `permissions` and `jobs`;
-     - the trigger line is exactly `on: [push, pull_request]`;
-     - one permissions block, at the top level, holding only `contents: read`;
-     - `runs-on: ubuntu-24.04` and a timeout of at most five minutes;
-     - one action, `actions/checkout` pinned to a 40-hex SHA, with `persist-credentials: false`;
-     - one run step equal to the command;
-     - no `secrets`, `${{`, `pull_request_target` or `workflow_run` anywhere.
+     - exactly one workflow file, and its content must equal the text pinned in full in the test, so any change to
+       the workflow fails the gate until the pinned text is deliberately updated (review round 1);
+     - the line rules, which explain why the pinned text is acceptable and say what a bad edit breaks:
+       - the top-level keys are `name`, `on`, `permissions` and `jobs`;
+       - the trigger line is exactly `on: [push, pull_request]`;
+       - one permissions block, at the top level, holding only `contents: read`;
+       - `runs-on: ubuntu-24.04` and a timeout of at most five minutes;
+       - one action, `actions/checkout` pinned to a 40-hex SHA, with `persist-credentials: false`;
+       - one run step equal to the command;
+       - no `if:` and no `continue-on-error:` on the job or a step, since either can skip the check or turn drift
+         green (review round 1);
+       - no `secrets`, `${{`, `pull_request_target` or `workflow_run` anywhere.
 
-     There is no YAML library here, so the file is kept flat and checked line by line after comments are removed;
-     anything the rules do not recognise fails. Seventeen bad workflows show that each rule catches something.
+     There is no YAML library here, so the file is kept flat and the rules read it line by line after comments are
+     removed. On their own they do not reject every key they do not know; the pinned text does. Twenty-one bad
+     workflows show that each rule catches something; each also differs from the pinned text.
    - `tests/t02_world` is unchanged and is the second gate.
 
 ## What the tests cannot show
@@ -89,8 +96,8 @@ These are stated here instead of in the task outcome (`DEC-W2-04-CHOICES`).
 
 | Suite | Result | Time | Peak memory |
 |---|---|---|---|
-| w2_04_ci | 34 passed | 7.4 s | 1580 MB |
-| t02 | 699 passed | 28.1 s | 1621 MB |
+| w2_04_ci | 40 passed | 9.2 s | 1805 MB |
+| t02 | 699 passed | 28.1 s | 1820 MB |
 
 Peak memory is the memory in use on the whole machine, as `tools/memory_guard.sh` reports it.
 
@@ -104,6 +111,6 @@ is the owner's step. The gate cannot see GitHub.
 - The claim is byte-identical regeneration under Python 3.12 only. No other Python version was tested. For example,
   `unicodedata` changes between minor versions.
 - The script trusts `worldgen` to regenerate. It checks the result, not the generator's code.
-- The static test reads a flat file with fixed rules, not YAML. A workflow GitHub would accept but written in
-  another style fails the test; it does not pass unchecked.
+- The static test reads a flat file with fixed rules, not YAML. Any other content, however GitHub would read it,
+  fails the pinned-text check; it does not pass unchecked.
 - On GitHub the check guards only what is pushed. It does not block a merge: `main` has no branch rule requiring it.

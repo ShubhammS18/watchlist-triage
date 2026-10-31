@@ -1,5 +1,6 @@
 # The world drift check (W2-04, DEC-W2-04-CHOICES). It runs the same script, with the same command, as the gate
-# test tests/w2_04_ci. tests/w2_04_ci/test_workflow.py checks this file line by line, so keep it flat.
+# test tests/w2_04_ci. tests/w2_04_ci/test_workflow.py pins this file's exact content and checks it line by line,
+# so keep it flat and change both together.
 name: world drift
 on: [push, pull_request]
 permissions:

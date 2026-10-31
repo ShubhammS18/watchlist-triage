@@ -1,6 +1,8 @@
-"""The static test of the workflow (DEC-W2-04-CHOICES). There is no YAML library here, so the workflow is kept flat
-and checked line by line after comments are removed. Anything the rules do not recognise fails. Each rule is also
-shown to catch a bad workflow."""
+"""The static test of the workflow (DEC-W2-04-CHOICES). The file must equal EXPECTED, pinned here in full, so any
+change to it fails this gate until EXPECTED is deliberately updated (review round 1). The line rules below explain why
+that content is acceptable: there is no YAML library here, so they read the flat file line by line after comments are
+removed. They do not by themselves reject every key they do not know; the pin does. Each rule is also shown to catch
+a bad workflow."""
 import re
 from itertools import takewhile
 
@@ -11,6 +13,24 @@ from drift_common import COMMAND, WORKFLOWS
 TOP_LEVEL = ["name", "on", "permissions", "jobs"]
 ON = "on: [push, pull_request]"            # every push and pull request: no filters, never pull_request_target
 PINNED_ACTION = re.compile(r"actions/checkout@[0-9a-f]{40}")
+EXPECTED = """\
+# The world drift check (W2-04, DEC-W2-04-CHOICES). It runs the same script, with the same command, as the gate
+# test tests/w2_04_ci. tests/w2_04_ci/test_workflow.py pins this file's exact content and checks it line by line,
+# so keep it flat and change both together.
+name: world drift
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  drift:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - run: python3 tools/check_world_drift.py
+"""
 
 
 def lines_of(text):
@@ -51,6 +71,9 @@ def workflow_problems(text):
         found.append("the checkout does not set persist-credentials: false")
     if values(lines, "run") != [COMMAND]:
         found.append(f"run steps are {values(lines, 'run')}, not only {COMMAND!r}")
+    for key in ("if", "continue-on-error"):                      # either can skip the check or turn drift green
+        if values(lines, key):
+            found.append(f"{key!r} appears in the workflow: {values(lines, key)}")
     for needle in ("secrets", "${{", "pull_request_target", "workflow_run"):
         if needle in text:
             found.append(f"{needle!r} appears in the workflow")
@@ -63,8 +86,12 @@ def the_workflow():
     return WORKFLOWS.joinpath("world-drift.yml").read_text(encoding="utf-8")
 
 
-def test_the_workflow_triggers_on_push_and_pull_request_and_runs_the_gate_command():
-    assert workflow_problems(the_workflow()) == []
+def test_the_workflow_is_exactly_the_pinned_content():
+    assert the_workflow() == EXPECTED
+
+
+def test_the_pinned_content_triggers_on_push_and_pull_request_and_runs_the_gate_command():
+    assert workflow_problems(EXPECTED) == []
 
 
 def test_comments_are_ignored_but_a_hash_inside_a_value_is_kept():
@@ -92,12 +119,19 @@ BAD = [
     ("      - run: python3 tools/check_world_drift.py",
      "      - run: python3 tools/check_world_drift.py\n        env:\n          KEY: ${{ secrets.KEY }}", "'secrets'"),
     ("name: world drift\n", "name: world drift\nenv:\n  X: 1\n", "top-level keys"),
+    ("    runs-on: ubuntu-24.04", "    if: false\n    runs-on: ubuntu-24.04", "'if' appears"),
+    ("      - run: python3 tools/check_world_drift.py",
+     "      - if: false\n        run: python3 tools/check_world_drift.py", "'if' appears"),
+    ("      - run: python3 tools/check_world_drift.py",
+     "      - run: python3 tools/check_world_drift.py\n        continue-on-error: true", "'continue-on-error' appears"),
+    ("    runs-on: ubuntu-24.04", "    continue-on-error: true\n    runs-on: ubuntu-24.04", "'continue-on-error' appears"),
 ]
 
 
 @pytest.mark.parametrize("old, new, expected", BAD, ids=[f"bad-{n}" for n in range(len(BAD))])
-def test_each_rule_catches_a_bad_workflow(old, new, expected):
-    text = the_workflow()
-    assert text.count(old) == 1, old
-    found = workflow_problems(text.replace(old, new))
+def test_each_rule_catches_a_bad_workflow_and_the_pin_refuses_it(old, new, expected):
+    assert EXPECTED.count(old) == 1, old
+    bad = EXPECTED.replace(old, new)
+    assert bad != EXPECTED                                       # so the pinned-content test fails on it
+    found = workflow_problems(bad)
     assert any(expected in problem for problem in found), found

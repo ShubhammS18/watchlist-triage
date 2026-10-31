@@ -133,15 +133,40 @@ def test_end_to_end_a_re_seeded_world_fails_the_copied_script(tmp_path):
         f"DRIFT: MANIFEST.json world_hash is {reseeded!r}, not the frozen {PINNED}"]
 
 
-@pytest.mark.parametrize("version", [(3, 11, 9), (3, 13, 0)], ids=["3.11", "3.13"])
-def test_any_python_but_3_12_is_refused_before_anything_runs(version):
-    """sys.version_info is replaced before the script runs, as if a runner had another Python."""
-    code = ("import runpy, sys; sys.version_info = (*" + repr(version) + ", 'final', 0); "
-            "runpy.run_path(sys.argv[1], run_name='__main__')")
-    result = subprocess.run([sys.executable, "-B", "-c", code, SCRIPT], cwd=REPO, capture_output=True, text=True,
-                            env=environment())
-    shown = ".".join(str(part) for part in version)
+PROBE = """\
+import runpy, sys
+if sys.argv[2] != "real":
+    sys.version_info = (*map(int, sys.argv[2].split(".")), "final", 0)
+try:
+    runpy.run_path(sys.argv[1], run_name="__main__")
+    code = 0
+except SystemExit as stop:
+    code = stop.code
+imported = sorted(name for name in sys.modules if name == "worldgen" or name.startswith("worldgen."))
+print("worldgen modules imported:", imported, file=sys.stderr)
+sys.exit(code)
+"""
+
+
+def probe(version):
+    """The script run with sys.version_info replaced (as if a runner had another Python), or as it is with "real";
+    stderr ends with the worldgen modules imported by the time it stopped."""
+    return subprocess.run([sys.executable, "-B", "-c", PROBE, SCRIPT, version], cwd=REPO, capture_output=True,
+                          text=True, env=environment())
+
+
+@pytest.mark.parametrize("version", ["3.11.9", "3.13.0"])
+def test_any_python_but_3_12_is_refused_before_worldgen_is_imported(version):
+    result = probe(version)
     assert result.returncode == 2, result.stdout + result.stderr
-    assert result.stdout == (f"unsupported Python {shown}: this check supports Python 3.12 only. "
+    assert result.stdout == (f"unsupported Python {version}: this check supports Python 3.12 only. "
                              "It did not run; this is not drift.\n")
-    assert result.stderr == ""
+    assert result.stderr == "worldgen modules imported: []\n"
+
+
+def test_the_probe_sees_worldgen_imported_when_the_python_is_supported():
+    """The positive control: on Python 3.12 the same probe sees the script import worldgen and run to OK."""
+    result = probe("real")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "worldgen.build" in result.stderr.splitlines()[-1]
+    assert result.stdout.splitlines()[-1].startswith("OK: no drift")

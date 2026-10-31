@@ -1,14 +1,14 @@
 W2-04 gate suites, each run alone through tools/timed_run.sh (charger check, fixed benchmark, then tools/memory_guard.sh)
-tree: the build, before its commit, on top of 26e5ba9; date: 2026-10-31
+tree: the build after review round 1, before its commit, on top of 9254a24; date: 2026-10-31
 == tests/w2_04_ci
 Power: plugged in
-benchmark: 0.817 s (N=12000000, result 983797)
-34 passed in 7.44s
-exit=0  memory used: before 1514 MB, peak 1580 MB (limit for stopping 3000 MB)
+benchmark: 0.813 s (N=12000000, result 983797)
+40 passed in 9.24s
+exit=0  memory used: before 1747 MB, peak 1805 MB (limit for stopping 3000 MB)
 exit 0
 == tests/t02_world
 Power: plugged in
-benchmark: 0.814 s (N=12000000, result 983797)
-699 passed in 28.06s
-exit=0  memory used: before 1575 MB, peak 1621 MB (limit for stopping 3000 MB)
+benchmark: 0.810 s (N=12000000, result 983797)
+699 passed in 28.09s
+exit=0  memory used: before 1781 MB, peak 1820 MB (limit for stopping 3000 MB)
 exit 0
