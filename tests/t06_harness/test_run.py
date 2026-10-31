@@ -263,7 +263,7 @@ def test_an_exception_from_the_agent_aborts_the_run_and_names_the_item(tmp_path,
     assert manifest["aborted"] == {"item_id": "ALT-0001/3", "error_type": "RuntimeError", "message": "boom in the agent"}
     assert manifest["items"]["total"] == 2 and manifest["infra_invalid"]["marked"] is None
     run_dir = tmp_path.joinpath("out", manifest["run_id"])
-    assert sorted(path.name for path in run_dir.iterdir()) == ["manifest.json"]  # no items.jsonl for an aborted run
+    assert sorted(path.name for path in run_dir.iterdir()) == ["audit.jsonl", "checkpoint.json", "manifest.json"]  # no items
     entry, = json.loads(tmp_path.joinpath("out", "index.json").read_text(encoding="utf-8"))["runs"]
     assert entry["state"] == "aborted" and entry["cause"] == "RuntimeError: boom in the agent"
     assert entry["calls"] == manifest["calls"] and entry["calls"]["attempts"] >= 2

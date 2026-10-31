@@ -15,12 +15,16 @@
                                                             targets; writes nothing, prints the result as JSON, and
                                                             exits 0 on PASS, 3 on PASS (cost bounded under a stated
                                                             assumption), 1 otherwise
+    python -m harness verify-log LOG CHECKPOINT             checks a run's audit log against a checkpoint, as
+                                                            committed under audit/checkpoints; exits 0 if it holds,
+                                                            1 naming the first bad record (DEC-W2-05-CHOICES)
 """
 import argparse
 import json
 import sys
 from pathlib import Path
 
+from . import audit
 from . import manifest as records
 from .run import WorldMismatch, _json, check_world, load_config, run
 
@@ -48,6 +52,9 @@ def main(arguments=None):
     one.add_argument("out")
     one.add_argument("run_set")
     one.add_argument("--world", default=str(records.REPO.joinpath("data", "world")))
+    one = commands.add_parser("verify-log")
+    one.add_argument("log")
+    one.add_argument("checkpoint")
     args = parser.parse_args(arguments)
     try:
         if args.command in ("run", "run-and-score"):
@@ -73,6 +80,13 @@ def main(arguments=None):
                 print(f"excluded {run_id}: {reason}", file=sys.stderr)
             if done["excluded"]:
                 return 1
+        elif args.command == "verify-log":
+            trusted = json.loads(Path(args.checkpoint).read_text(encoding="utf-8"))
+            found = audit.verify(Path(args.log).read_bytes(), trusted)
+            if found:
+                print(f"FAILED: {found}")
+                return 1
+            print(f"OK: {trusted['records']} records, head {trusted['head']}")
         elif args.command == "acceptance":
             from .release_check import check  # loads the scoring code, like the score command
             result = check(args.out, args.run_set, args.world)

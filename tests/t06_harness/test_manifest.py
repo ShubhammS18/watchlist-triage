@@ -75,7 +75,7 @@ def test_no_environment_variable_reaches_any_output(full_run):
     out, _, _ = full_run
     assert os.environ[SENTINEL[0]] == SENTINEL[1]  # it was set while the run was made
     files = [path for path in out.rglob("*") if path.is_file()]
-    assert len(files) == 3  # index.json, manifest.json, items.jsonl
+    assert len(files) == 5  # index.json, manifest.json, items.jsonl, audit.jsonl, checkpoint.json (W2-05)
     for path in files:
         data = path.read_bytes()
         assert SENTINEL[1].encode() not in data and SENTINEL[0].encode() not in data

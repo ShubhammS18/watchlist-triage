@@ -316,7 +316,8 @@ def test_a_fault_in_a_parallel_run_aborts_it_and_counts_what_the_calls_in_flight
     # the test above, where the order of events is certain
     assert 13 <= manifest["items"]["total"] < 100
     assert manifest["calls"]["attempts"] > manifest["items"]["total"] and manifest["cost"]["attempts"] == manifest["calls"]["attempts"]
-    assert sorted(path.name for path in tmp_path.joinpath("out", manifest["run_id"]).iterdir()) == ["manifest.json"]
+    assert sorted(path.name for path in tmp_path.joinpath("out", manifest["run_id"]).iterdir()) == [
+        "audit.jsonl", "checkpoint.json", "manifest.json"]  # no items.jsonl; the log is kept (W2-05)
 
 
 INTERRUPTED = {"item_id": None, "error_type": "KeyboardInterrupt", "message": "the run was interrupted"}

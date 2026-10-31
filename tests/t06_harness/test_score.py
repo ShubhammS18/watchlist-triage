@@ -1071,7 +1071,7 @@ def test_the_truth_is_read_only_after_the_outputs_exist_and_were_checked(tmp_pat
     seen = python(ORDER_PROBE, str(Path(__file__).resolve().parent), str(tmp_path), str(WORLD))
     assert seen["after_run"] == 0  # the whole run step opened nothing under hidden/
     files, truth_loaded = seen["first"]
-    assert files == ["index.json", "items.jsonl", "manifest.json"]  # the outputs were there at the first open
+    assert files == ["audit.jsonl", "checkpoint.json", "index.json", "items.jsonl", "manifest.json"]  # at the first open
     assert truth_loaded is False  # and that first open was the hash check, before the truth module was loaded
     assert seen["opens"] == 7  # four files hashed, then the three that worldgen.truth.load_truth reads
     assert seen["items_read_before"] >= 1  # the items file was read, and so hashed, before the first hidden open

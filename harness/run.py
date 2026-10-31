@@ -1,9 +1,10 @@
 """The run step: every alert and control twin of a world, in three framings, one bundle per call
 (FR-20, NFR-3, DEC-T06-TWINS, DEC-T06-FAULTS, DEC-T06-COST). Python standard library only.
 
-It writes items.jsonl, the manifest and the run-set index. It does no scoring: it never imports worldgen.truth
-and never opens a world's hidden folder. An exception out of the agent call, a wrong log hand-over or a world
-that does not match its manifest is a harness fault: the run is marked aborted and writes no items.
+It writes items.jsonl, the manifest, the run-set index and the audit log with its checkpoint (harness/audit.py). It
+does no scoring: it never imports worldgen.truth and never opens a world's hidden folder. An exception out of the agent
+call, a wrong log hand-over, a world that does not match its manifest or a failed audit write (DEC-W2-05-AUDIT-FAULT)
+is a harness fault: the run is marked aborted and writes no items.
 """
 import json
 import platform
@@ -27,6 +28,7 @@ from triage_agent.recommend import recommend as triage_recommend
 from worldgen.harness_twins import load_twins
 from worldgen.loader import load_alerts
 
+from . import audit
 from . import cost as money
 from . import manifest as records
 from . import schema
@@ -223,6 +225,29 @@ def _one(item, agent, model, settings, queue_s):
             "result": result, "wall_s": wall_s, "queue_s": queue_s, "attempts": tokens.snapshot()}, None
 
 
+class _Logged(list):
+    """The finished items of a run. Each is written to the audit log before it is kept, so an item is kept only if
+    its record was written."""
+
+    def __init__(self, log, input_hashes):
+        super().__init__()
+        self.log, self.input_hashes = log, input_hashes
+
+    def append(self, line):
+        self.log.write("recommendation", **audit.recommendation(line, self.input_hashes[line["item_id"]]))
+        super().append(line)
+
+
+def _keep(done, line):
+    """Append one finished item to `done`. If that fails, as when the audit log cannot be written, the item's fault
+    is returned, with its calls, so that they stay in the cost (DEC-W2-05-AUDIT-FAULT); otherwise None."""
+    try:
+        done.append(line)
+    except Exception as error:
+        return HarnessFault(line["item_id"], error, line["attempts"])
+    return None
+
+
 def hand_off(items, agent, model, settings, done, workers=1, pacer_per_minute=None, clock=time.monotonic, wait=time.sleep):
     """Call `agent` once per item and append one line per item to `done`, in the order the calls finish
     (DEC-T06-PARALLEL). The caller sorts.
@@ -233,8 +258,8 @@ def hand_off(items, agent, model, settings, done, workers=1, pacer_per_minute=No
     it. The time an item waits for a worker or for the pacer is its `queue_s`; it is not part of its `wall_s`.
     Only this thread touches `done`.
 
-    Each call must hand over exactly one log record, equal to its result's log. Anything else, or any exception
-    out of a call, is a harness fault: nothing more is handed off, the calls in flight are waited for, and the
+    Each call must hand over exactly one log record, equal to its result's log. Anything else, any exception
+    out of a call, or a failure to append a finished item to `done`, is a harness fault: nothing more is handed off, the calls in flight are waited for, and the
     first fault is raised with the attempts of every faulted call. Ctrl-C does the same, as a fault with no
     item. With one worker it cuts the call in flight short; with more, a second Ctrl-C during the wait is not
     caught.
@@ -259,7 +284,9 @@ def hand_off(items, agent, model, settings, done, workers=1, pacer_per_minute=No
                 line, fault = _one(item, agent, model, settings, paced(clock()))
                 if fault:
                     raise interrupted(fault.attempts) if isinstance(fault.cause, KeyboardInterrupt) else fault
-                done.append(line)
+                fault = _keep(done, line)
+                if fault:
+                    raise fault
         except KeyboardInterrupt:  # between two calls
             raise interrupted([]) from None
         return
@@ -280,7 +307,9 @@ def hand_off(items, agent, model, settings, done, workers=1, pacer_per_minute=No
         while in_flight and (block or not results.empty()):
             line, fault = results.get()
             in_flight -= 1
-            faults.append(fault) if fault else done.append(line)
+            fault = fault or _keep(done, line)
+            if fault:
+                faults.append(fault)
 
     pool = futures.ThreadPoolExecutor(max_workers=workers)
     try:
@@ -387,15 +416,30 @@ def run(config_path, out_dir, rerun_cause=None):
              "started_at": started.isoformat()}
     records.index_update(out, entry)
 
-    done, aborted, extra = [], None, []
+    done, aborted, extra, log, input_hashes = [], None, [], None, {}
+
+    def hashed(items):
+        """The items as they are handed off, noting the hash of each framed bundle for its audit record."""
+        for item in items:
+            input_hashes[item["item_id"]] = records.content_hash(item["evidence"])
+            yield item
+
     try:
+        log = audit.Log(run_dir, run_id)
+        log.write("run_started", run_set=run_set, commit=commit, dirty=dirty, world_hash=listed["world_hash"],
+                  agent=config["agent"], provider=from_inputs["model"]["provider"],
+                  requested_model=from_inputs["model"]["requested"],
+                  prompt_sha256=from_inputs["prompt"]["sha256"] if from_inputs["prompt"] else None,
+                  rule_code_sha256=rule_code, config_sha256=from_inputs["config_sha256"],
+                  framing_code_sha256=from_inputs["framing_code_sha256"], review_policy="none")
+        done = _Logged(log, input_hashes)
         check_world(config["world"], listed)
-        hand_off(bundles(config["world"]), AGENTS[config["agent"]], config["model"], settings, done,
+        hand_off(hashed(bundles(config["world"])), AGENTS[config["agent"]], config["model"], settings, done,
                  workers=config["workers"], pacer_per_minute=config["pacer_per_minute"])
     except HarnessFault as fault:
         aborted = {"item_id": fault.item_id, "error_type": type(fault.cause).__name__, "message": str(fault.cause)}
         extra = fault.attempts
-    except Exception as error:  # the world check, loading or framing
+    except Exception as error:  # the audit log at its start, the world check, loading or framing
         aborted = {"item_id": None, "error_type": type(error).__name__, "message": str(error)}
     except KeyboardInterrupt:  # Ctrl-C before the first hand-off: the run is listed, so it is marked aborted
         aborted = {"item_id": None, "error_type": "KeyboardInterrupt", "message": "the run was interrupted"}
@@ -403,11 +447,24 @@ def run(config_path, out_dir, rerun_cause=None):
     done.sort(key=lambda line: line["item_id"])
     attempts = [one for line in done for one in line["attempts"]] + extra
     transient = sum(1 for line in done if line["result"]["failure_kind"] in TRANSIENT)
+    text = None
+    if log is not None:  # an aborted run's log is kept too, and checkpointed as far as it could be written
+        if aborted is None:  # the log ends with the hash of the items file, so its checkpoint vouches for the items
+            text = "".join(json.dumps(line, sort_keys=True, ensure_ascii=False) + "\n" for line in done)
+            ended = {"state": "completed", "items_sha256": records.sha256(text.encode("utf-8")),
+                     "aborted_item_id": None, "error_type": None}
+        else:
+            ended = {"state": "aborted", "items_sha256": None, "aborted_item_id": aborted["item_id"],
+                     "error_type": aborted["error_type"]}
+        for step in (lambda: log.write("run_ended", items=len(done), **ended), log.close):
+            try:
+                step()
+            except audit.AuditWriteError as error:  # DEC-W2-05-AUDIT-FAULT
+                aborted = aborted or {"item_id": None, "error_type": type(error).__name__, "message": str(error)}
     # over all items, main and twin; an aborted run is not judged
     marked = None if aborted or not done else infra_invalid(transient, len(done), threshold)
     outputs = None
     if aborted is None:
-        text = "".join(json.dumps(line, sort_keys=True, ensure_ascii=False) + "\n" for line in done)
         run_dir.joinpath("items.jsonl").write_text(text, encoding="utf-8")
         outputs = {"items_file": "items.jsonl", "sha256": records.sha256(text.encode("utf-8"))}
     twins = sum(1 for line in done if line["twin"])

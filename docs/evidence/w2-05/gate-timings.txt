@@ -1,0 +1,39 @@
+W2-05 gate suites and the W2-03 re-score suite, each run alone through tools/timed_run.sh (charger check, fixed benchmark, then tools/memory_guard.sh with MEMORY_GUARD_MAX_SECONDS=150)
+tree: the build, before its commit, on top of 5d30745; date: 2026-10-31
+== tests/w2_05_audit
+Power: plugged in
+benchmark: 0.825 s (N=12000000, result 983797)
+......................................                                   [100%]
+38 passed in 7.38s
+exit=0  memory used: before 1522 MB, peak 1602 MB (limit for stopping 3000 MB)
+exit 0
+== tests/t06_harness
+Power: plugged in
+benchmark: 0.820 s (N=12000000, result 983797)
+........................................................................ [ 20%]
+........................................................................ [ 62%]
+..........................................................               [100%]
+340 passed, 6 skipped in 67.12s (0:01:07)
+exit=0  memory used: before 1554 MB, peak 1764 MB (limit for stopping 3000 MB)
+exit 0
+== tests/w2_01_acceptance
+Power: plugged in
+benchmark: 0.820 s (N=12000000, result 983797)
+....................................................................     [100%]
+68 passed in 70.46s (0:01:10)
+exit=0  memory used: before 1556 MB, peak 1736 MB (limit for stopping 3000 MB)
+exit 0
+== tests/w2_02_agent
+Power: plugged in
+benchmark: 0.816 s (N=12000000, result 983797)
+....................................................................     [100%]
+68 passed in 6.24s
+exit=0  memory used: before 1539 MB, peak 1637 MB (limit for stopping 3000 MB)
+exit 0
+== tests/w2_03_harness_fixes
+Power: plugged in
+benchmark: 0.855 s (N=12000000, result 983797)
+......................................                                   [100%]
+38 passed in 5.50s
+exit=0  memory used: before 1563 MB, peak 1618 MB (limit for stopping 3000 MB)
+exit 0

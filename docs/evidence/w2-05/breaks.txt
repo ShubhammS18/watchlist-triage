@@ -1,0 +1,15 @@
+W2-05 deliberate breaks, made by hand on the build before its commit, each in the real file and then restored byte for byte
+date: 2026-10-31
+== break 1: in harness/audit.py, replace:         if record["seq"] != seq:
+   with:         if False:
+FAILED tests/w2_05_audit/test_verify.py::test_a_deleted_middle_record_fails_and_is_named
+FAILED tests/w2_05_audit/test_verify.py::test_a_reordered_pair_fails_and_is_named
+2 failed, 14 passed in 1.93s
+== break 2: in harness/run.py, replace:             fault = fault or _keep(done, line)
+   with:             fault = fault or done.append(line)
+FAILED tests/w2_05_audit/test_fault.py::test_in_a_parallel_run_the_calls_in_flight_are_waited_for
+1 failed, 6 passed in 3.71s
+== break 3: in harness/run.py, replace: "items_sha256": records.sha256(text.encode("utf-8")),
+   with: "items_sha256": None,
+FAILED tests/w2_05_audit/test_log.py::test_the_events_are_one_start_one_per_item_and_one_end
+1 failed, 8 passed in 1.17s
