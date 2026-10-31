@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-31T06:36:02.505Z"
+    "updated_at": "2026-10-31T09:30:12.747Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2056,6 +2056,38 @@
         "docs/reviews/W2-04-ci-drift-review-round-1.md",
         "docs/reviews/W2-04-ci-drift-review-round-2.md"
       ],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-05-CHOICES",
+      "title": "The audit log: one chain per run, checkpoints committed by me",
+      "text": "Each evaluation run writes one hash-chained audit log in its run folder: a record when the run starts, one per item with its recommendation, and one when it ends that carries the hash of the run's items file, so a checkpoint also vouches for the exact items that are scored. Records hold only typed fields; the agent's reason is the one free-text field, and that is disclosed. A copy of each run's checkpoint is committed under audit/checkpoints. The harness never touches git; committing the checkpoints is my step, so the log's anchor depends on that step. Because the run's commit is one of the inputs that define a run set, runs are made from a separate checkout at the run commit, and checkpoints are committed from the main checkout, so committing them never splits a run set. Every real-model run commits its checkpoint, practice runs included; runs with the fake model never do. The verify command names the first bad record for an edited record, a deleted middle record, a reordered pair and a deleted last record; if someone edits a record and re-hashes everything after it, the change is still caught through the checkpoint, but the last record is named instead. The log cannot prove that the harness or the model told the truth, that a run nobody checkpointed never happened, or anything about human decisions, and its anchor is only as strong as the public git history. The task's outcome says a run whose audit write fails is marked failed; the harness has no failed state, so such a run ends aborted, which is never valid.",
+      "status": "accepted",
+      "source": "Owner, 31 Oct 2026; W2-05-audit-log pre-flight; FR-14, FR-15, AC-9, AC-22; DEC-W2-SCOPE, DEC-W2-RELEASE-RULES",
+      "recorded_at": "2026-10-31T09:30:09.278Z",
+      "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-05-AUDIT-FAULT",
+      "title": "An audit-write failure is a harness fault",
+      "text": "If writing the audit log fails during a run, the run stops taking new items, waits for the calls already in flight so its cost stays complete, and ends aborted with the error type AuditWriteError. An aborted run is never valid, so it never counts toward the three valid runs, and scoring is unchanged. This adds one item to the list of harness faults in my earlier record on faults, without replacing it. An aborted run's log is never deleted, so the release task can still count any unsafe answer it recorded.",
+      "status": "accepted",
+      "source": "Owner, 31 Oct 2026; W2-05-audit-log pre-flight; adds to DEC-T06-FAULTS-2; DEC-W2-01-RUN-RULE",
+      "recorded_at": "2026-10-31T09:30:11.133Z",
+      "paths": [
+        "harness/run.py"
+      ],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-05-REVIEW-BUDGET",
+      "title": "Review budget for the audit log",
+      "text": "The audit log gets at most two review rounds from a fresh read-only Codex session started inside the repository, which runs the gates. A third round happens only if the second finds a blocker, and is limited to that fix. Anything the final round finds is fixed and recorded without another round. The reviewer also runs the harness-fixes re-score suite, which is not one of this task's gates, to confirm the committed baseline and upgrade figures did not move.",
+      "status": "accepted",
+      "source": "Owner, 31 Oct 2026; W2-05-audit-log pre-flight; follows DEC-W2-04-REVIEW-BUDGET",
+      "recorded_at": "2026-10-31T09:30:12.746Z",
+      "paths": [],
       "tags": []
     }
   ],
