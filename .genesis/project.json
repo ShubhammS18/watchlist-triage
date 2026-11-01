@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-11-01T07:10:33.089Z"
+    "updated_at": "2026-11-01T08:32:11.163Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2156,6 +2156,26 @@
         "docs/reviews/W2-06-boundary-checks-review-round-1.md",
         "docs/reviews/W2-06-boundary-checks-review-round-2.md"
       ],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-08-CHOICES",
+      "title": "How the release rules work in code, and what they cannot see",
+      "text": "The release rules apply only when the check is given the freeze commit; otherwise it runs exactly as reviewed, with byte-identical output on the committed run sets. Each release world allows one run set and at most five runs, and needs exactly three valid ones. Any run that is aborted, unfinished, infrastructure-invalid, dirty or holds an unbounded failed call is replaced, never valid. The check cannot tell a run ruined by infrastructure from one stopped on purpose, so every run and its reason go in the release log. Unsafe answers count from every run, from the items file or else from the audit log checked against its checkpoint. The fresh world is judged on the safety counts only, with rates shown for information; if all ten seeds are rejected, there is no fresh world. The check regenerates every try itself and never trusts the generation record. After the freeze, only checkpoints, the generation record, release run output and the release log may change, up to the commit that publishes the release. Since anyone could try many freeze commits and keep the easiest world, the freeze is tagged and pushed before the fresh world is made, and this limit is disclosed. A qualified frozen-world pass needs my Console sign-off.",
+      "status": "accepted",
+      "source": "Owner, 1 Nov 2026; W2-08-release-protocol pre-flight, D1-D15; extends DEC-W2-RELEASE-RULES; DEC-W2-01-ELIGIBILITY-3, DEC-W2-01-PASS-LABEL, DEC-W2-01-RUN-RULE, DEC-W2-05-CHOICES",
+      "recorded_at": "2026-11-01T08:32:07.189Z",
+      "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-08-REVIEW-BUDGET",
+      "title": "Review budget for the release protocol",
+      "text": "At most four review rounds from a fresh read-only Codex session inside the repository, which runs every gate. Round one reviews only the design, before any code. Whatever round four finds is fixed and recorded without another round. The reviewer also confirms the committed outputs stay byte-identical, the run, scoring, audit, world-generation and model-interface code are unchanged, and no real model is called.",
+      "status": "accepted",
+      "source": "Owner, 1 Nov 2026; W2-08-release-protocol pre-flight; follows DEC-W2-06-REVIEW-BUDGET",
+      "recorded_at": "2026-11-01T08:32:11.162Z",
+      "paths": [],
       "tags": []
     }
   ],
