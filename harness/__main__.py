@@ -15,6 +15,14 @@
                                                             targets; writes nothing, prints the result as JSON, and
                                                             exits 0 on PASS, 3 on PASS (cost bounded under a stated
                                                             assumption), 1 otherwise
+    python -m harness acceptance OUT RUN_SET --release FREEZE [--fresh]
+                                                            the same under the release rules (docs/w2-08-release-
+                                                            protocol.md): OUT is release/frozen or release/fresh, and
+                                                            HEAD is the commit that publishes the release; exits 0
+                                                            on PASS (safety counts only) for the fresh world too
+    python -m harness fresh-world FREEZE WORLD_OUT RECORD   from a clean checkout of the freeze commit, writes the
+                                                            fresh world and its generation record, both outside the
+                                                            repository (FR-23, AC-19)
     python -m harness verify-log LOG CHECKPOINT             checks a run's audit log against a checkpoint, as
                                                             committed under audit/checkpoints; exits 0 if it holds,
                                                             1 naming the first bad record (DEC-W2-05-CHOICES)
@@ -51,7 +59,13 @@ def main(arguments=None):
     one = commands.add_parser("acceptance")
     one.add_argument("out")
     one.add_argument("run_set")
-    one.add_argument("--world", default=str(records.REPO.joinpath("data", "world")))
+    one.add_argument("--world")
+    one.add_argument("--release", metavar="FREEZE")
+    one.add_argument("--fresh", action="store_true")
+    one = commands.add_parser("fresh-world")
+    one.add_argument("freeze")
+    one.add_argument("world_out")
+    one.add_argument("record")
     one = commands.add_parser("verify-log")
     one.add_argument("log")
     one.add_argument("checkpoint")
@@ -89,9 +103,25 @@ def main(arguments=None):
             print(f"OK: {trusted['records']} records, head {trusted['head']}")
         elif args.command == "acceptance":
             from .release_check import check  # loads the scoring code, like the score command
-            result = check(args.out, args.run_set, args.world)
+            if args.release is None:
+                if args.fresh:
+                    raise ValueError("--fresh needs --release FREEZE")
+                result = check(args.out, args.run_set, args.world or records.REPO.joinpath("data", "world"))
+            else:
+                if args.world is not None:
+                    raise ValueError("--world is not taken with --release: the release mode judges data/world, or "
+                                     "the fresh world it regenerates itself")
+                result = check(args.out, args.run_set, release={"freeze": args.release, "fresh": args.fresh})
             print(json.dumps(result, indent=2, sort_keys=True))
-            return {"PASS": 0, "PASS (cost bounded under a stated assumption)": 3}.get(result["result"], 1)
+            return {"PASS": 0, "PASS (cost bounded under a stated assumption)": 3,
+                    "PASS (safety counts only)": 0}.get(result["result"], 1)
+        elif args.command == "fresh-world":
+            from .release import make_fresh_world
+            record = make_fresh_world(args.freeze, args.world_out, args.record)
+            accepted = record["accepted"]
+            print(f"no fresh world: all {len(record['tries'])} tries were rejected" if accepted is None else
+                  f"fresh world {accepted['world_hash']} at counter {accepted['counter']} (seed {accepted['seed']}), "
+                  f"after {len(record['tries'])} rejected tries")
         else:
             records.supersede(args.out, args.old, args.new, args.cause)
             print(f"run set {args.old[:8]} is superseded by {args.new[:8]}")

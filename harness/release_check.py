@@ -32,6 +32,7 @@ known cost and the bound are both given; the Console total is reconciled against
 """
 import json
 import subprocess
+import tempfile
 from decimal import Decimal
 from fractions import Fraction
 from pathlib import Path
@@ -195,28 +196,53 @@ def judge(per_run, valid, pooled, targets):
     return results
 
 
-def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), targets_path=TARGETS):
+def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), targets_path=TARGETS, release=None):
     """Judge one run set. Raises score.ScoreRefused when the run set is not in the output or nothing of it can be
     judged, and run.WorldMismatch when the world's hidden files do not match its manifest. The world is checked in
     this order before anything else of it is read: its hash against the frozen one (if it differs, nothing more of
     the world is read and no target is worked out), its manifest against that hash, its public files against the
     manifest; only then are the expected items and the runs read. Each world file is read once: the expected items
-    and the truth come from the very bytes that were checked."""
-    out, world, targets_path = Path(out_dir), Path(world), Path(targets_path)
-    not_eligible = []
+    and the truth come from the very bytes that were checked.
+
+    With `release` ({"freeze": the freeze commit or its tag, "fresh": whether this is the fresh world}) the release
+    rules apply (harness/release.py, DEC-W2-08-CHOICES, DEC-W2-08-CHECKPOINTS): the freeze check, for the fresh world
+    the replayed generation as the trust anchor, one run set of at most five runs with exactly three valid, every
+    run's audit log, and unsafe answers counted from every run. Without it, nothing here changes."""
+    if release is None:
+        return _check(out_dir, run_set, world, targets_path)
+    from . import release as protocol
+    with tempfile.TemporaryDirectory() as scratch:
+        state = protocol.prepare(release, scratch)
+        return protocol.finish(_check(out_dir, run_set, state["world"], targets_path, state), state)
+
+
+def _check(out_dir, run_set, world, targets_path, state=None):
+    """check(), with the release state of harness/release.py when the release rules apply."""
+    out, world, targets_path = Path(out_dir), world, Path(targets_path)
+    not_eligible = [] if state is None else list(state["problems"])
     raw = targets_path.read_bytes()
     if records.sha256(raw) != TARGETS_SHA256:
         not_eligible.append(f"the targets file is not the committed one (SHA-256 {records.sha256(raw)})")
     targets = json.loads(raw)["targets"]
+    if state is not None:
+        from . import release as protocol
+        if world is None:  # every try was rejected: there is no fresh world, and that is the result
+            return protocol.no_fresh_world({**state, "problems": not_eligible}, run_set, records.sha256(raw))
+    world = Path(world)
+    anchor, called = (FROZEN_WORLD_HASH, "the frozen world") if state is None or not state["fresh"] else \
+        (state["anchor"], "the regenerated fresh world")
     listed = json.loads(world.joinpath("MANIFEST.json").read_text(encoding="utf-8"))
     world_hash = listed.get("world_hash") if isinstance(listed, dict) else None
-    if world_hash != FROZEN_WORLD_HASH:  # stop here: no file list of that manifest is followed
-        not_eligible.append(f"the world is not the frozen world (world hash {world_hash})")
-        unread = {"result": "not worked out: the world is not the frozen world", "mechanism_only": True}
-        return {"result": "NOT ELIGIBLE", "run_set": run_set, "world_hash": world_hash,
-                "targets_sha256": records.sha256(raw), "mechanism_only": True, "not_eligible_because": not_eligible,
-                "failed": [], "cost_assumption": None, "runs": None, "targets": {name: dict(unread) for name in TARGET_NAMES},
-                "information": None}
+    if world_hash != anchor:  # stop here: no file list of that manifest is followed
+        not_eligible.append(f"the world is not {called} (world hash {world_hash})")
+        unread = {"result": f"not worked out: the world is not {called}", "mechanism_only": True}
+        result = {"result": "NOT ELIGIBLE", "run_set": run_set, "world_hash": world_hash,
+                  "targets_sha256": records.sha256(raw), "mechanism_only": True, "not_eligible_because": not_eligible,
+                  "failed": [], "cost_assumption": None, "runs": None, "targets": {name: dict(unread) for name in TARGET_NAMES},
+                  "information": None}
+        if state is not None:
+            result["release"] = protocol.summary(state, [], {})
+        return result
     try:
         public = check_world(world, listed)  # the manifest's file list against its world hash, then each public file
     except WorldMismatch as problem:
@@ -230,7 +256,10 @@ def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), target
     if run_set in index["sets"]:
         not_eligible.append("the index marks the run set superseded")
     entries = [entry for entry in good if entry["run_set"] == run_set]
-    if not entries:
+    if state is not None:  # one run set of at most five runs, and every run folder listed
+        state["runs"], run_states, found = protocol.inventory(out, index, run_set, state)
+        not_eligible.extend(found)
+    if not entries and state is None:
         raise score.ScoreRefused(f"no run of run set {run_set} is in {out}")
     loaded, expected = {}, None if public is None else expected_items(public)
     for entry in entries:
@@ -246,36 +275,53 @@ def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), target
             not_eligible.append(f"{entry['run_id']} does not hold exactly the world's items: {wrong}")
         else:
             loaded[entry["run_id"]] = got
-    if not loaded:
+    if not loaded and state is None:
         raise score.ScoreRefused(f"run set {run_set} has no completed run that can be loaded")
     valid = sorted(run for run, (manifest, _) in loaded.items()
                    if not manifest["git"]["dirty"] and not manifest["infra_invalid"]["marked"])
-    if len(valid) < MIN_VALID_RUNS:
+    if state is not None:  # a release run is also made at the freeze commit, and every cost in it can be bounded
+        state["unbounded"] = {run for run, (_, lines) in loaded.items() if protocol.unbounded(lines)}
+        valid = [run for run in valid if run not in state["unbounded"] and loaded[run][0]["git"]["commit"] == state["freeze"]]
+        if any(manifest["run_set_inputs"]["commit"] != state["freeze"] for manifest, _ in loaded.values()):
+            not_eligible.append("the run set's inputs do not name the freeze commit")
+        if len(valid) != protocol.VALID_RUNS:
+            not_eligible.append(f"{len(valid)} valid runs; a release world needs exactly {protocol.VALID_RUNS}")
+    elif len(valid) < MIN_VALID_RUNS:
         not_eligible.append(f"{len(valid)} valid runs, fewer than {MIN_VALID_RUNS}")
     manifests = [manifest for manifest, _ in loaded.values()]
-    if len({(m["price_table"]["sha256"], m["modelled_time"]["sha256"]) for m in manifests}) != 1:
-        not_eligible.append("the runs do not share one price table and one modelled-time file")
-    prices, times = manifests[0]["price_table"]["table"], manifests[0]["modelled_time"]["parameters"]
-    if any(money.is_fixture(m["price_table"]["table"]) for m in manifests):
-        not_eligible.append("the price table is a fixture, not a sourced one")
-    if any(m["price_table"]["sha256"] != committed_price_hash(m["git"]["commit"]) for m in manifests):
-        not_eligible.append(f"a run's price table is not {PRICES} as committed at that run's commit")
-    if any(m["modelled_time"]["sha256"] != TIME_SHA256 for m in manifests):
-        not_eligible.append("the modelled-time file is not the committed sourced one")
+    prices = times = None  # only in the release mode can no run have completed
+    if manifests:
+        if len({(m["price_table"]["sha256"], m["modelled_time"]["sha256"]) for m in manifests}) != 1:
+            not_eligible.append("the runs do not share one price table and one modelled-time file")
+        prices, times = manifests[0]["price_table"]["table"], manifests[0]["modelled_time"]["parameters"]
+        if any(money.is_fixture(m["price_table"]["table"]) for m in manifests):
+            not_eligible.append("the price table is a fixture, not a sourced one")
+        if any(m["price_table"]["sha256"] != committed_price_hash(m["git"]["commit"]) for m in manifests):
+            not_eligible.append(f"a run's price table is not {PRICES} as committed at that run's commit")
+        if any(m["modelled_time"]["sha256"] != TIME_SHA256 for m in manifests):
+            not_eligible.append("the modelled-time file is not the committed sourced one")
     not_eligible.extend(filter(None, (hash_problem(run, manifest) for run, (manifest, _) in loaded.items())))
+    if state is not None:  # every run's audit log; the answers of a run without scored items come from it
+        not_eligible.extend(protocol.check_logs(out, run_states, loaded, expected or {}, state))
 
     hidden = check_world(world, listed, hidden=True)
     from worldgen.truth import load_truth  # only here, after every output was checked, as in the score step
     truth = load_truth(texts={name.removeprefix("hidden/"): data for name, data in hidden.items()})
     per_run = {run: score.figures(lines, truth, prices, times) for run, (_, lines) in loaded.items()}
-    bound, problems = cost_bound(loaded, valid, prices)
+    counted_runs = per_run
+    if state is not None:  # unsafe answers count from every run: a replaced run's too (DEC-W2-RELEASE-RULES)
+        counted_runs = {**per_run, **{run: protocol.safety(lines, truth) for run, lines in state["log_lines"].items()}}
+        loaded_for_cost = {run: got for run, got in loaded.items() if run not in state["unbounded"]}
+    bound, problems = cost_bound(loaded if state is None else loaded_for_cost, valid, prices)
     not_eligible.extend(problems)
     if not valid:
-        raise score.ScoreRefused(f"run set {run_set} has no valid run to pool")
+        if state is None:
+            raise score.ScoreRefused(f"run set {run_set} has no valid run to pool")
+        return _counts_only(run_set, listed["world_hash"], raw, not_eligible, loaded, counted_runs, state, run_states)
     counted = {run: loaded[run][1] for run in valid}
     pooled = score.set_figures(counted, truth, prices, times, per_run=per_run)
 
-    results = judge(per_run, valid, pooled["pooled"], targets)
+    results = judge(counted_runs, valid, pooled["pooled"], targets)
     cost, known = results["cost_per_alert"], results["cost_per_alert"]["value"]
     added = bound["main"] / pooled["pooled"]["cost"]["main_items"]
     cost.update(value=money.amount(_fraction(known) + added, places=6), known_per_alert=known,
@@ -287,7 +333,7 @@ def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), target
         part["mechanism_only"] = bool(not_eligible)
     failed = sorted(name for name, part in results.items() if part["result"] == "fail")
     outcome = "NOT ELIGIBLE" if not_eligible else "FAIL" if failed else QUALIFIED_PASS if bound["tries"] else PASS
-    return {
+    result = {
         "result": outcome, "run_set": run_set, "world_hash": listed["world_hash"],
         "targets_sha256": records.sha256(raw), "mechanism_only": bool(not_eligible),
         "not_eligible_because": not_eligible, "failed": failed,
@@ -298,3 +344,24 @@ def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), target
                         "injection_verdict_divergence": pooled["pooled"]["injection"]["verdict_divergence"],
                         "noise_control": pooled["noise_control"]},
     }
+    if state is not None:
+        result["release"] = protocol.summary(state, valid, protocol.reasons(state, loaded, valid, run_states))
+    return result
+
+
+def _counts_only(run_set, world_hash, raw, not_eligible, loaded, counted_runs, state, run_states):
+    """The release mode's result when no run is valid: not eligible, with the safety counts of every run that can be
+    read; nothing is pooled, so no rate is worked out."""
+    from . import release as protocol
+    results = {}
+    for name, (criteria, read) in COUNTS.items():
+        counts = {run: read(tree) for run, tree in counted_runs.items()}
+        results[name] = {"criteria": criteria, "result": "fail" if any(counts.values()) else "pass",
+                         "rule": "zero in every completed run, valid or not", "per_run": counts, "mechanism_only": True}
+    for name in (*RATES, "modelled_review_time"):
+        results[name] = {"result": "not worked out: no valid run to pool", "mechanism_only": True}
+    return {"result": "NOT ELIGIBLE", "run_set": run_set, "world_hash": world_hash, "targets_sha256": records.sha256(raw),
+            "mechanism_only": True, "not_eligible_because": not_eligible,
+            "failed": sorted(name for name in COUNTS if results[name]["result"] == "fail"), "cost_assumption": None,
+            "runs": {"completed": sorted(loaded), "valid": []}, "targets": results, "information": None,
+            "release": protocol.summary(state, [], protocol.reasons(state, loaded, [], run_states))}
