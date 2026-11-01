@@ -453,12 +453,12 @@ def run(config_path, out_dir, rerun_cause=None):
         hand_off(hashed(bundles(config["world"])), AGENTS[config["agent"]], config["model"], settings, done,
                  workers=config["workers"], pacer_per_minute=config["pacer_per_minute"])
     except HarnessFault as fault:
-        aborted = {"item_id": fault.item_id, "error_type": type(fault.cause).__name__, "message": str(fault.cause)}
+        aborted = records.abort_record(fault.item_id, type(fault.cause).__name__, str(fault.cause))
         extra = fault.attempts
     except Exception as error:  # the audit log at its start, the world check, loading or framing
-        aborted = {"item_id": None, "error_type": type(error).__name__, "message": str(error)}
+        aborted = records.abort_record(None, type(error).__name__, str(error))
     except KeyboardInterrupt:  # Ctrl-C before the first hand-off: the run is listed, so it is marked aborted
-        aborted = {"item_id": None, "error_type": "KeyboardInterrupt", "message": "the run was interrupted"}
+        aborted = records.abort_record(None, "KeyboardInterrupt", "the run was interrupted")
 
     done.sort(key=lambda line: line["item_id"])
     attempts = [one for line in done for one in line["attempts"]] + extra
@@ -476,7 +476,7 @@ def run(config_path, out_dir, rerun_cause=None):
             try:
                 step()
             except audit.AuditWriteError as error:  # DEC-W2-05-AUDIT-FAULT
-                aborted = aborted or {"item_id": None, "error_type": type(error).__name__, "message": str(error)}
+                aborted = aborted or records.abort_record(None, type(error).__name__, str(error))
     # over all items, main and twin; an aborted run is not judged
     marked = None if aborted or not done else infra_invalid(transient, len(done), threshold)
     outputs = None
@@ -502,7 +502,7 @@ def run(config_path, out_dir, rerun_cause=None):
         "calls": _calls(attempts), "cost": money.cost(attempts, config["price_table"]),
     }
     records.write_json(run_dir.joinpath("manifest.json"), manifest)
-    cause = None if aborted is None else f"{aborted['error_type']}: {aborted['message']}"
+    cause = None if aborted is None else records.abort_cause(aborted)
     records.index_update(out, {**entry, "state": manifest["state"], "infra_invalid": marked, "cause": cause,
                                "calls": manifest["calls"], "cost": manifest["cost"]})
     return manifest

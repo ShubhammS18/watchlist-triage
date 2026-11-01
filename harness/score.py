@@ -468,7 +468,7 @@ def validate_manifest(entry, manifest):
         raise Unassigned(f"{run_id}: its manifest is a {type(manifest).__name__}, not an object")
     if manifest.get("run_set") != entry.get("run_set"):
         raise Unassigned(f"{run_id}: the index and the manifest disagree on run_set: "
-                         f"{entry.get('run_set')!r} against {manifest.get('run_set')!r}")
+                         f"{schema.shown(entry.get('run_set'))} against {schema.shown(manifest.get('run_set'))}")
     inputs = manifest.get("run_set_inputs")
     if not isinstance(inputs, dict) or records.content_hash(inputs) != manifest["run_set"]:
         raise Unassigned(f"{run_id}: its run-set ID does not match its run-set inputs")
@@ -482,11 +482,11 @@ def validate_manifest(entry, manifest):
     for index_field, manifest_field in DUPLICATED:  # the index entry and the manifest tell the same story
         if _at(entry, index_field) != _at(manifest, manifest_field):
             fail(f"the index and the manifest disagree on {index_field}: "
-                 f"{entry.get(index_field)!r} against {_at(manifest, manifest_field)!r}")
+                 f"{schema.shown(entry.get(index_field))} against {schema.shown(_at(manifest, manifest_field))}")
     aborted = manifest["aborted"]
-    cause = None if aborted is None else f"{aborted['error_type']}: {aborted['message']}"
+    cause = None if aborted is None else records.abort_cause(aborted)
     if entry.get("cause") != cause:
-        fail(f"the index and the manifest disagree on cause: {entry.get('cause')!r} against {cause!r}")
+        fail(f"the index and the manifest disagree on cause: {schema.shown(entry.get('cause'))} against {schema.shown(cause)}")
     for name, check, field, key in (("price table", money.check_prices, "price_table", "table"),
                                     ("modelled-time file", money.check_times, "modelled_time", "parameters")):
         held = manifest[field]

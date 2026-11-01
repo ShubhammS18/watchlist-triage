@@ -852,10 +852,10 @@ def test_the_score_step_reads_no_field_of_a_run_that_the_schema_does_not_list(th
 def micro_aborted():
     """The micro run as an aborted run: (index entry, manifest), both as the run step writes them."""
     entry, manifest, _ = micro_run()
-    manifest.update(state="aborted", aborted={"item_id": "A1/1", "error_type": "RuntimeError", "message": "boom"},
+    manifest.update(state="aborted", aborted=harness_run.records.abort_record("A1/1", "RuntimeError", "boom"),
                     outputs=None, infra_invalid={"threshold": "0.05", "transient_items": 0, "transient_share": None,
                                                  "marked": None})
-    entry.update(state="aborted", infra_invalid=None, cause="RuntimeError: boom")
+    entry.update(state="aborted", infra_invalid=None, cause=harness_run.records.abort_cause(manifest["aborted"]))
     return entry, manifest
 
 

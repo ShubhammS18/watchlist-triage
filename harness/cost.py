@@ -8,6 +8,8 @@ from datetime import date
 from decimal import ROUND_HALF_EVEN, Decimal, InvalidOperation, localcontext
 from fractions import Fraction
 
+from .schema import shown
+
 UNIT_PRICE = "per million tokens"
 UNIT_TIME = "minutes"
 SETS = ("LOW", "BASE", "HIGH")
@@ -27,7 +29,7 @@ def _number(value, name):
     except InvalidOperation:
         number = None
     if number is None or not number.is_finite() or number < 0:
-        raise TableError(f"{name} must be a decimal string of 0 or more, not {value!r}")
+        raise TableError(f"{name} must be a decimal string of 0 or more, not {shown(value)}")
     return Fraction(number)
 
 

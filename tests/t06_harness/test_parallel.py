@@ -22,6 +22,7 @@ import fake_model
 from conftest import FIXTURES, write_config
 from framings import FRAMINGS, frame
 from harness import run as harness_run
+from harness.manifest import abort_cause, abort_record
 from model_interface import Result, Settings, providers
 from worldgen.loader import load_alerts
 
@@ -311,7 +312,7 @@ def test_a_fault_in_a_parallel_run_aborts_it_and_counts_what_the_calls_in_flight
     monkeypatch.setitem(harness_run.AGENTS, "breaking", breaking)
     manifest = harness_run.run(write_config(tmp_path, agent="breaking", workers=4), tmp_path.joinpath("out"))
     assert manifest["state"] == "aborted" and manifest["outputs"] is None
-    assert manifest["aborted"] == {"item_id": "ALT-0005/2", "error_type": "RuntimeError", "message": "boom in a worker"}
+    assert manifest["aborted"] == abort_record("ALT-0005/2", "RuntimeError", "boom in a worker")
     # the 13 items before it, and the few handed off while it was still running; the exact bound is shown by
     # the test above, where the order of events is certain
     assert 13 <= manifest["items"]["total"] < 100
@@ -320,7 +321,7 @@ def test_a_fault_in_a_parallel_run_aborts_it_and_counts_what_the_calls_in_flight
         "audit.jsonl", "checkpoint.json", "manifest.json"]  # no items.jsonl; the log is kept (W2-05)
 
 
-INTERRUPTED = {"item_id": None, "error_type": "KeyboardInterrupt", "message": "the run was interrupted"}
+INTERRUPTED = abort_record(None, "KeyboardInterrupt", "the run was interrupted")
 
 
 @pytest.mark.parametrize("workers", [1, 2])  # the sequential path and the pool
@@ -342,7 +343,7 @@ def test_a_keyboard_interrupt_is_a_clean_abort(tmp_path, monkeypatch, workers):
     else:  # with a pool the calls in flight were waited for and finished
         assert manifest["calls"]["attempts"] >= manifest["items"]["total"] >= 3
     entry, = json.loads(tmp_path.joinpath("out", "index.json").read_text(encoding="utf-8"))["runs"]
-    assert entry["state"] == "aborted" and entry["cause"] == "KeyboardInterrupt: the run was interrupted"
+    assert entry["state"] == "aborted" and entry["cause"] == abort_cause(INTERRUPTED)
 
 
 def test_ctrl_c_before_the_first_hand_off_marks_the_listed_run_aborted(tmp_path, monkeypatch):
@@ -359,7 +360,7 @@ def test_ctrl_c_before_the_first_hand_off_marks_the_listed_run_aborted(tmp_path,
     assert calls == [] and manifest["state"] == "aborted" and manifest["aborted"] == INTERRUPTED
     assert manifest["items"]["total"] == 0 and manifest["calls"]["attempts"] == 0
     entry, = json.loads(tmp_path.joinpath("out", "index.json").read_text(encoding="utf-8"))["runs"]
-    assert entry["state"] == "aborted" and entry["cause"] == "KeyboardInterrupt: the run was interrupted"
+    assert entry["state"] == "aborted" and entry["cause"] == abort_cause(INTERRUPTED)
 
 
 def test_one_worker_makes_its_calls_in_this_thread_and_more_workers_do_not():

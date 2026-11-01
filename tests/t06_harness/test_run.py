@@ -18,6 +18,7 @@ import fake_model
 from conftest import FIXTURES, write_config
 from framings import FRAMINGS, frame
 from harness import run as harness_run
+from harness.manifest import abort_cause, abort_record
 from model_interface import ModelTimeout, Result, providers
 from worldgen.harness_twins import load_twins
 from worldgen.loader import load_alerts
@@ -136,8 +137,7 @@ def test_a_changed_world_file_aborts_the_run_before_any_call(tmp_path, name):
         file.write(b" ")
     manifest = harness_run.run(write_config(tmp_path, world=str(world)), tmp_path.joinpath("out"))
     assert manifest["state"] == "aborted" and manifest["outputs"] is None
-    assert manifest["aborted"] == {"item_id": None, "error_type": "WorldMismatch",
-                                   "message": f"{name} does not match the world manifest"}
+    assert manifest["aborted"] == abort_record(None, "WorldMismatch", f"{name} does not match the world manifest")
     assert manifest["calls"]["attempts"] == 0 and manifest["items"]["total"] == 0
 
 
@@ -148,7 +148,7 @@ def test_a_manifest_that_contradicts_itself_aborts_the_run(tmp_path):
     world.joinpath("MANIFEST.json").write_text(json.dumps(listed), encoding="utf-8")
     manifest = harness_run.run(write_config(tmp_path, world=str(world)), tmp_path.joinpath("out"))
     assert manifest["state"] == "aborted" and manifest["aborted"]["error_type"] == "WorldMismatch"
-    assert "world_hash" in manifest["aborted"]["message"]
+    assert manifest["aborted"] == abort_record(None, "WorldMismatch", "the manifest's world_hash does not match its own file list")
 
 
 # ---- one bundle per call, and what a run holds
@@ -260,12 +260,12 @@ def test_an_exception_from_the_agent_aborts_the_run_and_names_the_item(tmp_path,
     manifest = harness_run.run(write_config(tmp_path, agent="exploding"), tmp_path.joinpath("out"))
     assert states == [["started"]]  # the run was listed before it finished
     assert manifest["state"] == "aborted" and manifest["outputs"] is None
-    assert manifest["aborted"] == {"item_id": "ALT-0001/3", "error_type": "RuntimeError", "message": "boom in the agent"}
+    assert manifest["aborted"] == abort_record("ALT-0001/3", "RuntimeError", "boom in the agent")
     assert manifest["items"]["total"] == 2 and manifest["infra_invalid"]["marked"] is None
     run_dir = tmp_path.joinpath("out", manifest["run_id"])
     assert sorted(path.name for path in run_dir.iterdir()) == ["audit.jsonl", "checkpoint.json", "manifest.json"]  # no items
     entry, = json.loads(tmp_path.joinpath("out", "index.json").read_text(encoding="utf-8"))["runs"]
-    assert entry["state"] == "aborted" and entry["cause"] == "RuntimeError: boom in the agent"
+    assert entry["state"] == "aborted" and entry["cause"] == abort_cause(manifest["aborted"])
     assert entry["calls"] == manifest["calls"] and entry["calls"]["attempts"] >= 2
 
 
@@ -282,7 +282,8 @@ def test_a_wrong_log_hand_over_aborts_the_run(tmp_path, monkeypatch, records):
     monkeypatch.setitem(harness_run.AGENTS, "careless", careless)
     manifest = harness_run.run(write_config(tmp_path, agent="careless"), tmp_path.joinpath("out"))
     assert manifest["state"] == "aborted" and manifest["aborted"]["item_id"] == "ALT-0001/1"
-    assert manifest["aborted"]["error_type"] == "ValueError" and "one log record" in manifest["aborted"]["message"]
+    assert manifest["aborted"] == abort_record(
+        "ALT-0001/1", "ValueError", "the agent did not hand over exactly one log record equal to its result's log")
 
 
 def test_the_failing_items_own_attempts_are_counted_in_an_aborted_run(tmp_path, monkeypatch):

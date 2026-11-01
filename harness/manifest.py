@@ -24,6 +24,18 @@ def sha256(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def abort_record(item_id, error_type, message):
+    """The abort record of a run: the error type and the SHA-256 of the exception text, never the text itself, which
+    could carry a customer name (DEC-W2-06-CHOICES)."""
+    return {"item_id": item_id, "error_type": error_type,
+            "message_sha256": sha256(message.encode("utf-8", "surrogatepass"))}
+
+
+def abort_cause(aborted):
+    """The index entry's cause for an abort record."""
+    return f"{aborted['error_type']}: message sha256 {aborted['message_sha256']}"
+
+
 def content_hash(value):
     """SHA-256 of a JSON value in one canonical form, so the spacing and key order of a file do not matter."""
     return sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8"))

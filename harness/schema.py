@@ -10,6 +10,7 @@ A spec is one of: a Rule (a named test of one value); a dict (an object with exa
 MapOf(spec) (an object with any text keys, each value of that spec); Either(spec, ...) (the first that fits); or
 ByState(specs) (the spec for the object's own "state").
 """
+import hashlib
 import math
 import re
 from datetime import datetime
@@ -136,7 +137,7 @@ MANIFEST = ByState({
                   "infra_invalid": {"threshold": THRESHOLD, "transient_items": COUNT, "transient_share": SHARE,
                                     "marked": FLAG}},
     "aborted": {**_MANIFEST_COMMON, "state": literal("aborted"),
-                "aborted": {"item_id": maybe(NONEMPTY), "error_type": NONEMPTY, "message": TEXT},
+                "aborted": {"item_id": maybe(NONEMPTY), "error_type": NONEMPTY, "message_sha256": HEX64},
                 "outputs": NULL,
                 "infra_invalid": {"threshold": THRESHOLD, "transient_items": COUNT, "transient_share": maybe(SHARE),
                                   "marked": NULL}},
@@ -174,18 +175,20 @@ ITEM_ROW = {
 }
 
 
-def _shown(value):
-    """The value as a refusal shows it, never raising: a whole number too long to print is described instead."""
+def shown(value):
+    """A bad value as a refusal describes it: its type and the SHA-256 of its repr, never the value itself, so that a
+    refusal cannot echo data (DEC-W2-06-CHOICES). It never raises: a whole number too long to print is described."""
     try:
-        return repr(value)[:200]
+        text = repr(value)
     except ValueError:
         return "a whole number too long to show"
+    return f"a {type(value).__name__} with sha256 {hashlib.sha256(text.encode('utf-8', 'surrogatepass')).hexdigest()}"
 
 
 def problem(spec, value, path="it"):
     """What is wrong with `value` against `spec`, naming the field, or None."""
     if isinstance(spec, Rule):
-        return None if spec.test(value) else f"{path} is not {spec.name}: {_shown(value)}"
+        return None if spec.test(value) else f"{path} is not {spec.name}: {shown(value)}"
     if isinstance(spec, dict):
         if not isinstance(value, dict):
             return f"{path} is not an object"
@@ -221,7 +224,7 @@ def problem(spec, value, path="it"):
     if isinstance(spec, ByState):
         state = value.get("state") if isinstance(value, dict) else None
         if not isinstance(value, dict) or type(state) is not str or state not in spec.specs:  # a list is not hashable
-            return f"{path}.state is not one of {sorted(spec.specs)}: {_shown(state)}"
+            return f"{path}.state is not one of {sorted(spec.specs)}: {shown(state)}"
         return problem(spec.specs[state], value, path)
     raise TypeError(f"not a spec: {spec!r}")
 
