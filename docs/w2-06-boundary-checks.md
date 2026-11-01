@@ -1,6 +1,6 @@
 # Boundary checks (W2-06)
 
-Status: built, 1 Nov 2026; review round 1 found two SHOULDs and no blocker, both fixed. The task checks the boundary parts of FR-10, FR-15, FR-18, AC-11, AC-20
+Status: Approved, 1 Nov 2026 (review round 2; `DEC-W2-06-REVIEW`, reports in `docs/reviews/`; round 1 found two smaller issues, one kept as a deliberate break by `DEC-W2-06-LEGACY-ABORT` and one fixed; round 2 clean). The task checks the boundary parts of FR-10, FR-15, FR-18, AC-11, AC-20
 and AC-22 that exist without operational mode. Choices: `DEC-W2-06-CHOICES`, within `DEC-T06-MANIFEST-9`; the deliberate break for older aborted runs: `DEC-W2-06-LEGACY-ABORT`. Review
 budget: `DEC-W2-06-REVIEW-BUDGET`. No model was called: the tests use T06's fake model, the T04 stub and the committed
 run outputs, read only. The network part of AC-11 is unchanged; nothing under `model_interface/` changed.

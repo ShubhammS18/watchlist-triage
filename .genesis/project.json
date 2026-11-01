@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-11-01T06:51:17.739Z"
+    "updated_at": "2026-11-01T07:07:38.325Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2143,6 +2143,19 @@
       "source": "Owner, 1 Nov 2026; W2-06-boundary-checks review round 1, finding 1; DEC-T06-MANIFEST-9",
       "recorded_at": "2026-11-01T06:51:17.736Z",
       "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-06-REVIEW",
+      "title": "Independent review of the boundary checks: two rounds, the last clean",
+      "text": "An independent reviewer, GPT-6 Sol at medium effort, in a fresh read-only session started inside the repository, reviewed the boundary checks in two rounds and ran the gate suites, the harness suite, the re-score suite and the harness's by-hand breakage proofs each time. It found that each check proves what my record says and no more, that the error-text changes stay within my earlier manifest record, and that the changed harness tests keep their meaning. Round one found no blocker and two smaller issues: an aborted run written before the change would now be refused, which I kept as a deliberate break by decision record, and one by-hand breakage proof had been crashing before its named check since the harness fixes, which was moved so it fails on that check again. Round two found both resolved and no new issues. The reviewer's sandbox could not run the model-interface suite, because it blocks the local test server; that suite passed in full on my machine, and the reviewer confirmed nothing under the model interface changed. The committed baseline and upgrade figures did not move. The reports are kept in docs/reviews.",
+      "status": "accepted",
+      "source": "Owner, 1 Nov 2026; W2-06-boundary-checks review rounds 1-2; DEC-W2-06-REVIEW-BUDGET, DEC-W2-06-LEGACY-ABORT",
+      "recorded_at": "2026-11-01T07:07:38.324Z",
+      "paths": [
+        "docs/reviews/W2-06-boundary-checks-review-round-1.md",
+        "docs/reviews/W2-06-boundary-checks-review-round-2.md"
+      ],
       "tags": []
     }
   ],

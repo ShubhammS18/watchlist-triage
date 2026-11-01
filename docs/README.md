@@ -19,6 +19,6 @@ the baseline, read `baseline-report.md`.
 | `w2-03-harness-fixes.md` | W2-03-harness-fixes | Approved, 30 Oct 2026 (review round 2) | the current doc for T06 known issues 2 to 5; its "Supersedes" table lists `harness-design.md:708-724`, where those issues are listed as not fixed |
 | `w2-04-ci-drift.md` | W2-04-ci-drift | Approved, 31 Oct 2026 (review round 2) | the current doc for the world drift check and its GitHub workflow |
 | `w2-05-audit-log.md` | W2-05-audit-log | Approved, 31 Oct 2026 (review round 2) | the current doc for the run audit log, its verify command and the owner's checkpoint step |
-| `w2-06-boundary-checks.md` | W2-06-boundary-checks | Built, 1 Nov 2026; not yet reviewed | the current doc for the boundary checks; the run's abort record and the index cause now hold a hash of the exception text, and a refusal describes a bad value by its type and a hash (`DEC-W2-06-CHOICES`) |
+| `w2-06-boundary-checks.md` | W2-06-boundary-checks | Approved, 1 Nov 2026 (review round 2) | the current doc for the boundary checks; the run's abort record and the index cause now hold a hash of the exception text, and a refusal describes a bad value by its type and a hash (`DEC-W2-06-CHOICES`) |
 
 Review reports are in `reviews/`; the evidence behind the T07 report is in `evidence/t07/`.
