@@ -2,7 +2,7 @@
 
 Status: Design, for review round 1 (design only, before any code; `DEC-W2-08-REVIEW-BUDGET`). Requirements: FR-23
 and AC-19, and AC-1, AC-2, AC-5 and AC-12 on the fresh-seed world. Rules: `DEC-W2-RELEASE-RULES`, as built by
-`DEC-W2-08-CHOICES`, within `DEC-W2-01-ELIGIBILITY-3`, `DEC-W2-01-PASS-LABEL`, `DEC-W2-01-RUN-RULE` and
+`DEC-W2-08-CHOICES` and `DEC-W2-08-CHECKPOINTS`, within `DEC-W2-01-ELIGIBILITY-3`, `DEC-W2-01-PASS-LABEL`, `DEC-W2-01-RUN-RULE` and
 `DEC-W2-05-CHOICES`. No model is called: the tests use T06's fake model only. The release itself is W2-10's task, and
 the README's account of it is W2-09's.
 
@@ -151,9 +151,18 @@ call no longer makes the whole set NOT ELIGIBLE, as `DEC-W2-RELEASE-RULES` says.
 **What the check cannot tell.** It cannot tell a run ruined by infrastructure from one stopped on purpose. Every run
 and its reason therefore go in the release log.
 
-**Checkpoints.** Every checkpoint added after the freeze must belong to a run in `release/frozen` or
-`release/fresh`. A committed checkpoint whose run output was left out makes the set NOT ELIGIBLE. There are no
-practice runs after the freeze.
+**Checkpoints** (`DEC-W2-08-CHECKPOINTS`):
+- **Every completed or aborted run needs its checkpoint committed** at `audit/checkpoints/<run_id>.json`, because
+  those runs always write one. A missing one makes the set NOT ELIGIBLE.
+- **The log must match it.** The run's log (`release/<world>/<run_id>/audit.jsonl`) must verify against the
+  committed checkpoint with `audit.verify`. For a completed run, the log's `run_ended` record must also carry the
+  hash of its items file. A log that fails either check makes the set NOT ELIGIBLE. So every recommendation in a
+  finished release run sits in a hash-chained log anchored in public git.
+- **A run that never finished** has no checkpoint, for example because its process was killed. It is handled as
+  in step 4: counted from its log as it stands, marked unverified, and replaced.
+- **No orphan checkpoints.** Every checkpoint added after the freeze must belong to a run in `release/frozen` or
+  `release/fresh`. A committed checkpoint whose run output was left out makes the set NOT ELIGIBLE. There are no
+  practice runs after the freeze.
 
 ### 4. Unsafe answers from every run
 
@@ -162,9 +171,9 @@ without a valid citation set. Each must be zero in every run, valid or replaced,
 
 - **A run with an items file** (any completed run) is counted from its items, exactly as today.
 - **A run without one** (aborted or unfinished) is counted from its audit log (`release/<world>/<run_id>/audit.jsonl`):
-  - **With a committed checkpoint:** the log is first verified against `audit/checkpoints/<run_id>.json` with
-    `audit.verify`. A log that fails verification makes the set NOT ELIGIBLE.
-  - **Without a committed checkpoint:** a killed process never writes one. The log's complete records are counted
+  - **An aborted run:** its log has already been verified against its committed checkpoint (step 3), and its
+    records are counted.
+  - **A run that never finished:** a killed process writes no checkpoint. The log's complete records are counted
     as they stand and marked "unverified: no checkpoint".
   - **No log at all:** an index entry without a log makes the set NOT ELIGIBLE.
 - **How the counts are rebuilt:** each recommendation record is turned into the line shape that the score step's
@@ -226,7 +235,8 @@ Runs are made from a separate clean checkout of the freeze commit, so committing
    Commit the record as `release/generation.json` and push it before any run on the fresh world.
 4. **Run on the frozen world.** From the freeze checkout, run the release candidate with its run output outside the
    repository. After each run:
-   - commit its checkpoint under `audit/checkpoints/`;
+   - commit its checkpoint under `audit/checkpoints/`; every completed or aborted run needs one, or the world is
+     NOT ELIGIBLE;
    - add a row for it to `docs/release-log.md`: run ID, state, valid or replaced and why, and cost;
    - stop at three valid runs;
    - replace a run only if it is aborted, unfinished, infrastructure-invalid, dirty, or holds a failed call with no
@@ -288,7 +298,11 @@ written.
   - a true match or an ambiguous alert closed in a replaced or aborted run fails the set;
   - counts from the log equal counts from the items;
   - an edited aborted-run log is caught by its checkpoint;
-  - a killed run without a checkpoint is counted, marked unverified.
+  - a completed run, or an aborted one, with no committed checkpoint gives NOT ELIGIBLE;
+  - a completed run whose log does not verify against its committed checkpoint, or whose `run_ended` record does
+    not carry its items file's hash, gives NOT ELIGIBLE;
+  - a run that never finished, with no checkpoint, is counted from its log, marked unverified, and replaced; the
+    set stays eligible.
 - **Fresh mode:**
   - a rate far from its target does not fail the set, and one safety count does;
   - rates are shown beside the frozen targets with no pass or fail word;
@@ -309,8 +323,9 @@ written.
   gives each run's reason.
 - **Clean checkout:** that a run came from a clean checkout of the freeze commit rests on the run's own git state in
   its manifest, as for every run.
-- **Unrecorded runs:** a run whose checkpoint was never committed is invisible. A killed run's log has no
-  checkpoint, so records cut from its end cannot be detected (`DEC-W2-05-CHOICES`).
+- **Unrecorded runs:** a run left out of both the run output and the checkpoints is invisible. A run that never
+  finished has no checkpoint, so records cut from the end of its log cannot be detected (`DEC-W2-05-CHOICES`,
+  `DEC-W2-08-CHECKPOINTS`).
 - **Rejections:** the generator has never been seen to reject a world. It accepted all 20 seeds of a probe, so the
   rejection path is proven only with a patched generator.
 - **Runtime:** regenerating the world needs Python 3.12 and full git history.

@@ -17,7 +17,7 @@ Load Genesis and official Ponytail full, then run `genesis brief .` for the curr
 Fetch full records with `genesis context . --id ID` only when needed. Do not load project.json or historical proof wholesale.
 Ask the index before reading code: `genesis query . search|scope|callers|callees|impact|path` (`--json` for parsing). Run `genesis query . impact PATH` before editing shared code. Answers are advisory static analysis; `ambiguous` means candidates were not ruled out, so confirm in source.
 Run `genesis serve .` for a live map of the repository when structure is unclear; it reindexes on save and is read-only. Run `genesis index .` if the index is stale and nothing is watching.
-Context fingerprint: 13b5b04909bc37e350d6625f1f703576562bc759eab65a152ca6bda472fd497b. Use --since only after receiving that full packet; kickoff is not the packet.
+Context fingerprint: 1b8f773e314a64060c89eea61d80972bac5c144c78caab6a4f4217ac22ed6d8e. Use --since only after receiving that full packet; kickoff is not the packet.
 - DEC-W2-RELEASE-RULES: Release rules, fixed before the freeze
 - DEC-W2-08-CHOICES: How the release rules work in code, and what they cannot see
 - DEC-W2-05-CHOICES: The audit log: one chain per run, checkpoints committed by me
