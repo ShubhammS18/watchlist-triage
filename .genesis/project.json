@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-10-31T12:35:35.786Z"
+    "updated_at": "2026-11-01T05:52:33.640Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2113,6 +2113,26 @@
         "docs/reviews/W2-05-audit-log-review-round-1.md",
         "docs/reviews/W2-05-audit-log-review-round-2.md"
       ],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-06-CHOICES",
+      "title": "Boundary checks: what they cover and how a customer value is matched",
+      "text": "The boundary checks are tests, plus two small changes to error text. A run folder is the isolated per-run log the specification describes; an evaluation run writes only inside its output folder: its run folder, the run-set index and the set reports. Only the audit log and the items file hold free text, the agent's reason, which often quotes synthetic customer values and is disclosed. The run's abort record and the index cause keep the error type and a hash of the exception text, never the raw text, which could carry a customer name. Refusal reasons stay readable, as my earlier manifest record says, but describe a bad value by its type and a hash instead of quoting it. A structured field matches a customer value if, after normalising case and splitting on anything that is not a letter or digit, it holds the whole value as a run of words, all the non-title words of a customer's name in any order, or any name or address word of four or more letters that is not a title or a common address word. No value is removed, the rule is never loosened, and planted values show the test catches leaks. The as-of date, source and version, which are the same on every world record, are left out. The capability check shows the outward capabilities equal a reviewed list; that none serves account actions or regulator reporting rests on review. Both agents, not the harness, refuse a close without a written reason. The checks show that no L2 record or final disposition is written, not that one would be refused.",
+      "status": "accepted",
+      "source": "Owner, 1 Nov 2026; W2-06-boundary-checks pre-flight, sections 1 to 4 and 7; FR-10, FR-15, FR-18, AC-11, AC-20, AC-22; DEC-W2-05-MODEL-ID; within DEC-T06-MANIFEST-9",
+      "recorded_at": "2026-11-01T05:52:30.001Z",
+      "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-06-REVIEW-BUDGET",
+      "title": "Review budget for the boundary checks",
+      "text": "The boundary checks get at most three review rounds from a fresh read-only Codex session started inside the repository, which runs the gates. Anything the final round finds is fixed and recorded without another round, and an over-broad claim is fixed by narrowing it, not by changing behaviour. The reviewer also confirms that nothing under the model interface changed and that the committed baseline and upgrade figures did not move.",
+      "status": "accepted",
+      "source": "Owner, 31 Oct 2026; W2-06-boundary-checks pre-flight, section 6; follows DEC-W2-05-REVIEW-BUDGET",
+      "recorded_at": "2026-11-01T05:52:33.640Z",
+      "paths": [],
       "tags": []
     }
   ],
