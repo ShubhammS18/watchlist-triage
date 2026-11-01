@@ -1,0 +1,30 @@
+{
+  "task": "W2-06-boundary-checks",
+  "gate": "tests",
+  "kind": "command",
+  "attempt": "56788736-6cda-4821-bab4-35119e0e9184",
+  "command": ".venv/bin/python -m pytest tests/w2_06_boundary -q -p no:cacheprovider",
+  "started_at": "2026-11-01T07:07:59.142Z",
+  "observed_at": "2026-11-01T07:08:07.988Z",
+  "exit_code": 0,
+  "signal": null,
+  "stdout": "........................................................................ [ 56%]\n.......................................................                  [100%]\n127 passed in 7.97s\n",
+  "stderr": "",
+  "failure": null,
+  "receipt": null,
+  "revision": {
+    "commit": "190141d03e74d0ae921f7fb4e6937a53e9b6b24e",
+    "dirty": true
+  },
+  "source_hash": "20f14745552475da478d0ffedfd282a58b7565b09d1c728d49bde1fefd30f797",
+  "before_hash": "20f14745552475da478d0ffedfd282a58b7565b09d1c728d49bde1fefd30f797",
+  "config_hash": "f3a42690c4e8761df43ca20266b66034d3e6d5f9df50eddf32b03294778e865f",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "arch": "x64",
+    "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+    "variables": {}
+  },
+  "hash": "eb39b47ac5dce3b1b24373ab688a8c6a4402007eaca5e12d831f1f2b47c74bdd"
+}

@@ -4,11 +4,11 @@
 
 - objective: Triage sanctions/PEP name-match alerts from a frozen synthetic world: recommend close or escalate with cited evidence, human-approved, measured on zero missed planted true matches.
 - phase/status: build/active
-- active task: W2-06-boundary-checks — Automated checks show that a capability allowlist check finds no interface, configuration or credential for account actions or regulator reporting; that closing without a written reason is rejected, for the triage agent as well as the baseline agent; that structured fields of audit-log records, run reports and typed error records hold no customer-record field values, checked against every customer-record value in the frozen world; that the only persistent stores are the world store and the audit log; and that an evaluation run writes only to its own run folder and log and creates no L2 queue record and no final disposition. With no L2 queue or dispositions in the code, that last check shows that none is written, not that one would be refused. The network part of AC-11 is unchanged.
+- active task: W2-08-release-protocol — The release protocol of DEC-W2-RELEASE-RULES is built and tested with the fake model only, before any freeze. A documented seed function derives the fresh world's seed from a commit hash and a counter from 0 to 9. A fresh-seed mode of the release check takes the freeze commit, derives the seed itself, regenerates the world with that commit's generator, hashes it and uses that hash as its trust anchor in place of the frozen-world hash; it requires exactly one accepted generation with every rejected try recorded beside it, runs made from a clean checkout of the freeze commit, and no change after the freeze except checkpoint, generation-record, run-output and sign-off files. It judges the fresh world on the safety counts only, each zero in every run and framing, and shows the rates for information beside the frozen-world targets. On both worlds a replaced run does not count toward the three valid runs, its unsafe answers still count, at most five runs per world are allowed, and five runs without three valid ones give NOT ELIGIBLE. The frozen-world path is unchanged: the check gives the same result on run set 8f4050be as before. The release steps are written down in the design doc. No real model is called.
 - blocker: none
 - next action: Run the task pre-flight.
 - phase instruction: Implement only the active task and prove it against current sources. Check `genesis query . impact PATH` before editing shared code.
-- gates: tests:pending, t04:pending, t05:pending, independent-review:pending
+- gates: tests:pending, w2-01:pending, t06:pending, t02:pending, w2-02:pending, independent-review:pending
 - recent failures: none
 
 ## Resume
@@ -17,9 +17,9 @@ Load Genesis and official Ponytail full, then run `genesis brief .` for the curr
 Fetch full records with `genesis context . --id ID` only when needed. Do not load project.json or historical proof wholesale.
 Ask the index before reading code: `genesis query . search|scope|callers|callees|impact|path` (`--json` for parsing). Run `genesis query . impact PATH` before editing shared code. Answers are advisory static analysis; `ambiguous` means candidates were not ruled out, so confirm in source.
 Run `genesis serve .` for a live map of the repository when structure is unclear; it reindexes on save and is read-only. Run `genesis index .` if the index is stale and nothing is watching.
-Context fingerprint: 9ad346ab36073b3a8ea7c02a9be248f4dd70af9f6f4febce6cdb7a38e523c2db. Use --since only after receiving that full packet; kickoff is not the packet.
-- DEC-W2-06-CHOICES: Boundary checks: what they cover and how a customer value is matched
+Context fingerprint: 99536cbdf6b01ad22e743ad812c54cffe1a83237ebfa3310409e4335b4a3f665. Use --since only after receiving that full packet; kickoff is not the packet.
+- DEC-W2-RELEASE-RULES: Release rules, fixed before the freeze
 - DEC-W2-05-CHOICES: The audit log: one chain per run, checkpoints committed by me
-- DEC-W2-02-RULES-FIRST: Rubric rules decide what the fields settle; the model reads only snippets
+- DEC-W2-04-CHOICES: The drift check: one standard-library script and a locked-down workflow
 Applicable invariants, active rules, authorization and proof references are in the packet. Truncated summaries are retrieval pointers, not the full evidence.
 Reuse fresh gates with --reuse. Reconcile interrupted attempts before replaying commands. Report state → evidence → blocker → next action; checkpoint before stopping.

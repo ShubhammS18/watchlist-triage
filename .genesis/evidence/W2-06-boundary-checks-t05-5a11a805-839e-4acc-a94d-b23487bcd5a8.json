@@ -1,0 +1,30 @@
+{
+  "task": "W2-06-boundary-checks",
+  "gate": "t05",
+  "kind": "command",
+  "attempt": "5a11a805-839e-4acc-a94d-b23487bcd5a8",
+  "command": ".venv/bin/python -m pytest tests/t05_agent -q -p no:cacheprovider",
+  "started_at": "2026-11-01T07:08:54.894Z",
+  "observed_at": "2026-11-01T07:09:58.138Z",
+  "exit_code": 0,
+  "signal": null,
+  "stdout": "........................................................................ [ 24%]\n........................................................................ [ 49%]\n........................................................................ [ 74%]\n........................................................................ [ 98%]\n...                                                                      [100%]\n291 passed in 63.84s (0:01:03)\n",
+  "stderr": "",
+  "failure": null,
+  "receipt": null,
+  "revision": {
+    "commit": "190141d03e74d0ae921f7fb4e6937a53e9b6b24e",
+    "dirty": true
+  },
+  "source_hash": "20f14745552475da478d0ffedfd282a58b7565b09d1c728d49bde1fefd30f797",
+  "before_hash": "20f14745552475da478d0ffedfd282a58b7565b09d1c728d49bde1fefd30f797",
+  "config_hash": "f3a42690c4e8761df43ca20266b66034d3e6d5f9df50eddf32b03294778e865f",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "arch": "x64",
+    "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+    "variables": {}
+  },
+  "hash": "3d19a3aebdb0e4a1f462cc55739ef3c08be48446609a9208de97e9326bb45b9e"
+}

@@ -1,0 +1,13 @@
+{
+  "task": "W2-06-boundary-checks",
+  "gate": "independent-review",
+  "kind": "review",
+  "attempt": "122acadc-b21e-4243-9839-492e03a6ed29",
+  "human": "Shubham Suradkar",
+  "reason": "Two independent review rounds: round 1 found two smaller issues, one kept deliberately by decision record and one fixed; round 2 clean. Decision record DEC-W2-06-REVIEW.",
+  "observed_at": "2026-11-01T07:10:29.873Z",
+  "source_hash": "20f14745552475da478d0ffedfd282a58b7565b09d1c728d49bde1fefd30f797",
+  "config_hash": "f3a42690c4e8761df43ca20266b66034d3e6d5f9df50eddf32b03294778e865f",
+  "reviewed_proofs": "c22d367086e6129f3684cb9c9d5502057fcea7dfe988293dd6aa75c9499b0c5b",
+  "hash": "ab68f200ffff52b93508afd6876fe9223de7deda3dbf10e152fda72a28d8ebc8"
+}

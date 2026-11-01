@@ -1,0 +1,30 @@
+{
+  "task": "W2-06-boundary-checks",
+  "gate": "t04",
+  "kind": "command",
+  "attempt": "34cec674-c957-4739-bf92-c31f191c1571",
+  "command": ".venv/bin/python -m pytest tests/t04_model_interface -q -p no:cacheprovider",
+  "started_at": "2026-11-01T07:08:10.143Z",
+  "observed_at": "2026-11-01T07:08:52.648Z",
+  "exit_code": 0,
+  "signal": null,
+  "stdout": "........................................................................ [ 52%]\n.................................................................        [100%]\n137 passed in 41.69s\n",
+  "stderr": "",
+  "failure": null,
+  "receipt": null,
+  "revision": {
+    "commit": "190141d03e74d0ae921f7fb4e6937a53e9b6b24e",
+    "dirty": true
+  },
+  "source_hash": "20f14745552475da478d0ffedfd282a58b7565b09d1c728d49bde1fefd30f797",
+  "before_hash": "20f14745552475da478d0ffedfd282a58b7565b09d1c728d49bde1fefd30f797",
+  "config_hash": "f3a42690c4e8761df43ca20266b66034d3e6d5f9df50eddf32b03294778e865f",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "arch": "x64",
+    "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+    "variables": {}
+  },
+  "hash": "fa365fa09f319cda04fdee41611f3ccbbd88d2db5ed79f2f26bdc2a8804e07fa"
+}
