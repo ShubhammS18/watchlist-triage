@@ -1,7 +1,12 @@
 """W2-08: the mutation proofs of the release protocol. Eight deliberate breakages, each applied to its own shared clone
 of the repository with the uncommitted work laid over it, must each make its named guard test fail, while the same
 test passes on an untouched clone; the real files are not changed. The proof machinery is T06's
-(tests/t06_harness/mutations.py), with W2-01's kind of copy (tests/w2_01_acceptance/test_mutation.py)."""
+(tests/t06_harness/mutations.py), with W2-01's kind of copy (tests/w2_01_acceptance/test_mutation.py).
+
+As in T06 (DEC-T06-GATE-TIME), the proofs run by hand before completion, with W2_08_MUTATION=1, and are recorded as
+evidence; the default gate run skips them, so the gate stays under Genesis's 120-second limit. The check that every
+breakage names a guard test that exists is quick and runs in the gate. test_mutation_switch.py shows the switch."""
+import os
 import shutil
 import subprocess
 import sys
@@ -9,6 +14,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1].joinpath("t06_harness")))
 import mutations  # noqa: E402
+import pytest  # noqa: E402
+
+by_hand = pytest.mark.skipif(os.environ.get("W2_08_MUTATION") != "1",
+                             reason="the mutation proofs run only with W2_08_MUTATION=1, by hand before completion")
 
 REPO = mutations.REPO
 OVERLAID = ("harness", "worldgen", "triage_agent", "docs", "tests/w2_08_release_protocol")  # the uncommitted work
@@ -74,6 +83,7 @@ def test_every_breakage_names_a_guard_test_that_exists_and_a_text_that_occurs_on
         assert old != new and what and expected
 
 
+@by_hand
 def test_every_breakage_is_caught_and_the_real_files_are_unchanged(tmp_path, monkeypatch):
     monkeypatch.setattr(mutations, "COPIED", OVERLAID)  # the untracked work; git status covers the tracked files
     monkeypatch.setattr(mutations, "make_copy", make_copy)

@@ -341,6 +341,12 @@ the clone while a run is made or a release is checked, and nothing is written in
   when a test first asks for them.
 - **The fresh world:** made from the freeze commit with the real generator.
 - **Rejections:** extra test-only freeze commits whose generator rejects its first N tries, or faults.
+- **Shared replays, to keep the gate under Genesis's 120-second limit:**
+  - In `test_generation.py`, the check's replay of the three-rejection freeze commit is made once and compared with
+    each tampered record, since the replay is deterministic.
+  - In `test_fresh.py`, the first check runs the real replay, and the module's later checks reuse its record and
+    world. `test_the_shared_replay_is_one_real_replay_reused` shows the reuse. The replay on its own is proven in
+    `test_generation.py`.
 
 - **Seed** (`test_seed.py`): the test vectors, which must also appear in this doc; seeds in range and distinct; the
   refusals of short, uppercase and tag-name commits and of counters outside 0 to 9.
@@ -387,7 +393,8 @@ the clone while a run is made or a release is checked, and nothing is written in
   - an unsafe answer fails the fresh world;
   - a record that differs from the replay, or a missing record, gives NOT ELIGIBLE with the counts still judged;
   - frozen-world runs judged as fresh are NOT ELIGIBLE;
-  - the command line takes `--release` and `--fresh`, and refuses `--world` with `--release`.
+  - the command line takes `--release` and `--fresh`, and refuses `--world` with `--release`;
+  - the shared replay is one real replay, reused.
 - **Sign-off** (`test_signoff.py`): the gate test of the real release (xfail until it is published); the row rule on
   seven made-up rows; the cost over replaced runs too; a missing log; no sign-off needed for any other result.
 - **Unchanged** (`test_frozen_unchanged.py`): the 8f4050be and f2e614d2 outputs are byte-identical, with their exit
@@ -396,15 +403,21 @@ the clone while a run is made or a release is checked, and nothing is written in
   goes in the release log.
 - **Mutations** (`test_mutation.py`, with T06's proof machinery): each of eight deliberate breakages, each in its own
   shared clone with the uncommitted work laid over it, makes its named guard test fail, while the guard passes on an
-  untouched clone. The breakages are:
-  - log answers not counted;
-  - only the last commit after the freeze checked;
-  - the generation record trusted;
-  - an unlisted run folder let through;
-  - a finished run's checkpoint not required;
-  - the log not compared with the items;
-  - an unfinished log not checked as a chain;
-  - release mode on without `--release`.
+  untouched clone.
+  - **When they run:** as in T06 (`DEC-T06-GATE-TIME`), by hand before completion with `W2_08_MUTATION=1`, recorded
+    as evidence. The default gate run skips them. The check that every breakage names a guard test and a text that
+    occurs once runs in the gate.
+  - **The switch test:** `test_mutation_switch.py` shows, in a fresh test process without the variable, that the
+    proofs are skipped with their reason while that check runs.
+  - **The breakages:**
+    - log answers not counted;
+    - only the last commit after the freeze checked;
+    - the generation record trusted;
+    - an unlisted run folder let through;
+    - a finished run's checkpoint not required;
+    - the log not compared with the items;
+    - an unfinished log not checked as a chain;
+    - release mode on without `--release`.
 
 ## Gate timings
 
@@ -413,13 +426,32 @@ at 2,009 MB, against the 3,000 MB stop). Times are pytest's own.
 
 | Gate | Result | Time |
 |---|---|---|
-| `tests` (`tests/w2_08_release_protocol`) | 116 passed, 1 xfailed (the sign-off of the unpublished release) | 167.2 s |
+| `tests` (`tests/w2_08_release_protocol`), first build | 116 passed, 1 xfailed (the sign-off of the unpublished release) | 167.2 s |
 | `w2-01` (`tests/w2_01_acceptance`) | 68 passed | 75.3 s |
 | `t06` (`tests/t06_harness`) | 340 passed, 6 skipped (its mutation proofs, run by hand) | 71.0 s |
 | `t02` (`tests/t02_world`) | 699 passed | 28.7 s |
 | `w2-02` (`tests/w2_02_agent`) | 68 passed | 6.4 s |
 
-The eight mutation proofs take about 33 s of the `tests` gate.
+**The `tests` gate under the time limit.** Genesis stops a gate at 120 s, so the first build's 167.2 s would always
+fail. Two changes removed no coverage:
+- the mutation proofs moved behind `W2_08_MUTATION=1`;
+- the replays are shared (see Tests).
+
+The suite is then 117 passed, 1 skipped (the proofs) and 1 xfailed. Three runs of the gate command through
+`tools/timed_run.sh` on 1 Nov 2026 (charger in, fixed benchmark checked):
+
+| Run | Result | Time | Benchmark | Memory in use, before and peak |
+|---|---|---|---|---|
+| 1 | 117 passed, 1 skipped, 1 xfailed | 67.13 s | 0.837 s | 1,771 MB, 1,959 MB |
+| 2 | 117 passed, 1 skipped, 1 xfailed | 66.91 s | 0.850 s | 1,750 MB, 1,964 MB |
+| 3 | 117 passed, 1 skipped, 1 xfailed | 67.04 s | 0.838 s | 1,735 MB, 1,850 MB |
+
+The slowest, 67.13 s, is 33 s under the 100-second aim and 53 s under the limit.
+
+**The mutation proofs by hand**, `W2_08_MUTATION=1 .venv/bin/python -m pytest tests/w2_08_release_protocol/test_mutation.py
+-q -p no:cacheprovider`, on the charger under `tools/memory_guard.sh`: 2 passed in 28.05 s, with all eight breakages
+caught (each guard passed on its untouched clone and failed on its broken one). Memory in use was 1,764 MB before and
+peaked at 1,953 MB.
 
 ## Limits
 

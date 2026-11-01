@@ -47,6 +47,14 @@ def three(tmp_path_factory):
     return clone, freeze, record, folder.joinpath("world")
 
 
+@pytest.fixture(scope="module")
+def replayed(three, tmp_path_factory):
+    """The check's replay of that freeze commit's generation, made once and compared with each tampered record: the
+    replay is deterministic, so one serves them all. (record the replay makes, the world it accepts)."""
+    clone, freeze, _, _ = three
+    return release.generation(clone, freeze, tmp_path_factory.mktemp("replay"))
+
+
 def test_the_fresh_world_is_the_first_accepted_try_with_the_freeze_commits_generator(cloned, fresh):
     _, freeze = cloned
     world, record = fresh
@@ -68,10 +76,10 @@ def test_rejected_tries_are_recorded_beside_the_accepted_one(three):
     assert json.loads(world.joinpath("MANIFEST.json").read_text())["world_hash"] == record["accepted"]["world_hash"]
 
 
-def test_the_replay_gives_the_record_again(three, tmp_path):
-    clone, freeze, record, _ = three
-    replayed, world = release.generation(clone, freeze, tmp_path)
-    assert release.generation_problems(record, replayed) == [] and world is not None
+def test_the_replay_gives_the_record_again(three, replayed):
+    _, _, record, _ = three
+    again, world = replayed
+    assert release.generation_problems(record, again) == [] and world is not None
 
 
 def tamper(record, path, value):
@@ -100,16 +108,14 @@ TAMPERED = [
 
 
 @pytest.mark.parametrize("path, value", TAMPERED)
-def test_every_field_of_the_record_is_checked_against_the_replay(three, tmp_path, path, value):
-    clone, freeze, record, _ = three
-    replayed, _ = release.generation(clone, freeze, tmp_path)
-    assert release.generation_problems(tamper(record, path, value), replayed), (path, value)
+def test_every_field_of_the_record_is_checked_against_the_replay(three, replayed, path, value):
+    _, _, record, _ = three
+    assert release.generation_problems(tamper(record, path, value), replayed[0]), (path, value)
 
 
-def test_only_the_python_patch_level_may_differ(three, tmp_path):
-    clone, freeze, record, _ = three
-    replayed, _ = release.generation(clone, freeze, tmp_path)
-    assert release.generation_problems({**record, "python": "3.12.99"}, replayed) == []
+def test_only_the_python_patch_level_may_differ(three, replayed):
+    _, _, record, _ = three
+    assert release.generation_problems({**record, "python": "3.12.99"}, replayed[0]) == []
 
 
 def test_ten_rejections_give_no_fresh_world(tmp_path):

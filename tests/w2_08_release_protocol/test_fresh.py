@@ -2,12 +2,40 @@
 anchor is the world the check regenerates itself with the freeze commit's generator. Only the four safety counts
 decide; the rates, the cost and the modelled time are shown for information beside the frozen-world targets, with no
 pass or fail. The committed generation record is never trusted."""
+import copy
 import json
+import shutil
 from pathlib import Path
+
+import pytest
 
 import release_common as rc
 from harness import release, release_check
 from harness.__main__ import main
+
+
+@pytest.fixture(scope="module", autouse=True)
+def one_replay(tmp_path_factory):
+    """The fresh world is regenerated once for this module's checks, and each later check reuses that replay: the
+    first check runs the real replay, and the replay is deterministic, so later ones would give the same record and
+    world (test_generation.py proves the replay on its own). The world folder is kept for the module; a check only
+    reads it."""
+    made, real = {}, release.generation
+
+    def generation(repo, freeze, scratch):
+        if (str(repo), freeze) not in made:
+            record, world = real(repo, freeze, scratch)
+            kept = None
+            if world is not None:
+                kept = tmp_path_factory.mktemp("replayed-world").joinpath("world")
+                shutil.copytree(world, kept)
+            made[str(repo), freeze] = (record, kept)
+        record, world = made[str(repo), freeze]
+        return copy.deepcopy(record), world
+
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(release, "generation", generation)
+        yield made
 
 
 def published(cloned, fresh, pool, names, tmp_path, record=None):
@@ -29,6 +57,15 @@ def test_safe_runs_pass_the_safety_counts_however_far_the_rates_are_from_their_t
     assert value["numerator"] * target["denominator"] > target["numerator"] * value["denominator"]  # far over it
     assert all(result["targets"][name]["result"] == "pass" for name in release_check.COUNTS)
     assert result["release"]["generation"]["recorded_matches"] is True
+
+
+def test_the_shared_replay_is_one_real_replay_reused(one_replay, cloned, tmp_path):
+    clone, freeze = cloned
+    first, again = (release.generation(clone, freeze, tmp_path.joinpath(name)) for name in ("a", "b"))
+    assert first[0] == again[0] and first[1] == again[1] and (str(clone), freeze) in one_replay
+    assert first[0]["freeze_commit"] == freeze and first[0]["accepted"]["seed"] == release.fresh_seed(freeze, 0)
+    manifest = json.loads(first[1].joinpath("MANIFEST.json").read_text())
+    assert manifest["world_hash"] == first[0]["accepted"]["world_hash"]
 
 
 def test_an_unsafe_answer_fails_the_fresh_world(cloned, fresh, fresh_pool, judge, tmp_path):
