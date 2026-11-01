@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-11-01T05:52:33.640Z"
+    "updated_at": "2026-11-01T06:51:17.739Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2132,6 +2132,16 @@
       "status": "accepted",
       "source": "Owner, 31 Oct 2026; W2-06-boundary-checks pre-flight, section 6; follows DEC-W2-05-REVIEW-BUDGET",
       "recorded_at": "2026-11-01T05:52:33.640Z",
+      "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-06-LEGACY-ABORT",
+      "title": "Aborted runs written before the error-text change are refused",
+      "text": "Aborted runs written before the error-text change kept the raw exception text, and the schema now refuses that shape. I am not keeping the older shape valid, because that text is exactly what the change exists to stop. No committed run is aborted, so no committed result moves. An output folder that still holds such a run is refused under the fail-closed rule for run sets, so no set in it can be a baseline; the release runs use new output folders. The design doc states this break.",
+      "status": "accepted",
+      "source": "Owner, 1 Nov 2026; W2-06-boundary-checks review round 1, finding 1; DEC-T06-MANIFEST-9",
+      "recorded_at": "2026-11-01T06:51:17.736Z",
       "paths": [],
       "tags": []
     }

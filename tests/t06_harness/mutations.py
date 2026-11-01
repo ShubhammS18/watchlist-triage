@@ -163,9 +163,11 @@ MUTATIONS = (
      '    if superseded:  # refused before any call (DEC-T06-FAULTS)', '    if False:',
      T + "test_sets.py::test_a_run_in_a_superseded_set_is_refused_before_any_call",
      NOT_REFUSED),
+    # planted where the final manifest is assembled, after the start-up check of the inputs (W2-03), so that the run
+    # completes and the guard fails on its own assertion (W2-06 review round 1)
     ("the manifest records the environment", "harness/run.py",
-     '        "run_id": run_id, "run_set": run_set, "run_set_inputs": inputs,',
-     '        "environment": dict(__import__("os").environ), "run_id": run_id, "run_set": run_set, "run_set_inputs": inputs,',
+     '        **from_inputs, "model": {**from_inputs["model"], "reported": dict(reported)},',
+     '        "environment": dict(__import__("os").environ), **from_inputs, "model": {**from_inputs["model"], "reported": dict(reported)},',
      T + "test_manifest.py::test_no_environment_variable_reaches_any_output", ASSERTS),
     ("the truth is imported at the top of the scoring module", "harness/score.py",
      'from . import cost as money\n', 'from worldgen import truth\n\nfrom . import cost as money\n',

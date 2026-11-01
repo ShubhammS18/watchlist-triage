@@ -1,7 +1,7 @@
 # Boundary checks (W2-06)
 
-Status: built, 1 Nov 2026; not yet reviewed. The task checks the boundary parts of FR-10, FR-15, FR-18, AC-11, AC-20
-and AC-22 that exist without operational mode. Choices: `DEC-W2-06-CHOICES`, within `DEC-T06-MANIFEST-9`. Review
+Status: built, 1 Nov 2026; review round 1 found two SHOULDs and no blocker, both fixed. The task checks the boundary parts of FR-10, FR-15, FR-18, AC-11, AC-20
+and AC-22 that exist without operational mode. Choices: `DEC-W2-06-CHOICES`, within `DEC-T06-MANIFEST-9`; the deliberate break for older aborted runs: `DEC-W2-06-LEGACY-ABORT`. Review
 budget: `DEC-W2-06-REVIEW-BUDGET`. No model was called: the tests use T06's fake model, the T04 stub and the committed
 run outputs, read only. The network part of AC-11 is unchanged; nothing under `model_interface/` changed.
 
@@ -27,10 +27,17 @@ A hash of a short value can be guessed by trying candidates; it keeps the value 
 Old runs: every committed run (`baseline/`, `w2-02-runs/`) is completed, with `aborted: null`, so none holds the old
 abort record and their figures do not move (the `w2_03` re-score suite shows it). A run-output folder elsewhere that
 holds an aborted run written before this change now fails the shared schema; by `DEC-T06-MANIFEST-9`'s fail-closed rule
-no set in that folder is then eligible.
+no set in that folder is then eligible. This break is deliberate (`DEC-W2-06-LEGACY-ABORT`, review round 1, finding 1):
+the older shape is not kept valid, because it holds exactly the raw text this change removes. The release runs use new
+output folders.
 
 T06 tests changed to match (no behaviour they check changed otherwise): `tests/t06_harness/test_run.py`,
 `test_parallel.py` and `test_score.py` now expect the hashed abort record and cause.
+
+T06 mutation proof 36 ("the manifest records the environment", `tests/t06_harness/mutations.py`) now plants the
+environment where the final manifest is assembled. It used to plant it among the inputs, which the start-up check of
+W2-03 refuses, so the broken copy never made a run and `test_no_environment_variable_reaches_any_output` failed in its
+fixture, not on its assertion (review round 1, finding 2). The untouched-copy and exact-reason requirements are kept.
 
 ## The checks
 
@@ -123,3 +130,18 @@ T06 timings; the Windows power mode is not known.
 A pass/fail run on battery the same morning, not a timing, had one t06 failure: a manifest whose `started_at` was
 0.7 s after its `ended_at`, because the clock stepped back during the run (systemd-journald logged "Time jumped
 backwards"). The run step takes both times from the wall clock; the timed run above passed.
+
+After the round-1 fixes, measured on 1 Nov 2026 the same way, with the charger in:
+
+| Suite | Result | Time | Benchmark | Memory in use: before, peak |
+|---|---|---|---|---|
+| `tests/w2_06_boundary` (gate `tests`) | 127 passed | 7.58 s | 0.834 s | 1,732 MB, 1,817 MB |
+| `tests/t04_model_interface` (gate `t04`) | 137 passed | 41.42 s | 0.829 s | 1,770 MB, 1,847 MB |
+| `tests/t05_agent` (gate `t05`) | 291 passed | 63.29 s | 0.836 s | 1,810 MB, 1,899 MB |
+| `tests/t06_harness` | 340 passed, 6 skipped | 67.69 s | 0.850 s | 1,816 MB, 1,949 MB |
+| `tests/w2_03_harness_fixes` | 38 passed | 5.52 s | 0.832 s | 1,738 MB, 1,779 MB |
+| T06 mutation proofs (`T06_MUTATION=1`, `test_mutation.py`) | 7 passed | 34.43 s | 0.828 s | 1,709 MB, 2,407 MB |
+
+The proof table (`python tests/t06_harness/mutations.py`, run once more under the memory guard) shows breakage 36
+passing on its untouched copy and failing on its broken one, and 43 of 43 breakages caught, with the real files
+unchanged.
