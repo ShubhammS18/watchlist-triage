@@ -1,9 +1,11 @@
 # Release protocol (W2-08)
 
-Status: Built, for review round 4, the last of the budget (`DEC-W2-08-REVIEW-BUDGET`). The three earlier rounds:
+Status: Approved, 2 Nov 2026, after review round 4 (`DEC-W2-08-REVIEW`; budget `DEC-W2-08-REVIEW-BUDGET`; reports
+in `docs/reviews/W2-08-release-protocol-review-round-1.md` to `-4.md`). The four rounds:
 - **Round 1** reviewed the design only, before any code. It found two blockers and six SHOULDs.
 - **Round 2** reviewed the code. It found two new blockers and two SHOULDs.
 - **Round 3** found one blocker.
+- **Round 4** was clean.
 
 The owner accepted every finding. The changes are listed under "Review round 1", "Review round 2" and "Review round
 3". Requirements: FR-23 and AC-19, and AC-1, AC-2, AC-5 and AC-12 on the fresh-seed world. Rules:

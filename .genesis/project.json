@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-11-01T08:36:59.593Z"
+    "updated_at": "2026-11-02T06:35:19.855Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2186,6 +2186,21 @@
       "source": "Owner, 1 Nov 2026; W2-08-release-protocol design; adds to DEC-W2-08-CHOICES; DEC-W2-05-CHOICES",
       "recorded_at": "2026-11-01T08:36:59.592Z",
       "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-08-REVIEW",
+      "title": "Independent review of the release protocol: four rounds, the last clean",
+      "text": "An independent reviewer, GPT-6 Sol at medium effort, in a fresh read-only session inside the repository, reviewed the release protocol in four rounds, the first on the design alone. The design round found two blockers, that an early refusal could hide unsafe answers and that a killed run's log was accepted unchecked, plus six smaller gaps; all were fixed. Round two found places where the code trusted what it should verify: an all-rejected seed result could mask a bad generation record, allowed files could be symlinks, a killed run's log was bound by a short prefix, and a log supplied its own input hash. Round three found a relative output path that let the symlink guard be bypassed. Each was fixed with a test and a mutation proof, and round four was clean. Throughout, the check's output on the committed baseline and upgrade run sets stayed byte-identical, and no real model was called. The reports are kept in docs/reviews.",
+      "status": "accepted",
+      "source": "Owner, 2 Nov 2026; W2-08-release-protocol review rounds 1-4; DEC-W2-08-REVIEW-BUDGET",
+      "recorded_at": "2026-11-02T06:35:19.843Z",
+      "paths": [
+        "docs/reviews/W2-08-release-protocol-review-round-1.md",
+        "docs/reviews/W2-08-release-protocol-review-round-2.md",
+        "docs/reviews/W2-08-release-protocol-review-round-3.md",
+        "docs/reviews/W2-08-release-protocol-review-round-4.md"
+      ],
       "tags": []
     }
   ],
