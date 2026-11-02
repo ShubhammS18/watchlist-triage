@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-11-02T06:40:42.345Z"
+    "updated_at": "2026-11-02T13:19:59.721Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2201,6 +2201,26 @@
         "docs/reviews/W2-08-release-protocol-review-round-3.md",
         "docs/reviews/W2-08-release-protocol-review-round-4.md"
       ],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-10-CHOICES",
+      "title": "How the release runs are done and checked",
+      "text": "Paid runs go through the run wrapper from a separate checkout at ~/release-1/checkout. The rehearsal goes in the release log, whose running total continues from wave 2's spend. The gate checks the release at the release-1 tag in a temporary clone, so later commits cannot break it, and one accepted generation means the committed record equals the check's own replay. No Genesis writes are made between the freeze and the publish commit. A killed run's Console spend is shown in its own row; the sign-off compares the harness's cost with the Console for the priced runs only. Two release keys are used and revoked after the publish. If any run costs over USD 0.30, or the release passes USD 2.00, I stop before the next run.",
+      "status": "accepted",
+      "source": "Owner, 2 Nov 2026; W2-10-release-runs pre-flight, Q1-Q3, F1-F5; narrows DEC-W2-01-PASS-LABEL for killed runs; DEC-W2-08-CHOICES, DEC-W2-02-SPEND-PLAN",
+      "recorded_at": "2026-11-02T13:19:54.493Z",
+      "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-10-REVIEW-BUDGET",
+      "title": "Review budget for the release runs",
+      "text": "At most four review rounds from a fresh read-only Codex session inside the repository, which runs every gate. Rounds one to three come before the freeze: the design, then the gate tests and a dry run on a made-up release; whatever round three finds is fixed and recorded without another round. Round four is a read-only check of the published release at its tag; its findings cannot change the release and go in the release log or the README.",
+      "status": "accepted",
+      "source": "Owner, 2 Nov 2026; W2-10-release-runs pre-flight, section 6; follows DEC-W2-08-REVIEW-BUDGET",
+      "recorded_at": "2026-11-02T13:19:59.721Z",
+      "paths": [],
       "tags": []
     }
   ],
