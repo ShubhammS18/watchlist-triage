@@ -1,0 +1,13 @@
+{
+  "task": "W2-08-release-protocol",
+  "gate": "independent-review",
+  "kind": "review",
+  "attempt": "9d0a18db-95dd-4337-92cf-baaa0d84adce",
+  "human": "Shubham Suradkar",
+  "reason": "Four independent review rounds, the first on the design alone; every blocker fixed with a test and a mutation proof; round 4 clean. Decision record DEC-W2-08-REVIEW.",
+  "observed_at": "2026-11-02T06:40:33.618Z",
+  "source_hash": "0f3a9bddb68a42fa81846ff7cdbe00fd5f97c057523288a8f4c30fefdc2ffbc8",
+  "config_hash": "d93490067a857b9f87a7fcbda7011a5c591e92f9a5e4c3aef3661355fcb98d5e",
+  "reviewed_proofs": "7816e2ee19150ac44c5e16418a332eff0702ffe6b1ea8d604cb64aa97b6c350b",
+  "hash": "b800bfc0262cf7d8451494ad8bc2b2a6ebcd3c03ecbd1e4470602bbe2a6a37f3"
+}

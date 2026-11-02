@@ -4,11 +4,11 @@
 
 - objective: Triage sanctions/PEP name-match alerts from a frozen synthetic world: recommend close or escalate with cited evidence, human-approved, measured on zero missed planted true matches.
 - phase/status: build/active
-- active task: W2-08-release-protocol — The release protocol of DEC-W2-RELEASE-RULES is built and tested with the fake model only, before any freeze. A documented seed function derives the fresh world's seed from a commit hash and a counter from 0 to 9. A fresh-seed mode of the release check takes the freeze commit, derives the seed itself, regenerates the world with that commit's generator, hashes it and uses that hash as its trust anchor in place of the frozen-world hash; it requires exactly one accepted generation with every rejected try recorded beside it, runs made from a clean checkout of the freeze commit, and no change after the freeze except checkpoint, generation-record, run-output and sign-off files. It judges the fresh world on the safety counts only, each zero in every run and framing, and shows the rates for information beside the frozen-world targets. On both worlds a replaced run does not count toward the three valid runs, its unsafe answers still count, at most five runs per world are allowed, and five runs without three valid ones give NOT ELIGIBLE. The frozen-world path is unchanged: the check gives the same result on run set 8f4050be as before. The release steps are written down in the design doc. No real model is called.
+- active task: W2-10-release-runs — The release is run under DEC-W2-RELEASE-RULES. One rehearsal run of the release candidate on the practice world comes first and is logged with its cost. Code, prompts, configuration and targets are then frozen in one freeze commit. From a clean checkout of that commit, the fresh world is generated with the derived seed, and the release candidate runs three times on the frozen world and three times on the fresh world, with at most five runs per world. The generation and every rejected try, both run sets, the release check's output for each world, the checkpoints and the Console sign-offs are committed, and every run, replaced or not, is a row in a release log with its cost. The result is published whatever it shows. The gate checks the committed files only and never calls a model: the freeze commit exists, the seed is the one the function gives for it, there is exactly one accepted generation, the committed check output is what the check gives on the committed runs, every run is in the log within five per world, and nothing the freeze pins changed after it. The gate checks that the result is published and consistent, not that it passed: a published FAIL or NOT ELIGIBLE completes this task.
 - blocker: none
 - next action: Run the task pre-flight.
 - phase instruction: Implement only the active task and prove it against current sources. Check `genesis query . impact PATH` before editing shared code.
-- gates: tests:pending, w2-01:pending, t06:pending, t02:pending, w2-02:pending, independent-review:pending
+- gates: tests:pending, w2-08:pending, w2-01:pending, w2-02:pending, secrets:pending, independent-review:pending
 - recent failures: none
 
 ## Resume
@@ -17,9 +17,9 @@ Load Genesis and official Ponytail full, then run `genesis brief .` for the curr
 Fetch full records with `genesis context . --id ID` only when needed. Do not load project.json or historical proof wholesale.
 Ask the index before reading code: `genesis query . search|scope|callers|callees|impact|path` (`--json` for parsing). Run `genesis query . impact PATH` before editing shared code. Answers are advisory static analysis; `ambiguous` means candidates were not ruled out, so confirm in source.
 Run `genesis serve .` for a live map of the repository when structure is unclear; it reindexes on save and is read-only. Run `genesis index .` if the index is stale and nothing is watching.
-Context fingerprint: 39f974b2c00a2815e905c689974cba5f917fba1ec1583d627856d2d74f65263e. Use --since only after receiving that full packet; kickoff is not the packet.
+Context fingerprint: d6ec35e0439e697f58ac4c62120ca9bb3f10d6b194706838c78447fc119d1338. Use --since only after receiving that full packet; kickoff is not the packet.
 - DEC-W2-RELEASE-RULES: Release rules, fixed before the freeze
 - DEC-W2-08-CHOICES: How the release rules work in code, and what they cannot see
-- DEC-W2-05-CHOICES: The audit log: one chain per run, checkpoints committed by me
+- DEC-W2-02-ATTEMPTS: At most six measured attempts; practice runs are logged but not counted
 Applicable invariants, active rules, authorization and proof references are in the packet. Truncated summaries are retrieval pointers, not the full evidence.
 Reuse fresh gates with --reuse. Reconcile interrupted attempts before replaying commands. Report state → evidence → blocker → next action; checkpoint before stopping.

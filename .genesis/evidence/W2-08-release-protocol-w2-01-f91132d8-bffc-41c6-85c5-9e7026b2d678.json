@@ -1,0 +1,30 @@
+{
+  "task": "W2-08-release-protocol",
+  "gate": "w2-01",
+  "kind": "command",
+  "attempt": "f91132d8-bffc-41c6-85c5-9e7026b2d678",
+  "command": ".venv/bin/python -m pytest tests/w2_01_acceptance -q -p no:cacheprovider",
+  "started_at": "2026-11-02T06:36:55.511Z",
+  "observed_at": "2026-11-02T06:38:08.097Z",
+  "exit_code": 0,
+  "signal": null,
+  "stdout": "....................................................................     [100%]\n68 passed in 70.03s (0:01:10)\n",
+  "stderr": "",
+  "failure": null,
+  "receipt": null,
+  "revision": {
+    "commit": "16813d28be47f6ca45897dc3a56d4eb38c5b0031",
+    "dirty": true
+  },
+  "source_hash": "0f3a9bddb68a42fa81846ff7cdbe00fd5f97c057523288a8f4c30fefdc2ffbc8",
+  "before_hash": "0f3a9bddb68a42fa81846ff7cdbe00fd5f97c057523288a8f4c30fefdc2ffbc8",
+  "config_hash": "d93490067a857b9f87a7fcbda7011a5c591e92f9a5e4c3aef3661355fcb98d5e",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "arch": "x64",
+    "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+    "variables": {}
+  },
+  "hash": "1e981960e9d346ca9993a881edce502af68c47d0f9dedf43575b82766a503981"
+}
