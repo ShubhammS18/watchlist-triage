@@ -131,3 +131,39 @@ def test_the_release_mode_reports_the_freeze_problems_but_still_counts_safety(cl
     assert result["result"] == "NOT ELIGIBLE"
     assert any("README.md" in p for p in result["not_eligible_because"])
     assert result["targets"]["true_matches_closed"]["result"] == "fail"
+
+
+def linked(clone, path, outside):
+    """Replace a file of the clone with a symbolic link to a copy of it outside the repository."""
+    target = Path(clone, path)
+    copy = Path(outside, target.name)
+    copy.write_bytes(target.read_bytes())
+    target.unlink()
+    target.symlink_to(copy)
+
+
+def test_a_symbolic_link_committed_at_an_allowed_path_is_caught(cloned, frozen_pool, tmp_path):
+    """Review round 2, finding N3: a link would let a file outside git stand in for a release file."""
+    clone, freeze = cloned
+    out, chosen = rc.assemble(frozen_pool, ["valid1", "valid2", "valid3"], tmp_path)
+    outside = tmp_path.joinpath("outside")
+    outside.mkdir()
+
+    def links(c):
+        linked(c, "release/frozen/index.json", outside)
+        linked(c, f"audit/checkpoints/{chosen['valid1']}.json", outside)
+    rc.publish(clone, freeze, {"frozen": out}, before_commit=links)
+    found = problems(cloned)
+    for path in ("release/frozen/index.json", f"audit/checkpoints/{chosen['valid1']}.json"):
+        assert any(f"{path}: committed with git mode 120000, not as a regular file" in p for p in found), found
+
+
+def test_a_symbolic_link_committed_in_a_later_commit_is_caught(cloned):
+    clone, freeze = cloned
+    rc.reset(clone, freeze)
+    commit(clone, {"docs/release-log.md": "# Release log\n"})
+    Path(clone, "docs/release-log.md").unlink()
+    Path(clone, "docs/release-log.md").symlink_to("/etc/hostname")
+    rc.git(clone, "add", "-A")
+    rc.git(clone, "commit", "-q", "-m", "Link (test)")
+    assert any("docs/release-log.md: committed with git mode 120000" in p for p in problems(cloned))

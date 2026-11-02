@@ -118,22 +118,56 @@ def test_only_the_python_patch_level_may_differ(three, replayed):
     assert release.generation_problems({**record, "python": "3.12.99"}, replayed[0]) == []
 
 
-def test_ten_rejections_give_no_fresh_world(tmp_path):
-    clone, freeze = variant(tmp_path.joinpath("repo"), reject=10)
-    record = release.make_fresh_world(freeze, tmp_path.joinpath("world"), tmp_path.joinpath("record.json"), repo=clone)
+@pytest.fixture(scope="module")
+def ten(tmp_path_factory):
+    """A freeze commit whose generator rejects every try: (clone, freeze, the record the fresh-world step wrote)."""
+    folder = tmp_path_factory.mktemp("ten")
+    clone, freeze = variant(folder.joinpath("repo"), reject=10)
+    record = release.make_fresh_world(freeze, folder.joinpath("world"), folder.joinpath("record.json"), repo=clone)
+    assert not folder.joinpath("world").exists()
+    assert json.loads(folder.joinpath("record.json").read_text()) == record
+    return clone, freeze, record
+
+
+def test_ten_rejections_give_a_record_of_all_ten_and_no_world(ten):
+    _, _, record = ten
     assert [one["counter"] for one in record["tries"]] == list(range(10)) and record["accepted"] is None
-    assert not tmp_path.joinpath("world").exists()
-    assert json.loads(tmp_path.joinpath("record.json").read_text()) == record
-    shortened = {**record, "tries": record["tries"][:9]}  # an all-rejected record must show all ten
-    scratch = tmp_path.joinpath("scratch")
-    scratch.mkdir()
-    replayed, _ = release.generation(clone, freeze, scratch)
-    assert release.generation_problems(shortened, replayed)
-    rc.publish(clone, freeze, {}, generation=record)
+
+
+def judged(clone, freeze, record, before_commit=None):
+    """The release check of the fresh world, with `record` committed as the generation record (None: no record)."""
+    rc.publish(clone, freeze, {}, generation=record, before_commit=before_commit)
     with rc.at(clone):
-        result = release_check.check(clone.joinpath("release", "fresh"), "0" * 64,
-                                     release={"freeze": freeze, "fresh": True})
-    assert result["result"] == release.NO_FRESH_WORLD and result["not_eligible_because"] == []
+        return release_check.check(clone.joinpath("release", "fresh"), "0" * 64,
+                                   release={"freeze": freeze, "fresh": True})
+
+
+def test_ten_rejections_with_a_matching_record_give_no_fresh_world(ten):
+    clone, freeze, record = ten
+    result = judged(clone, freeze, record)
+    assert (result["result"], result["not_eligible_because"]) == (release.NO_FRESH_WORLD, [])
+    assert result["release"]["generation"] == {"replayed": result["release"]["generation"]["replayed"],
+                                               "recorded_matches": True}
+    assert len(result["release"]["generation"]["replayed"]["tries"]) == 10
+
+
+@pytest.mark.parametrize("case", ["missing", "shortened", "freeze problem"])
+def test_ten_rejections_with_any_other_problem_are_not_eligible_with_the_replay_kept(ten, case):
+    """Review round 2, finding N1: NO FRESH WORLD only with a matching record and an otherwise eligible freeze."""
+    clone, freeze, record = ten
+    if case == "missing":
+        result, expected = judged(clone, freeze, None), f"{release.GENERATION} is missing or is not JSON"
+    elif case == "shortened":
+        result = judged(clone, freeze, {**record, "tries": record["tries"][:9]})
+        expected = "the generation record's tries is not what the replay gives"
+    else:
+        result = judged(clone, freeze, record, before_commit=lambda c: Path(c, "README.md").write_text("changed\n"))
+        expected = "README.md: changed after the freeze, and it is not a file the release may change"
+    assert result["result"] == "NOT ELIGIBLE"
+    assert any(expected in problem for problem in result["not_eligible_because"]), result["not_eligible_because"]
+    replayed = result["release"]["generation"]["replayed"]
+    assert replayed["accepted"] is None and [one["counter"] for one in replayed["tries"]] == list(range(10))
+    assert result["release"]["generation"]["recorded_matches"] is (case == "freeze problem")
 
 
 def test_a_fault_in_the_generator_is_not_a_rejection_and_writes_nothing(tmp_path):

@@ -1,4 +1,4 @@
-"""W2-08: the mutation proofs of the release protocol. Eight deliberate breakages, each applied to its own shared clone
+"""W2-08: the mutation proofs of the release protocol. Thirteen deliberate breakages, each applied to its own shared clone
 of the repository with the uncommitted work laid over it, must each make its named guard test fail, while the same
 test passes on an untouched clone; the real files are not changed. The proof machinery is T06's
 (tests/t06_harness/mutations.py), with W2-01's kind of copy (tests/w2_01_acceptance/test_mutation.py).
@@ -45,7 +45,8 @@ BREAKAGES = (
      "        if False:\n            problems.append(f\"{run_id}: its checkpoint is not committed",
      W + "test_logs.py::test_a_completed_run_without_its_committed_checkpoint_is_not_eligible", ASSERTS),
     ("a completed run's log is not compared with its items", "harness/release.py",
-     "mismatch = items_problem(run, parsed, loaded[run][1], loaded[run][0]) if parsed else None", "mismatch = None",
+     'mismatch = items_problem(run, parsed, loaded[run][1], loaded[run][0], state["input_hashes"]) if parsed else None',
+     "mismatch = None",
      W + "test_logs.py::test_a_logged_answer_that_is_not_the_items_rows_is_not_eligible", ASSERTS),
     ("an unfinished log is not checked as a chain", "harness/release.py",
      "        found = audit.verify(b\"\".join(line + b\"\\n\" for line in lines),",
@@ -55,6 +56,24 @@ BREAKAGES = (
      "    if release is None:\n        return _check(out_dir, run_set, world, targets_path)\n",
      "    if release is None:\n        release = {\"freeze\": \"HEAD\"}\n",
      W + "test_frozen_unchanged.py::test_the_committed_run_sets_give_byte_identical_output", ASSERTS),
+    # review round 2
+    ("an all-rejected replay ignores a record or freeze problem", "harness/release.py",
+     '"result": "NOT ELIGIBLE" if problems else NO_FRESH_WORLD,', '"result": NO_FRESH_WORLD,',
+     W + "test_generation.py::test_ten_rejections_with_any_other_problem_are_not_eligible_with_the_replay_kept", ASSERTS),
+    ("a link committed at an allowed path is let through", "harness/release.py",
+     '            if found is None and status != "D" and mode not in REGULAR:', "            if False:",
+     W + "test_freeze.py::test_a_symbolic_link_committed_at_an_allowed_path_is_caught", ASSERTS),
+    ("release inputs on disk are read through links", "harness/release.py",
+     "    bad = unsafe_paths(repo)\n    state = {", "    bad = {}\n    state = {",
+     W + "test_logs.py::test_a_symbolic_link_is_never_read_and_the_answers_still_count", ASSERTS),
+    ("a killed run's log is bound only by its run-set prefix", "harness/release.py",
+     '        elif started["run_set"] != indexed or not run_id.endswith(indexed[:8]):',
+     '        elif not run_id.endswith(started["run_set"][:8]):',
+     W + "test_logs.py::test_a_killed_runs_log_is_bound_to_the_full_run_set_id", ASSERTS),
+    ("a completed log's own input hash is trusted", "harness/release.py",
+     '        made = audit.recommendation(line, hashes.get(line["item_id"]))',
+     '        made = audit.recommendation(line, record["input_sha256"])',
+     W + "test_logs.py::test_a_completed_logs_input_hash_is_made_again_from_the_checked_world", ASSERTS),
 )
 
 
@@ -75,7 +94,7 @@ def make_copy(folder, mutation=None):
 
 
 def test_every_breakage_names_a_guard_test_that_exists_and_a_text_that_occurs_once():
-    assert len(BREAKAGES) == 8
+    assert len(BREAKAGES) == 13
     for what, name, old, new, guard, expected in BREAKAGES:
         path, test = guard.split("::")
         assert f"def {test}(" in REPO.joinpath(path).read_text(encoding="utf-8"), guard

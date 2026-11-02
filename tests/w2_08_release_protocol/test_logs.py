@@ -219,3 +219,60 @@ def test_the_counts_from_a_log_equal_the_counts_from_its_items(frozen_pool, fres
     line["result"].update(recommendation="CLOSE", system_failure=False, cited_ids=["EVD-NOT-SENT"])
     record = release.audit.recommendation(line, "0" * 64)
     assert score.valid_citation_set(line) is score.valid_citation_set(release.as_line(record)) is False
+
+
+def test_a_symbolic_link_is_never_read_and_the_answers_still_count(cloned, frozen_pool, judge, tmp_path):
+    """Review round 2, finding N3: a linked index or checkpoint is caught on disk before anything is read through it.
+    The index is then not read, so every run is unlisted and counted from its log."""
+    from test_freeze import linked
+    clone, freeze = cloned
+    out, chosen = rc.assemble(frozen_pool, ["aborted_unsafe", "valid1", "valid2", "valid3"], tmp_path)
+    outside = tmp_path.joinpath("outside")
+    outside.mkdir()
+
+    def links(c):
+        linked(c, "release/frozen/index.json", outside)
+        linked(c, f"audit/checkpoints/{chosen['valid1']}.json", outside)
+    rc.publish(clone, freeze, {"frozen": out}, before_commit=links)
+    run_set = rc.records.read_index(frozen_pool["out"])["runs"][0]["run_set"]
+    result = judge(run_set=run_set)
+    because = result["not_eligible_because"]
+    assert result["result"] == "NOT ELIGIBLE" and result["failed"] == ["true_matches_closed"]
+    assert "release/frozen/index.json is a symbolic link; it is not read" in because
+    assert f"audit/checkpoints/{chosen['valid1']}.json is a symbolic link; it is not read" in because
+    assert f"{chosen['valid1']}: its checkpoint is not committed at audit/checkpoints/{chosen['valid1']}.json" in because
+    assert set(result["release"]["counted_from_logs"]) == set(chosen.values())
+
+
+def test_a_killed_runs_log_is_bound_to_the_full_run_set_id(cloned, frozen_pool, judge, tmp_path):
+    """Review round 2, finding N2: another run-set ID with the same first eight characters is caught."""
+    def change(found):
+        found[0]["run_set"] = found[0]["run_set"][:8] + "f" * 56 if found[0]["run_set"][8:] != "f" * 56 else \
+            found[0]["run_set"][:8] + "e" * 56
+    chosen = published(cloned, frozen_pool, ["aborted", "valid1", "valid2", "valid3"], tmp_path,
+                       killed("aborted", broken_log(change)))
+    result = judge()
+    assert result["result"] == "NOT ELIGIBLE"
+    assert any(p.startswith(f"{chosen['aborted']}: its log names run set ") and "not the one its index entry names" in p
+               for p in result["not_eligible_because"]), result["not_eligible_because"]
+
+
+def changed_input(found):
+    first_recommendation(found)["input_sha256"] = "5" * 64
+
+
+def test_a_completed_logs_input_hash_is_made_again_from_the_checked_world(cloned, frozen_pool, judge, tmp_path):
+    """Review round 2, finding N4: the log's own input hash is never the one it is compared with."""
+    chosen = published(cloned, frozen_pool, ["valid1", "valid2", "valid3"], tmp_path, rewritten("valid1", changed_input))
+    result = judge()
+    assert result["result"] == "NOT ELIGIBLE"
+    assert any(p.startswith(f"{chosen['valid1']}: its log's answer for ") for p in result["not_eligible_because"])
+
+
+def test_a_killed_runs_input_hashes_are_checked_against_the_checked_world(cloned, frozen_pool, judge, tmp_path):
+    chosen = published(cloned, frozen_pool, ["aborted", "valid1", "valid2", "valid3"], tmp_path,
+                       killed("aborted", broken_log(changed_input)))
+    result = judge()
+    assert result["result"] == "NOT ELIGIBLE"
+    assert any(p.startswith(f"{chosen['aborted']}: its log gives 1 input hashes that are not the checked world's")
+               for p in result["not_eligible_because"]), result["not_eligible_because"]

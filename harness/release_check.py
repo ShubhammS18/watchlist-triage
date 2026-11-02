@@ -227,7 +227,7 @@ def _check(out_dir, run_set, world, targets_path, state=None):
     if state is not None:
         from . import release as protocol
         if world is None:  # every try was rejected: there is no fresh world, and that is the result
-            return protocol.no_fresh_world({**state, "problems": not_eligible}, run_set, records.sha256(raw))
+            return protocol.no_fresh_world(state, not_eligible, run_set, records.sha256(raw))
     world = Path(world)
     anchor, called = (FROZEN_WORLD_HASH, "the frozen world") if state is None or not state["fresh"] else \
         (state["anchor"], "the regenerated fresh world")
@@ -248,8 +248,11 @@ def _check(out_dir, run_set, world, targets_path, state=None):
     except WorldMismatch as problem:
         not_eligible.append(f"the world's public files cannot be verified: {problem}")
         public = None  # no unchecked bytes are used: the run items are then not compared with the world
+    if state is not None and public is not None:  # every framed bundle's hash, made again from the checked bytes
+        state["input_hashes"] = protocol.input_hashes(public, state)
 
-    index = records.read_index(out)
+    index = records.read_index(out) if state is None or protocol.readable(state, out.joinpath("index.json")) else \
+        {"runs": [], "sets": {}}  # a link is never followed: the runs are then unlisted, and read from their logs
     good, problems = score.check_index(index)
     if problems:
         not_eligible.extend(f"run-set index: {problem}" for _, problem in problems)
@@ -263,6 +266,8 @@ def _check(out_dir, run_set, world, targets_path, state=None):
         raise score.ScoreRefused(f"no run of run set {run_set} is in {out}")
     loaded, expected = {}, None if public is None else expected_items(public)
     for entry in entries:
+        if state is not None and not protocol.run_readable(state, out, entry["run_id"]):
+            continue  # a link is never followed: the run is not loaded, and is counted from its log if that is safe
         try:
             got = score._load_run(out, entry, listed["world_hash"])
         except score.ScoreRefused as problem:  # Unassigned too

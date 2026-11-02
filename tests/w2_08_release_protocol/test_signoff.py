@@ -66,3 +66,12 @@ def test_any_other_result_needs_no_sign_off(tmp_path, result):
 
 def test_no_committed_check_output_is_a_problem(tmp_path):
     assert "check-frozen.json is missing" in release.signoff_problem(tmp_path)
+
+
+def test_a_linked_release_input_is_not_read(tmp_path):
+    folder = made_up(tmp_path.joinpath("repo"), QUALIFIED_PASS, ["| `1c8d128b` | 0.30 | 0.2998 | Owner: matches |"])
+    real = tmp_path.joinpath("check.json")
+    real.write_bytes(folder.joinpath("release", "check-frozen.json").read_bytes())
+    folder.joinpath("release", "check-frozen.json").unlink()
+    folder.joinpath("release", "check-frozen.json").symlink_to(real)
+    assert "check-frozen.json is a symbolic link or not a regular file" in release.signoff_problem(folder)

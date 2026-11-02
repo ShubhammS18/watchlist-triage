@@ -1,8 +1,9 @@
 # Release protocol (W2-08)
 
-Status: Built, for review round 2. Round 1 reviewed the design only, before any code (`DEC-W2-08-REVIEW-BUDGET`).
-It found two blockers and six SHOULDs, and the owner accepted all eight; the changes are listed under "Review round
-1". Requirements: FR-23 and AC-19, and AC-1, AC-2, AC-5 and AC-12 on the fresh-seed world. Rules:
+Status: Built, for review round 3. Round 1 reviewed the design only, before any code (`DEC-W2-08-REVIEW-BUDGET`):
+it found two blockers and six SHOULDs, and the owner accepted all eight. Round 2 reviewed the code: it found two new
+blockers and two SHOULDs, and the owner accepted all four. The changes are listed under "Review round 1" and "Review
+round 2". Requirements: FR-23 and AC-19, and AC-1, AC-2, AC-5 and AC-12 on the fresh-seed world. Rules:
 `DEC-W2-RELEASE-RULES`, as built by `DEC-W2-08-CHOICES` and `DEC-W2-08-CHECKPOINTS`, within
 `DEC-W2-01-ELIGIBILITY-3`, `DEC-W2-01-PASS-LABEL`, `DEC-W2-01-RUN-RULE` and `DEC-W2-05-CHOICES`.
 
@@ -34,6 +35,15 @@ and this doc.
 | 6. Sign-off not checked on the real release | The release gate's test `test_signoff.py::test_the_published_release_has_the_console_sign_off_it_needs` parses the committed release log for the sign-off a qualified frozen-world pass needs. It is xfail (strict) until `release/check-frozen.json` is committed, then an ordinary test (the release log). |
 | 7. Log and items linked only by a file hash | Each logged answer of a completed run must be the record the run step makes from its items row, for exactly the same items (step 3). |
 | 8. Push-before-generation is not a checked fact | Stated in Limits; the evidence goes in the release log (release steps 2 and 3). |
+
+## Review round 2
+
+| Finding | What changed |
+|---|---|
+| N1. BLOCKER: an all-rejected replay masked a bad record | When the replay accepts no world, the result is NO FRESH WORLD only if the committed record matches the replay and the freeze is otherwise eligible. Any freeze, record or targets problem gives NOT ELIGIBLE. Either way the replayed generation, all ten rejections, is kept in the `release` block (step 2). |
+| N3. BLOCKER: an allowed path could be committed as a symbolic link | In every commit after the freeze, an allowed file must be committed with a regular-file git mode (100644 or 100755). A link (120000) or a submodule (160000) is caught, and so is a file turned into a link (step 1). Before anything is read, the check also looks on disk, without following anything, at `release/` and everything under it, and at `audit/checkpoints/` and its files. A link or a non-regular file there is a problem, and it is never read (step 3). |
+| N2. A killed run's log was bound by an eight-character prefix | Every log's first record must name the full 64-character run-set ID of the run's index entry. A log of a run the index does not list is reported as having no set identity that can be checked (step 3). |
+| N4. A completed log's input hash was self-supplied | The input hash of every item is made again from the checked bytes of the world's public files and the framing code, as the run step makes it. A completed log's records are compared with what `audit.recommendation` makes from the items row and that hash. Every other log's input hashes are compared with it too (step 3). |
 
 ## The seed function
 
@@ -126,6 +136,9 @@ These conditions compare the freeze with `HEAD`, which is the commit that publis
 - the freeze commit is an ancestor of `HEAD`;
 - the tree is clean, with no modified or untracked file, because the check runs its own code from the tree;
 - the history from the freeze to `HEAD` is linear: a merge commit fails;
+- every file added or changed at an allowed path, in every commit, has a regular-file git mode (100644 or 100755).
+  A symbolic link (120000) or a submodule (160000) fails, and so does a file turned into a link, which git reports as
+  a change of type (review round 2, finding N3);
 - **every commit** after the freeze changes only the files in the table below, each in its allowed way. A change
   made in one commit and undone in a later one is caught, though the end points alone would show nothing (review
   round 1, finding 5);
@@ -155,14 +168,27 @@ A deletion of any file fails, and so does a change to any path not in the table.
 - **Frozen world:** the anchor is `FROZEN_WORLD_HASH`, as now, and the world is `data/world`. The freeze check has
   shown that `data/world` is unchanged since the freeze.
 - **Fresh world:** the anchor is the hash of the world the replay accepts, in place of `FROZEN_WORLD_HASH`, and the
-  world read is that regenerated copy. If the replay accepts no world, the result is **NO FRESH WORLD** and nothing
-  more is read.
+  world read is that regenerated copy. If the replay accepts no world, nothing more is read. The result is **NO
+  FRESH WORLD** only when the committed record matches the replay and nothing else, the freeze and the targets file
+  included, makes the set not eligible. Otherwise it is NOT ELIGIBLE. Either way the replayed generation is in the
+  `release` block (review round 2, finding N1).
 
 From here the existing order is kept unchanged: the world hash against the anchor, then the manifest's file list,
 then the public files, then the expected items, then the runs, then the hidden files, each file read once. All
 audit logs are read before the hidden files.
 
 ### 3. The runs and their logs
+
+**Nothing is read through a link** (review round 2, finding N3). Before any release input is read, the check walks
+`release/` and everything under it, and `audit/checkpoints/` and its files, with `lstat`, following nothing. Each
+symbolic link or non-regular file it finds is a problem, and nothing at or under that path is read:
+- a linked `index.json` leaves the index unread, so every run is unlisted and counted from its log;
+- a linked checkpoint counts as not committed;
+- a linked run file keeps the run from being loaded;
+- a linked log is no log;
+- a linked generation record is a missing one.
+
+The release gate's sign-off check applies the same rule to its three inputs.
 
 `OUT` must be `release/<world>`. The set is NOT ELIGIBLE if any of these holds (review round 1, finding 4):
 - the run folders and the index entries do not name exactly the same runs. A run folder holds only the files a run
@@ -195,7 +221,8 @@ and its reason therefore go in the release log.
   - its last record ends the run as completed, with the items file's hash and count;
   - it holds one recommendation per item, for exactly the items of the items file;
   - each recommendation equals, field for field, the record the run step makes from that items row
-    (`audit.recommendation`).
+    (`audit.recommendation`), with the input hash made again from the checked world, never the log's own (review
+    round 2, finding N4).
 
   So every recommendation in a finished release run sits in a hash-chained log anchored in public git, and it is
   the answer that was scored.
@@ -203,9 +230,12 @@ and its reason therefore go in the release log.
   present is still checked as a chain (review round 1, finding 2): `audit.verify` runs against the log's own last
   record in place of a checkpoint, so canonical form, schema, order, links, hashes and run ID are all checked. Only
   the anchor is missing. A cut-off last line is left out.
-- **Binding:** in every log, the first record must be the run's start, naming the run's own run set (the run ID ends
-  with it), the freeze commit and the anchor world. Every record must belong to the run. Every recommendation must
-  be for an item of this world.
+- **Binding:** in every log, the first record must be the run's start. It must name the full 64-character run-set ID
+  of the run's index entry (review round 2, finding N2), with which the run ID also ends, the freeze commit and the
+  anchor world. For a run the index does not list, no set identity can be checked, and that is reported. Every
+  record must belong to the run. Every recommendation must be for an item of this world, with the input hash made
+  again from the checked world: the checked bytes of the public files are written to a temporary folder, and the
+  run step's own `bundles` and `records.content_hash` are run over them.
 - A log that fails any of these makes the set NOT ELIGIBLE. A run listed without a log does too.
 
 ### 4. Unsafe answers from every run
@@ -355,8 +385,10 @@ the clone while a run is made or a release is checked, and nothing is written in
   - three rejections are recorded beside the accepted try, with their error hashes, and the replay gives the record
     again;
   - each of 19 tampered fields is refused, while a different Python patch level is accepted;
-  - ten rejections give no world, a record of all ten, NO FRESH WORLD from the check, and a shortened record is
-    refused;
+  - ten rejections give no world and a record of all ten. Through the check:
+    - with a matching record they give NO FRESH WORLD;
+    - with a missing record, a shortened record (nine tries), or a matching record and a changed README, they give
+      NOT ELIGIBLE, with the replayed ten rejections kept in the `release` block (review round 2, finding N1);
   - a fault writes nothing;
   - the step refuses a dirty tree, a commit that is not `HEAD`, and output inside the repository.
 - **Freeze check** (`test_freeze.py`):
@@ -366,7 +398,9 @@ the clone while a run is made or a release is checked, and nothing is written in
   - a change made and undone across two commits is caught twice, while the end-point diff is empty;
   - a modified checkpoint or generation record, a deleted checkpoint, a modified run file, an orphan checkpoint, an
     untracked or modified file, a freeze that is not an ancestor, and a merge are each caught;
-  - in release mode a freeze problem gives NOT ELIGIBLE with the unsafe answer still counted.
+  - in release mode a freeze problem gives NOT ELIGIBLE with the unsafe answer still counted;
+  - a linked `index.json` and a linked checkpoint, committed together, are each caught by their git mode, and so is
+    a release log turned into a link in a later commit (review round 2, finding N3).
 - **Runs** (`test_runs.py`):
   - three valid runs pass;
   - an infrastructure-invalid, a dirty, or an unbounded-call run is replaced, and the set passes. The unbounded set
@@ -386,7 +420,12 @@ the clone while a run is made or a release is checked, and nothing is written in
     record, is NOT ELIGIBLE;
   - an unlisted run folder is NOT ELIGIBLE and still counted;
   - `SHA256SUMS` and set-file mismatches are NOT ELIGIBLE;
-  - counts from logs equal counts from items.
+  - counts from logs equal counts from items;
+  - a linked `index.json` and a linked checkpoint are caught on disk and never read. The runs are then counted from
+    their logs, so the unsafe answer still fails the set (N3);
+  - a killed run's log naming another run-set ID with the same first eight characters is NOT ELIGIBLE (N2);
+  - a changed input hash, in a completed run's log chained again with its checkpoint following, or in a killed run's
+    log, is NOT ELIGIBLE (N4).
 - **Fresh** (`test_fresh.py`):
   - safe runs far over the over-escalation target give PASS (safety counts only), with the rates marked as
     information;
@@ -396,12 +435,13 @@ the clone while a run is made or a release is checked, and nothing is written in
   - the command line takes `--release` and `--fresh`, and refuses `--world` with `--release`;
   - the shared replay is one real replay, reused.
 - **Sign-off** (`test_signoff.py`): the gate test of the real release (xfail until it is published); the row rule on
-  seven made-up rows; the cost over replaced runs too; a missing log; no sign-off needed for any other result.
+  seven made-up rows; the cost over replaced runs too; a missing log; no sign-off needed for any other result; a linked
+  check output is not read.
 - **Unchanged** (`test_frozen_unchanged.py`): the 8f4050be and f2e614d2 outputs are byte-identical, with their exit
   codes. The w2-01, t06, t02 and w2-02 gates pass unchanged.
 - **This doc** (`test_doc.py`): it states that push-before-generation cannot be proven by code, and that its evidence
   goes in the release log.
-- **Mutations** (`test_mutation.py`, with T06's proof machinery): each of eight deliberate breakages, each in its own
+- **Mutations** (`test_mutation.py`, with T06's proof machinery): each of thirteen deliberate breakages, each in its own
   shared clone with the uncommitted work laid over it, makes its named guard test fail, while the guard passes on an
   untouched clone.
   - **When they run:** as in T06 (`DEC-T06-GATE-TIME`), by hand before completion with `W2_08_MUTATION=1`, recorded
@@ -417,7 +457,12 @@ the clone while a run is made or a release is checked, and nothing is written in
     - a finished run's checkpoint not required;
     - the log not compared with the items;
     - an unfinished log not checked as a chain;
-    - release mode on without `--release`.
+    - release mode on without `--release`;
+    - an all-rejected replay that ignores a record or freeze problem (N1);
+    - a link committed at an allowed path let through (N3);
+    - release inputs on disk read through links (N3);
+    - a killed run's log bound only by its run-set prefix (N2);
+    - a completed log's own input hash trusted (N4).
 
 ## Gate timings
 
@@ -448,7 +493,24 @@ The suite is then 117 passed, 1 skipped (the proofs) and 1 xfailed. Three runs o
 
 The slowest, 67.13 s, is 33 s under the 100-second aim and 53 s under the limit.
 
-**The mutation proofs by hand**, `W2_08_MUTATION=1 .venv/bin/python -m pytest tests/w2_08_release_protocol/test_mutation.py
+**After the round-2 fixes** (2 Nov 2026), all five gates were run again, each through `tools/timed_run.sh` with the
+charger in and the fixed benchmark checked. The `tests` gate was run three times.
+
+| Gate | Result | Time | Benchmark | Memory in use, before and peak |
+|---|---|---|---|---|
+| `tests`, run 1 | 128 passed, 1 skipped, 1 xfailed | 75.60 s | 0.812 s | 1,546 MB, 1,670 MB |
+| `tests`, run 2 | 128 passed, 1 skipped, 1 xfailed | 72.60 s | 0.802 s | 1,493 MB, 1,653 MB |
+| `tests`, run 3 | 128 passed, 1 skipped, 1 xfailed | 73.93 s | 0.803 s | 1,474 MB, 1,663 MB |
+| `w2-01` | 68 passed | 69.88 s | 0.800 s | 1,469 MB, 1,714 MB |
+| `t06` | 340 passed, 6 skipped | 66.78 s | 0.801 s | 1,475 MB, 1,743 MB |
+| `t02` | 699 passed | 27.05 s | 0.802 s | 1,514 MB, 1,548 MB |
+| `w2-02` | 68 passed | 5.86 s | 0.801 s | 1,478 MB, 1,559 MB |
+
+The slowest `tests` run, 75.60 s, is 24 s under the 100-second aim and 44 s under the limit. The mutation proofs by
+hand, with all thirteen breakages: 2 passed in 40.24 s, every breakage caught. Memory in use was 1,476 MB before and
+peaked at 1,791 MB.
+
+**The first mutation proofs by hand**, `W2_08_MUTATION=1 .venv/bin/python -m pytest tests/w2_08_release_protocol/test_mutation.py
 -q -p no:cacheprovider`, on the charger under `tools/memory_guard.sh`: 2 passed in 28.05 s, with all eight breakages
 caught (each guard passed on its untouched clone and failed on its broken one). Memory in use was 1,764 MB before and
 peaked at 1,953 MB.

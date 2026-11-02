@@ -13,9 +13,11 @@ It never touches git beyond reading, and never calls a model.
 """
 import hashlib
 import json
+import os
 import platform
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tarfile
@@ -48,6 +50,7 @@ ALLOWED = tuple((re.compile(pattern), kinds) for pattern, kinds in (
     (r"release/check-(frozen|fresh)\.json", "AM"),
     (r"docs/release-log\.md", "AM"),
 ))
+REGULAR = ("100644", "100755")  # the git modes of a regular file; 120000 is a symbolic link, 160000 a submodule
 OUTSIDE = "(outside the bundle)"  # stands for the cited IDs a log record counts but does not name
 
 
@@ -111,10 +114,14 @@ def freeze_problems(repo, freeze):
         if len(parents) != 1:
             problems.append(f"commit {commit[:12]} after the freeze is a merge; the release history must be linear")
             continue
-        fields = _git(repo, "diff-tree", "-r", "-z", "--no-renames", "--name-status", parents[0], commit).split(b"\0")
-        for status, path in zip(fields[0::2], fields[1::2]):
-            status, path = status.decode(), path.decode("utf-8", "surrogateescape")
+        fields = _git(repo, "diff-tree", "-r", "-z", "--no-renames", "--raw", parents[0], commit).split(b"\0")
+        for meta, path in zip(fields[0::2], fields[1::2]):
+            _, mode, _, _, status = meta.decode().lstrip(":").split(" ")
+            path = path.decode("utf-8", "surrogateescape")
+            status = "M" if status == "T" else status  # T: a file turned into a link, or back: a change of its kind
             found = change_problem(status[:1], path)
+            if found is None and status != "D" and mode not in REGULAR:  # a link would let a file outside git in
+                found = f"{path}: committed with git mode {mode}, not as a regular file"
             if found:
                 problems.append(f"commit {commit[:12]}: {found}")
             elif status == "A" and path.startswith("audit/checkpoints/"):
@@ -227,6 +234,46 @@ def make_fresh_world(freeze_ref, world_out, record_out, repo=None):
 
 # ---- the release mode of the release check
 
+def unsafe_paths(repo):
+    """{path: why} for every release input on disk that is not a plain file or folder reached without a symbolic
+    link: release/ and everything under it, audit/checkpoints/ and its files. Nothing is followed. A path listed here,
+    or under one, is never read (review round 2, finding N3)."""
+    repo, bad = Path(repo), {}
+
+    def walk(path):
+        try:
+            mode = os.lstat(path).st_mode
+        except FileNotFoundError:
+            return
+        if stat.S_ISLNK(mode):
+            bad[path] = "a symbolic link"
+        elif stat.S_ISDIR(mode):
+            for child in sorted(os.listdir(path)):
+                walk(path.joinpath(child))
+        elif not stat.S_ISREG(mode):
+            bad[path] = "not a regular file"
+
+    walk(repo.joinpath("release"))
+    audit_dir = repo.joinpath("audit")
+    if audit_dir.is_symlink():
+        bad[audit_dir] = "a symbolic link"
+    else:
+        walk(audit_dir.joinpath("checkpoints"))
+    return bad
+
+
+def run_readable(state, out, run_id):
+    """Whether every file of a run folder that the score step reads may be read."""
+    return all(readable(state, Path(out, run_id, name)) for name in ("manifest.json", "items.jsonl"))
+
+
+def readable(state, path):
+    """Whether a release input may be read: neither it nor a folder above it, up to the repository, is listed by
+    unsafe_paths."""
+    path = Path(path)
+    return not any(path == bad or bad in path.parents for bad in state["bad"])
+
+
 def prepare(release, scratch):
     """The state the release mode starts from: the freeze check's problems, the world to judge and its trust anchor
     and, for the fresh world, the replayed generation. Raises ReleaseRefused when no freeze commit can be found or
@@ -234,13 +281,18 @@ def prepare(release, scratch):
     from .release_check import FROZEN_WORLD_HASH
     repo = Path(release.get("repo") or records.REPO)
     freeze, fresh = resolve(repo, release["freeze"]), bool(release.get("fresh"))
-    state = {"repo": repo, "freeze": freeze, "fresh": fresh, "problems": freeze_problems(repo, freeze),
+    bad = unsafe_paths(repo)
+    state = {"repo": repo, "freeze": freeze, "fresh": fresh, "scratch": Path(scratch), "bad": bad,
+             "problems": freeze_problems(repo, freeze) + [f"{path.relative_to(repo).as_posix()} is {why}; it is not read"
+                                                          for path, why in sorted(bad.items())],
              "anchor": FROZEN_WORLD_HASH, "world": repo.joinpath("data", "world"), "generation": None,
-             "runs": None, "from_logs": {}, "log_lines": {}, "unbounded": set()}
+             "runs": None, "from_logs": {}, "log_lines": {}, "unbounded": set(), "input_hashes": {}}
     if fresh:
         replayed, world = generation(repo, freeze, scratch)
         path = repo.joinpath(GENERATION)
         try:
+            if not readable(state, path):
+                raise OSError("not read")
             recorded = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             recorded = None
@@ -254,20 +306,37 @@ def prepare(release, scratch):
     return state
 
 
-def no_fresh_world(state, run_set, targets_sha256):
-    return {"result": NO_FRESH_WORLD, "run_set": run_set, "world_hash": None, "targets_sha256": targets_sha256,
-            "mechanism_only": True, "not_eligible_because": list(state["problems"]), "failed": [],
-            "cost_assumption": None, "runs": None, "targets": None, "information": None}
+def no_fresh_world(state, problems, run_set, targets_sha256):
+    """The result when the replay accepts no world. NO FRESH WORLD only with a committed record that matches the
+    replay and an otherwise eligible freeze; any problem makes it NOT ELIGIBLE (review round 2, finding N1). Either
+    way the replayed generation, all ten rejections, is in the release block."""
+    return {"result": "NOT ELIGIBLE" if problems else NO_FRESH_WORLD, "run_set": run_set, "world_hash": None,
+            "targets_sha256": targets_sha256, "mechanism_only": True, "not_eligible_because": list(problems),
+            "failed": [], "cost_assumption": None, "runs": None, "targets": None, "information": None,
+            "release": summary(state, [], {})}
+
+
+def input_hashes(public, state):
+    """{item ID: the hash of its framed bundle}, made again from the checked bytes of the world's public files, as
+    the run step makes it, so a log's own input hash is never trusted (review round 2, finding N4)."""
+    from .run import bundles
+    folder = state["scratch"].joinpath("checked-world")
+    for name, data in public.items():
+        folder.joinpath(name).parent.mkdir(parents=True, exist_ok=True)
+        folder.joinpath(name).write_bytes(data)
+    return {item["item_id"]: records.content_hash(item["evidence"]) for item in bundles(folder)}
 
 
 def expected_out(state):
     return state["repo"].joinpath("release", "fresh" if state["fresh"] else "frozen")
 
 
-def _sums_problems(out):
+def _sums_problems(out, state):
     """Every file of the output folder must be listed once in its SHA256SUMS with its own hash, and every listed
     file must exist."""
     path = out.joinpath("SHA256SUMS")
+    if not readable(state, path) or not readable(state, out):
+        return []  # unsafe_paths has said why
     if not path.is_file():
         return [f"{out.name}/SHA256SUMS is missing"]
     listed, problems = {}, []
@@ -278,43 +347,49 @@ def _sums_problems(out):
         if name in listed:
             problems.append(f"SHA256SUMS lists {name} twice")
         listed[name] = digest
-    present = {p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file()} - {"SHA256SUMS"}
+    present = {Path(top, name).relative_to(out).as_posix() for top, _, names in os.walk(out) for name in names}
+    present -= {"SHA256SUMS"}
     problems += [f"{name} is in the output folder but not in SHA256SUMS" for name in sorted(present - set(listed))]
     problems += [f"SHA256SUMS lists {name}, which is not in the output folder" for name in sorted(set(listed) - present)]
     problems += [f"{name} does not match its hash in SHA256SUMS" for name in sorted(present & set(listed))
-                 if records.sha256(out.joinpath(name).read_bytes()) != listed[name]]
+                 if readable(state, out.joinpath(name)) and records.sha256(out.joinpath(name).read_bytes()) != listed[name]]
     return problems
 
 
 def inventory(out, index, run_set, state):
     """The runs of a release world's output folder, which must be exactly what its index lists: (every run ID found
-    in the index or as a folder, problems). One run set, at most five runs, nothing unlisted (DEC-W2-08-CHOICES)."""
+    in the index or as a folder, {run ID: its index state}, problems). One run set, at most five runs, nothing unlisted
+    (DEC-W2-08-CHOICES). Nothing unsafe_paths lists is read."""
     problems = []
     if Path(out).resolve() != expected_out(state).resolve():
         problems.append(f"the run output is not {expected_out(state).relative_to(state['repo'])}")
     entries = [entry for entry in index["runs"] if isinstance(entry, dict) and isinstance(entry.get("run_id"), str)]
     indexed = [entry["run_id"] for entry in entries]
-    folders = sorted(p.name for p in Path(out).iterdir() if p.is_dir() and p.name != "sets") if Path(out).is_dir() else []
+    listing = sorted(Path(out).iterdir()) if readable(state, out) and Path(out).is_dir() else []
+    folders = sorted(p.name for p in listing if p.name != "sets" and  # a linked run folder still counts as a run
+                     ((p.is_dir() and not p.is_symlink()) or (p.is_symlink() and re.fullmatch(RUN_ID, p.name))))
     problems += [f"{name} is a run folder that the index does not list" for name in folders if name not in indexed]
     problems += [f"{name} is listed in the index but has no run folder, so no log" for name in indexed
                  if name not in folders]
     problems += [f"{name} is not a run ID" for name in folders if not re.fullmatch(RUN_ID, name)]
     for name in folders:
-        problems += [f"{name}/{p.name} is not a file a run writes" for p in Path(out, name).iterdir()
-                     if p.name not in RUN_FILES]
+        if readable(state, Path(out, name)):
+            problems += [f"{name}/{p.name} is not a file a run writes" for p in Path(out, name).iterdir()
+                         if p.name not in RUN_FILES]
     sets = sorted({entry.get("run_set") for entry in entries}, key=str)
     if len(sets) > 1:
         problems.append(f"the output holds {len(sets)} run sets; a release world allows one")
     if sets and sets != [run_set]:
         problems.append(f"run set {str(run_set)[:8]} is not the one run set of the output")
     sets_folder = Path(out).joinpath("sets")
-    if sets_folder.is_dir():
+    if readable(state, sets_folder) and sets_folder.is_dir():
         problems += [f"sets/{p.name} is not the set file of this run set" for p in sets_folder.iterdir()
                      if p.name != f"{run_set}.json"]
     runs = sorted(set(indexed) | set(folders))
     if len(runs) > MAX_RUNS:
         problems.append(f"{len(runs)} runs, more than the {MAX_RUNS} a release world allows")
-    problems += _sums_problems(Path(out))
+    problems += _sums_problems(Path(out), state)
+    state["run_sets"] = {entry["run_id"]: entry.get("run_set") for entry in entries}
     states = {entry["run_id"]: entry.get("state") for entry in entries}
     return runs, states, problems
 
@@ -324,14 +399,17 @@ def read_log(out, run_id, state_of_run, state, expected):
     record that has the record shape).
     A completed or aborted run needs its committed checkpoint, and its log must verify against it
     (DEC-W2-08-CHECKPOINTS). A run that never finished has none: every complete record present is checked as a chain
-    all the same, and they are marked unverified. Its first record must bind it to this run, run set, freeze commit
-    and world. Every record that has the shape of a recommendation for an item of this world is counted, even when
+    all the same, and they are marked unverified. Its first record must bind it to this run, the full run-set ID its
+    index entry names, the freeze commit and the world, and each recommendation's input hash must be the one made
+    again from the checked world (review round 2, findings N2 and N4). Every record that has the shape of a recommendation for an item of this world is counted, even when
     the log fails its check, so no unsafe answer is lost; the failure makes the set not eligible."""
     problems, path = [], Path(out).joinpath(run_id, audit.LOG)
-    if not path.is_file():
-        return [], "no log", [f"{run_id}: it has no audit log"], []
+    if not readable(state, path) or not path.is_file():
+        return [], "no log", [f"{run_id}: it has no audit log that can be read"], []
     data = path.read_bytes()
     committed = state["repo"].joinpath("audit", "checkpoints", f"{run_id}.json")
+    if not readable(state, committed):
+        committed = None  # a link is never followed: the run counts as having no committed checkpoint
     lines = [line for line in data.split(b"\n")[:-1]]  # complete lines only: a killed run may leave a cut-off tail
     parsed = []
     for line in lines:
@@ -343,7 +421,7 @@ def read_log(out, run_id, state_of_run, state, expected):
             parsed.append(record)
     ended = any(record["event"] == "run_ended" for record in parsed)
     finished = state_of_run in ("completed", "aborted") or (state_of_run is None and ended)
-    if committed.is_file():
+    if committed is not None and committed.is_file():
         try:
             trusted = json.loads(committed.read_text(encoding="utf-8"))
         except ValueError:
@@ -365,13 +443,16 @@ def read_log(out, run_id, state_of_run, state, expected):
     if not finished and ended:
         problems.append(f"{run_id}: its log ends the run, but the index does not list it as finished")
     started = parsed[0] if parsed and parsed[0]["event"] == "run_started" else None
-    binding = {"run_set": None, "commit": state["freeze"], "world_hash": state["anchor"]}
+    binding = {"commit": state["freeze"], "world_hash": state["anchor"]}
+    indexed = state["run_sets"].get(run_id)
     if started is None:
         problems.append(f"{run_id}: its log does not begin with the run's start")
     else:
-        binding["run_set"] = started["run_set"]
-        if not run_id.endswith(started["run_set"][:8]):
-            problems.append(f"{run_id}: its log names run set {started['run_set'][:8]}, not the run's own")
+        if indexed is None:
+            problems.append(f"{run_id}: its log's run set cannot be checked, because the index does not list the run")
+        elif started["run_set"] != indexed or not run_id.endswith(indexed[:8]):
+            problems.append(f"{run_id}: its log names run set {started['run_set']}, not the one its index entry names, "
+                            f"{indexed}")
         for name in ("commit", "world_hash"):
             if started[name] != binding[name]:
                 problems.append(f"{run_id}: its log's {name} is not the release's ({name} {started[name]})")
@@ -382,13 +463,20 @@ def read_log(out, run_id, state_of_run, state, expected):
                or expected[record["item_id"]] != record["twin"]]
     if unknown:
         problems.append(f"{run_id}: its log names {len(unknown)} items that are not this world's (first {unknown[0]})")
+    hashes = state["input_hashes"]
+    wrong = [record["item_id"] for record in counted if record["item_id"] not in unknown
+             and record["input_sha256"] != hashes.get(record["item_id"])]
+    if wrong:
+        problems.append(f"{run_id}: its log gives {len(wrong)} input hashes that are not the checked world's framed "
+                        f"bundles (first {wrong[0]})")
     return [record for record in counted if record["item_id"] not in unknown], vouched, problems, parsed
 
 
-def items_problem(run_id, records_, lines, manifest):
+def items_problem(run_id, records_, lines, manifest, hashes):
     """Why a completed run's checked log does not tell the same story as its scored items, or None: its last record
     ends the run as completed with the items file's hash and count, and each recommendation is the record the run
-    step makes from that item row, for exactly the same items."""
+    step makes from that item row, for exactly the same items, with the input hash `hashes` makes again from the
+    checked world, never the log's own (review round 2, finding N4)."""
     ended = [record for record in records_ if record["event"] == "run_ended"]
     if not ended or ended[-1] is not records_[-1] or ended[-1]["state"] != "completed" \
             or ended[-1]["items_sha256"] != manifest["outputs"]["sha256"] or ended[-1]["items"] != len(lines):
@@ -403,7 +491,7 @@ def items_problem(run_id, records_, lines, manifest):
         return f"{run_id}: its log and its items file do not hold the same items"
     for line in lines:
         record = logged[line["item_id"]]
-        made = audit.recommendation(line, record["input_sha256"])
+        made = audit.recommendation(line, hashes.get(line["item_id"]))
         if any(record[name] != value for name, value in made.items()):
             return f"{run_id}: its log's answer for {line['item_id']} is not its items file's"
     return None
@@ -457,7 +545,7 @@ def check_logs(out, run_states, loaded, expected, state):
         counted, vouched, found, parsed = read_log(out, run, run_states.get(run), state, expected)
         problems += found
         if run in loaded:
-            mismatch = items_problem(run, parsed, loaded[run][1], loaded[run][0]) if parsed else None
+            mismatch = items_problem(run, parsed, loaded[run][1], loaded[run][0], state["input_hashes"]) if parsed else None
             problems += [mismatch] if mismatch else []
         else:
             state["log_lines"][run] = [as_line(record) for record in counted]
@@ -500,7 +588,7 @@ def finish(result, state):
     """The release mode's result. On the fresh world only the four safety counts decide; the rates, the cost and the
     modelled time are shown for information beside the frozen-world targets, with no pass or fail."""
     from .release_check import COUNTS
-    if not state["fresh"] or result["result"] in (NO_FRESH_WORLD,):
+    if not state["fresh"] or state["world"] is None:  # no fresh world: no_fresh_world has decided
         return result
     for name, part in (result["targets"] or {}).items():
         if name not in COUNTS:
@@ -549,6 +637,13 @@ def signoff_problem(repo=None):
     accepts against the run set's own cost, summed over every run of it in release/frozen, replaced runs included."""
     from .release_check import QUALIFIED_PASS
     repo = Path(repo or records.REPO)
+    bad = unsafe_paths(repo)
+    log = repo.joinpath(RELEASE_LOG)
+    if log.is_symlink() or (log.exists() and not log.is_file()):
+        bad[log] = "not a regular file"
+    for path in (repo.joinpath("release", "check-frozen.json"), repo.joinpath("release", "frozen", "index.json"), log):
+        if not readable({"bad": bad}, path):
+            return f"{path.relative_to(repo).as_posix()} is a symbolic link or not a regular file; it is not read"
     try:
         result = json.loads(repo.joinpath("release", "check-frozen.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):

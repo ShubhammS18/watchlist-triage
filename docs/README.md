@@ -20,6 +20,6 @@ the baseline, read `baseline-report.md`.
 | `w2-04-ci-drift.md` | W2-04-ci-drift | Approved, 31 Oct 2026 (review round 2) | the current doc for the world drift check and its GitHub workflow |
 | `w2-05-audit-log.md` | W2-05-audit-log | Approved, 31 Oct 2026 (review round 2) | the current doc for the run audit log, its verify command and the owner's checkpoint step |
 | `w2-06-boundary-checks.md` | W2-06-boundary-checks | Approved, 1 Nov 2026 (review round 2) | the current doc for the boundary checks; the run's abort record and the index cause now hold a hash of the exception text, and a refusal describes a bad value by its type and a hash (`DEC-W2-06-CHOICES`) |
-| `w2-08-release-protocol.md` | W2-08-release-protocol | Built, for review round 2 (round 1 reviewed the design only, `DEC-W2-08-REVIEW-BUDGET`) | the current doc for the seed function, the generation record, the release mode of the release check and the release steps (`DEC-W2-08-CHOICES`, `DEC-W2-08-CHECKPOINTS`) |
+| `w2-08-release-protocol.md` | W2-08-release-protocol | Built, for review round 3 (round 1 reviewed the design only, round 2 the code; `DEC-W2-08-REVIEW-BUDGET`) | the current doc for the seed function, the generation record, the release mode of the release check and the release steps (`DEC-W2-08-CHOICES`, `DEC-W2-08-CHECKPOINTS`) |
 
 Review reports are in `reviews/`; the evidence behind the T07 report is in `evidence/t07/`.
