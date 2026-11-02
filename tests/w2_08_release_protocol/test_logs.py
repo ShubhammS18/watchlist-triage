@@ -4,6 +4,8 @@ log must end with its items file's hash and give, item by item, the answers its 
 finished is counted from its log as it stands, marked unverified, but every record present is checked and bound to
 its run, run set, freeze commit and world. A run folder the index does not list is caught, and counted."""
 import json
+import os
+import sys
 from pathlib import Path
 
 import release_common as rc
@@ -276,3 +278,52 @@ def test_a_killed_runs_input_hashes_are_checked_against_the_checked_world(cloned
     assert result["result"] == "NOT ELIGIBLE"
     assert any(p.startswith(f"{chosen['aborted']}: its log gives 1 input hashes that are not the checked world's")
                for p in result["not_eligible_because"]), result["not_eligible_because"]
+
+
+WATCHED = {"target": None, "opened": [], "busy": False}  # read by one audit hook, installed once per process
+
+
+def _watch(event, args):
+    """Notes every open whose path, followed to its end, is the watched file. An audit hook cannot be removed, so it
+    does nothing while no file is watched."""
+    if event != "open" or WATCHED["target"] is None or WATCHED["busy"] or not isinstance(args[0], (str, bytes, os.PathLike)):
+        return
+    WATCHED["busy"] = True
+    try:
+        if os.path.realpath(os.fsdecode(args[0])) == WATCHED["target"]:
+            WATCHED["opened"].append(os.fsdecode(args[0]))
+    finally:
+        WATCHED["busy"] = False
+
+
+def test_the_documented_relative_command_never_reads_a_linked_index(cloned, frozen_pool, tmp_path, monkeypatch, capsys):
+    """Review round 3, finding R3-1: `acceptance release/frozen RUN_SET --release FREEZE`, run from the repository
+    exactly as the design doc shows it, with release/frozen/index.json a link to a file outside git. The link's target
+    is never opened: an audit hook watches every open, and the target is made unreadable, so a read would also fail."""
+    from test_freeze import linked
+    from harness.__main__ import main
+    if not getattr(sys, "_w2_08_watch", False):
+        sys.addaudithook(_watch)
+        sys._w2_08_watch = True
+    clone, freeze = cloned
+    out, chosen = rc.assemble(frozen_pool, ["aborted_unsafe", "valid1", "valid2", "valid3"], tmp_path)
+    outside = tmp_path.joinpath("outside")
+    outside.mkdir()
+    rc.publish(clone, freeze, {"frozen": out}, before_commit=lambda c: linked(c, "release/frozen/index.json", outside))
+    run_set = rc.records.read_index(frozen_pool["out"])["runs"][0]["run_set"]
+    target = outside.joinpath("index.json")
+    target.chmod(0)
+    WATCHED.update(target=os.path.realpath(target), opened=[])
+    monkeypatch.chdir(clone)
+    try:
+        with rc.at(clone):
+            code = main(["acceptance", "release/frozen", run_set, "--release", freeze])
+    finally:
+        WATCHED["target"] = None
+        target.chmod(0o600)
+    said = capsys.readouterr()
+    assert WATCHED["opened"] == [] and "refused" not in said.err, (WATCHED["opened"], said.err)
+    result = json.loads(said.out)
+    assert code == 1 and result["result"] == "NOT ELIGIBLE" and result["failed"] == ["true_matches_closed"]
+    assert "release/frozen/index.json is a symbolic link; it is not read" in result["not_eligible_because"]
+    assert set(result["release"]["counted_from_logs"]) == set(chosen.values())

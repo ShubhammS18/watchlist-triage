@@ -1,9 +1,12 @@
 # Release protocol (W2-08)
 
-Status: Built, for review round 3. Round 1 reviewed the design only, before any code (`DEC-W2-08-REVIEW-BUDGET`):
-it found two blockers and six SHOULDs, and the owner accepted all eight. Round 2 reviewed the code: it found two new
-blockers and two SHOULDs, and the owner accepted all four. The changes are listed under "Review round 1" and "Review
-round 2". Requirements: FR-23 and AC-19, and AC-1, AC-2, AC-5 and AC-12 on the fresh-seed world. Rules:
+Status: Built, for review round 4, the last of the budget (`DEC-W2-08-REVIEW-BUDGET`). The three earlier rounds:
+- **Round 1** reviewed the design only, before any code. It found two blockers and six SHOULDs.
+- **Round 2** reviewed the code. It found two new blockers and two SHOULDs.
+- **Round 3** found one blocker.
+
+The owner accepted every finding. The changes are listed under "Review round 1", "Review round 2" and "Review round
+3". Requirements: FR-23 and AC-19, and AC-1, AC-2, AC-5 and AC-12 on the fresh-seed world. Rules:
 `DEC-W2-RELEASE-RULES`, as built by `DEC-W2-08-CHOICES` and `DEC-W2-08-CHECKPOINTS`, within
 `DEC-W2-01-ELIGIBILITY-3`, `DEC-W2-01-PASS-LABEL`, `DEC-W2-01-RUN-RULE` and `DEC-W2-05-CHOICES`.
 
@@ -44,6 +47,12 @@ and this doc.
 | N3. BLOCKER: an allowed path could be committed as a symbolic link | In every commit after the freeze, an allowed file must be committed with a regular-file git mode (100644 or 100755). A link (120000) or a submodule (160000) is caught, and so is a file turned into a link (step 1). Before anything is read, the check also looks on disk, without following anything, at `release/` and everything under it, and at `audit/checkpoints/` and its files. A link or a non-regular file there is a problem, and it is never read (step 3). |
 | N2. A killed run's log was bound by an eight-character prefix | Every log's first record must name the full 64-character run-set ID of the run's index entry. A log of a run the index does not list is reported as having no set identity that can be checked (step 3). |
 | N4. A completed log's input hash was self-supplied | The input hash of every item is made again from the checked bytes of the world's public files and the framing code, as the run step makes it. A completed log's records are compared with what `audit.recommendation` makes from the items row and that hash. Every other log's input hashes are compared with it too (step 3). |
+
+## Review round 3
+
+| Finding | What changed |
+|---|---|
+| R3-1. BLOCKER: a relative `OUT` slipped past the guard against links | `check()` makes the release output folder absolute once, before any release-mode read, without following any link (`Path.absolute()`, then a lexical `os.path.normpath`). The guard's list of links and non-regular files holds absolute paths built from the repository, so the two are now compared like with like. The documented command, which passes the relative `release/frozen`, therefore never reads a linked file (step 3). |
 
 ## The seed function
 
@@ -179,7 +188,9 @@ audit logs are read before the hidden files.
 
 ### 3. The runs and their logs
 
-**Nothing is read through a link** (review round 2, finding N3). Before any release input is read, the check walks
+**Nothing is read through a link** (review round 2, finding N3). `OUT` is first made absolute, without following any
+link, so it compares like with like with the absolute paths below (review round 3, finding R3-1). Before any release
+input is read, the check walks
 `release/` and everything under it, and `audit/checkpoints/` and its files, with `lstat`, following nothing. Each
 symbolic link or non-regular file it finds is a problem, and nothing at or under that path is read:
 - a linked `index.json` leaves the index unread, so every run is unlisted and counted from its log;
@@ -425,7 +436,11 @@ the clone while a run is made or a release is checked, and nothing is written in
     their logs, so the unsafe answer still fails the set (N3);
   - a killed run's log naming another run-set ID with the same first eight characters is NOT ELIGIBLE (N2);
   - a changed input hash, in a completed run's log chained again with its checkpoint following, or in a killed run's
-    log, is NOT ELIGIBLE (N4).
+    log, is NOT ELIGIBLE (N4);
+  - the documented command, `acceptance release/frozen RUN_SET --release FREEZE` run from the repository with the
+    relative path, never opens the target of a linked `index.json` (R3-1). An audit hook watches every open, and the
+    target is made unreadable, so a read would also fail. The result is NOT ELIGIBLE with the unsafe answer counted
+    from the logs.
 - **Fresh** (`test_fresh.py`):
   - safe runs far over the over-escalation target give PASS (safety counts only), with the rates marked as
     information;
@@ -441,7 +456,7 @@ the clone while a run is made or a release is checked, and nothing is written in
   codes. The w2-01, t06, t02 and w2-02 gates pass unchanged.
 - **This doc** (`test_doc.py`): it states that push-before-generation cannot be proven by code, and that its evidence
   goes in the release log.
-- **Mutations** (`test_mutation.py`, with T06's proof machinery): each of thirteen deliberate breakages, each in its own
+- **Mutations** (`test_mutation.py`, with T06's proof machinery): each of fourteen deliberate breakages, each in its own
   shared clone with the uncommitted work laid over it, makes its named guard test fail, while the guard passes on an
   untouched clone.
   - **When they run:** as in T06 (`DEC-T06-GATE-TIME`), by hand before completion with `W2_08_MUTATION=1`, recorded
@@ -462,7 +477,8 @@ the clone while a run is made or a release is checked, and nothing is written in
     - a link committed at an allowed path let through (N3);
     - release inputs on disk read through links (N3);
     - a killed run's log bound only by its run-set prefix (N2);
-    - a completed log's own input hash trusted (N4).
+    - a completed log's own input hash trusted (N4);
+    - a relative release output folder compared with the guard's absolute paths (R3-1).
 
 ## Gate timings
 
@@ -509,6 +525,23 @@ charger in and the fixed benchmark checked. The `tests` gate was run three times
 The slowest `tests` run, 75.60 s, is 24 s under the 100-second aim and 44 s under the limit. The mutation proofs by
 hand, with all thirteen breakages: 2 passed in 40.24 s, every breakage caught. Memory in use was 1,476 MB before and
 peaked at 1,791 MB.
+
+**After the round-3 fix** (2 Nov 2026), all five gates were run again in the same way, with the `tests` gate run
+three times.
+
+| Gate | Result | Time | Benchmark | Memory in use, before and peak |
+|---|---|---|---|---|
+| `tests`, run 1 | 129 passed, 1 skipped, 1 xfailed | 74.94 s | 0.798 s | 1,772 MB, 1,920 MB |
+| `tests`, run 2 | 129 passed, 1 skipped, 1 xfailed | 76.13 s | 0.791 s | 1,806 MB, 1,993 MB |
+| `tests`, run 3 | 129 passed, 1 skipped, 1 xfailed | 75.17 s | 0.790 s | 1,794 MB, 1,921 MB |
+| `w2-01` | 68 passed | 69.87 s | 0.800 s | 1,755 MB, 1,956 MB |
+| `t06` | 340 passed, 6 skipped | 66.57 s | 0.796 s | 1,766 MB, 2,048 MB |
+| `t02` | 699 passed | 27.27 s | 0.795 s | 1,811 MB, 1,846 MB |
+| `w2-02` | 68 passed | 6.07 s | 0.788 s | 1,756 MB, 1,862 MB |
+
+The slowest `tests` run, 76.13 s, is 24 s under the 100-second aim and 44 s under the limit. The mutation proofs by
+hand, with all fourteen breakages: 2 passed in 39.07 s, every breakage caught. Memory in use was 1,769 MB before and
+peaked at 2,024 MB.
 
 **The first mutation proofs by hand**, `W2_08_MUTATION=1 .venv/bin/python -m pytest tests/w2_08_release_protocol/test_mutation.py
 -q -p no:cacheprovider`, on the charger under `tools/memory_guard.sh`: 2 passed in 28.05 s, with all eight breakages

@@ -1,4 +1,4 @@
-"""W2-08: the mutation proofs of the release protocol. Thirteen deliberate breakages, each applied to its own shared clone
+"""W2-08: the mutation proofs of the release protocol. Fourteen deliberate breakages, each applied to its own shared clone
 of the repository with the uncommitted work laid over it, must each make its named guard test fail, while the same
 test passes on an untouched clone; the real files are not changed. The proof machinery is T06's
 (tests/t06_harness/mutations.py), with W2-01's kind of copy (tests/w2_01_acceptance/test_mutation.py).
@@ -74,6 +74,10 @@ BREAKAGES = (
      '        made = audit.recommendation(line, hashes.get(line["item_id"]))',
      '        made = audit.recommendation(line, record["input_sha256"])',
      W + "test_logs.py::test_a_completed_logs_input_hash_is_made_again_from_the_checked_world", ASSERTS),
+    # review round 3
+    ("a relative release output folder is compared with the guard's absolute paths", "harness/release_check.py",
+     "    out_dir = Path(os.path.normpath(Path(out_dir).absolute()))\n", "    out_dir = Path(out_dir)\n",
+     W + "test_logs.py::test_the_documented_relative_command_never_reads_a_linked_index", ASSERTS),
 )
 
 
@@ -94,7 +98,7 @@ def make_copy(folder, mutation=None):
 
 
 def test_every_breakage_names_a_guard_test_that_exists_and_a_text_that_occurs_once():
-    assert len(BREAKAGES) == 13
+    assert len(BREAKAGES) == 14
     for what, name, old, new, guard, expected in BREAKAGES:
         path, test = guard.split("::")
         assert f"def {test}(" in REPO.joinpath(path).read_text(encoding="utf-8"), guard

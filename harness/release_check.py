@@ -31,6 +31,7 @@ are information only and bound nothing. The cost target passes only if the known
 known cost and the bound are both given; the Console total is reconciled against the harness's cost at review.
 """
 import json
+import os
 import subprocess
 import tempfile
 from decimal import Decimal
@@ -211,6 +212,9 @@ def check(out_dir, run_set, world=records.REPO.joinpath("data", "world"), target
     if release is None:
         return _check(out_dir, run_set, world, targets_path)
     from . import release as protocol
+    # once, before any release-mode read: absolute, with no link followed, so that the guard against links compares
+    # it with the absolute paths it lists (review round 3, finding R3-1)
+    out_dir = Path(os.path.normpath(Path(out_dir).absolute()))
     with tempfile.TemporaryDirectory() as scratch:
         state = protocol.prepare(release, scratch)
         return protocol.finish(_check(out_dir, run_set, state["world"], targets_path, state), state)
