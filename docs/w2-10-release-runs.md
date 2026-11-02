@@ -2,7 +2,8 @@
 
 Status: design, 2 Nov 2026. Not yet reviewed: this design is round 1 of at most four (`DEC-W2-10-REVIEW-BUDGET`).
 Requirements: FR-23, AC-19, and AC-1 to AC-6 and AC-12 on the release worlds. Rules: `DEC-W2-RELEASE-RULES`, as built
-by `DEC-W2-08-CHOICES` and `DEC-W2-08-CHECKPOINTS`, and done and checked as `DEC-W2-10-CHOICES` says.
+by `DEC-W2-08-CHOICES` and `DEC-W2-08-CHECKPOINTS`, and done and checked as `DEC-W2-10-CHOICES` and `DEC-W2-10-STOPS`
+say.
 
 This task runs the release and publishes it. It adds three things, and no harness, agent or wrapper code:
 - the gate tests (`tests/w2_10_release_runs/`), which check the published release from committed files only and
@@ -66,7 +67,7 @@ and 7,200 s. The wrapper sets those limits itself, so the guard's 110-second def
 2. **The benchmark limit is fixed at 0.82 s**, and the wrapper's setting overrides the environment. The W2-08
    timings on the charger had benchmarks of 0.788 to 0.850 s. So the wrapper can refuse on a slow day; on battery
    on 2 Nov 2026 the benchmark took 1.417 s. A refusal starts nothing: no index entry, no cost, and no run used up.
-   Close other programs and try again. See open point O2.
+   Close other programs and try again. The limit stays as it is (`DEC-W2-10-STOPS`).
 3. **It asks for `--rerun-cause` after an aborted, unfinished or infrastructure-invalid run** in the same output
    folder, and records the cause in the index and the manifest. The release log copies it.
 
@@ -94,8 +95,11 @@ REPO=~/projects/watchlist-triage   REL=~/release-1   CO=$REL/checkout   PY=$REPO
 2. Run `$PY -m harness verify-log OUT/<run_id>/audit.jsonl OUT/<run_id>/checkpoint.json`.
 3. Write the run's row in the release log.
 
-**Stop rules** (`DEC-W2-10-CHOICES`): if a run costs over USD 0.30, or W2-10's Console spend passes USD 2.00, stop
-before the next run and talk.
+**Stop rules:** stop before the next run and talk if any of these happens:
+- a run costs over USD 0.30 (`DEC-W2-10-CHOICES`);
+- W2-10's Console spend passes USD 2.00 (`DEC-W2-10-CHOICES`);
+- the wrapper prints its refusal checkpoint after a run, meaning more than 2% of the run's items were refused
+  (`DEC-W2-10-STOPS`).
 
 ### 1. Rehearsal, before the freeze (owner)
 
@@ -141,8 +145,9 @@ date -u +%FT%TZ; git ls-remote --tags origin release-1-freeze    # both outputs 
 - **A failing gate or a dirty tree:** fix it in a new commit before tagging.
 - **A rejected push:** never force-push a freeze. Fetch and look.
 - **A mistake found after the push but before generation:** a new freeze tagged `release-1-freeze-2`, with the
-  reason in the log. No world was made from the first freeze. The gate's tag names would then change too (open
-  point O1).
+  reason in the log. No world was made from the first freeze. Use the new tag wherever `release-1-freeze` appears
+  below. The gate still works, because it reads the freeze commit from the generation record, not from a tag name
+  (`DEC-W2-10-STOPS`).
 
 ### 3. Generate the fresh world (owner, only after the push)
 
@@ -215,17 +220,22 @@ For each world:
    If the result is NOT ELIGIBLE for a bookkeeping reason, such as a checkpoint not committed or a copy mismatch,
    fix the bookkeeping in an allowed file and check again. Any other result is the result.
 3. **Sign-off (owner).** If `check-frozen.json` is the qualified pass, add the sign-off row (see the release log).
-4. **Publish (owner).** Before the tag, the tree must be clean, the release log complete, and these must pass, run
-   directly with pytest, not through Genesis:
+4. **Publish (owner).** The tree must be clean and the release log complete. Make the publish commit and tag it
+   locally only, because the real-release test stays xfail until the tag exists. Then run these directly with
+   pytest, not through Genesis:
    - the W2-08 sign-off test;
-   - `tests/w2_10_release_runs` against the publish commit (open point O1).
+   - `tests/w2_10_release_runs`.
 
    ```
-   git commit -m "Release 1: publish"
-   git tag -a release-1 -m "Release 1" && git push origin main release-1
+   git commit -m "Release 1: publish" && git tag -a release-1 -m "Release 1"
+   # the two test runs; only if both pass:
+   git push origin main release-1
    ```
 
-   Only then the Genesis gates, the review round 4, the approval and completion. Revoke both keys.
+   If a test fails before the push, delete the local tag (`git tag -d release-1`), fix the allowed file, commit and
+   tag again. After the push, a tag is never moved.
+
+   Only then come the Genesis gates, review round 4, the approval and completion. Revoke both keys.
 
 ## The release log (`docs/release-log.md`)
 
@@ -240,7 +250,8 @@ Task W2-10-release-runs. Rules: DEC-W2-RELEASE-RULES, DEC-W2-08-CHOICES, DEC-W2-
 - Freeze commit: `<40 hex>`, tag `release-1-freeze`
 - Starting point: wave-2 spend USD 0.95 (docs/w2-02-attempts.md); Console balance USD 4.56 (owner, 2 Nov 2026)
 - Keys: w2-10-rehearsal (rehearsal), w2-10-release (release runs); both revoked after the publish
-- Stop rules: a run over USD 0.30, or W2-10 over USD 2.00, stops the release before the next run
+- Stop rules: a run over USD 0.30, W2-10 over USD 2.00, or the wrapper's refusal checkpoint stops the release before
+  the next run
 
 ## Rehearsal
 | Date | Run ID | Agent commit | Run set | State | Key figures | Harness USD | Console before | Console after | Spend USD | Peak memory MB | Note |
@@ -290,8 +301,8 @@ gate (`DEC-W2-10-CHOICES`). The checks:
 
 | | Check | Read from |
 |---|---|---|
-| G1 | **The freeze commit exists.** `release-1-freeze` is an ancestor of `release-1`. The freeze commit named by `release/generation.json`, by both check outputs (`release.freeze_commit`) and by the log's freeze line is that commit. | tags, the record, the outputs, the log |
-| G2 | **Nothing the freeze pins changed after it:** `release.freeze_problems(clone, freeze)` is empty, for every commit up to `release-1` | git history |
+| G1 | **The freeze commit exists.** The freeze commit is read from `release/generation.json` (`freeze_commit`), not from a tag name (`DEC-W2-10-STOPS`). It is a commit in the clone and an ancestor of `release-1`. Both check outputs (`release.freeze_commit`) and the log's freeze line name the same commit. | the record, git, the outputs, the log |
+| G2 | **A change to what the freeze pins is reported, not hidden:** `release.freeze_problems(clone, freeze)` is computed for every commit up to `release-1`. If it finds any problem, both published results are NOT ELIGIBLE and name each problem in `not_eligible_because`. If it finds none, no freeze problem is named. A broken freeze passes the gate when it is published consistently (`DEC-W2-10-STOPS`). | git history, the outputs |
 | G3 | **The seed is the function's:** every try's seed equals `release.fresh_seed(freeze, counter)`, with counters running 0, 1, … with no gap | the record |
 | G4 | **One accepted generation:** the committed record equals the check's own replay (`DEC-W2-10-CHOICES`), as G5's fresh output shows. Ten rejected tries with the result NO FRESH WORLD pass too. | the reproduced fresh output |
 | G5 | **The committed check output is what the check gives:** `python -m harness acceptance release/<world> <set> --release <freeze> [--fresh]` is run in the clone, and its standard output is byte-identical to `release/check-<world>.json` | the run output, the world, the replay |
@@ -300,9 +311,10 @@ gate (`DEC-W2-10-CHOICES`). The checks:
 | G8 | **The rehearsal came first, with the same code:** at least one rehearsal row. Every completed or aborted rehearsal has its checkpoint in the freeze's tree. Every rehearsal row's agent commit is an ancestor of the freeze, and the diff from it to the freeze touches only `tests/w2_10_release_runs/`, `docs/`, `.genesis/` and `audit/checkpoints/`. | the log, git |
 | G9 | **Published and consistent:** both check outputs are committed at `release-1`. The log's Results rows equal their results. The running total equals 0.95 plus every Spend USD in the log. | the log, the outputs |
 | G10 | **The sign-off:** `release.signoff_problem(clone)` is None, as in W2-08's sign-off test, here at the tag | the log, the outputs, the index |
-| G11 | **Push evidence present:** the "Freeze and push" section holds the freeze hash and `refs/tags/release-1-freeze`. It cannot show the order (Limits). | the log |
+| G11 | **Push evidence present:** the "Freeze and push" section holds the freeze hash and a `refs/tags/` line that names it. It cannot show the order (Limits). | the log |
 
-None of these asks whether the release passed: a published FAIL, NOT ELIGIBLE or NO FRESH WORLD passes the gate.
+None of these asks whether the release passed. A published FAIL, NOT ELIGIBLE (a broken freeze included) or NO FRESH
+WORLD passes the gate when it is consistent.
 
 **The dry run** (`test_rules.py`, review rounds 2 and 3) does these:
 - **Builds one made-up release** in a clone: a test freeze tagged `release-1-freeze`, a rehearsal checkpoint before
@@ -314,12 +326,16 @@ None of these asks whether the release passed: a published FAIL, NOT ELIGIBLE or
   - a wrong harness amount (G6);
   - a seed not from the function (G3);
   - an edited check output (G5);
-  - a code change after the freeze (G2);
+  - a code change after the freeze with a published result that does not say NOT ELIGIBLE (G2, G5);
   - a rehearsal checkpoint added after the freeze (G7, G8);
   - the generation record committed after a fresh-world checkpoint (G7);
   - a wrong running total (G9);
   - a missing push section (G11).
-- **Passes a made-up FAIL and a made-up NO FRESH WORLD,** each published consistently.
+- **Passes these, each published consistently:**
+  - a made-up FAIL;
+  - a made-up NO FRESH WORLD;
+  - a made-up broken freeze published as NOT ELIGIBLE;
+  - a made-up release with a second freeze tagged `release-1-freeze-2`.
 
 **Timing.** Genesis stops a gate at 120 s; the aim is under 100 s.
 - **What is known:**
@@ -333,21 +349,13 @@ None of these asks whether the release passed: a published FAIL, NOT ELIGIBLE or
   benchmark, and memory before and at peak are recorded each time.
 - **If it is over:** the made-up releases are shared further. The G checks themselves stay.
 
-## Open points for the owner, before round 1
+## Open points, settled (`DEC-W2-10-STOPS`, 2 Nov 2026)
 
-- **O1. The gate can fail with no way to fix it.**
-  - **A freeze problem:** the outcome makes "nothing the freeze pins changed after it" a gate check (G2). A freeze
-    problem cannot be undone, because undoing it is a change too. Such a release would be published as NOT ELIGIBLE
-    and could never complete the task. Should it then be closed as a new release (a new freeze and seed, as
-    `DEC-W2-RELEASE-RULES` says for a later agent), or should G2 report and not fail?
-  - **A second freeze** (`release-1-freeze-2`, step 2) changes the tag names the gate reads. Should the gate take
-    the freeze tag from the log's freeze line?
-- **O2. The wrapper's 0.82 s benchmark limit is fixed in code** (`baseline_run/wrapper.py`, `ENV`). Recent
-  benchmarks on the charger were 0.788 to 0.850 s, so it may refuse. A refusal costs nothing, but a change could
-  only be made before the freeze, as code under `DEC-T07-WRAPPER-CHECKS`.
-- **O3. The wrapper's refusal checkpoint.** After a run, the wrapper prints a "refusal checkpoint" when more than 2%
-  of items were refused (`DEC-T07-REFUSALS`). Should that also stop the release before the next run? It is not
-  among `DEC-W2-10-CHOICES`'s stop rules.
+| Point | Settled |
+|---|---|
+| O1. A freeze problem cannot be undone, so a gate that failed on it could never be passed; a second freeze changes the tag names | A broken freeze is reported, not failed: the check says NOT ELIGIBLE, that is published, and the gate checks that it is consistent (G2). The gate reads the freeze commit from the generation record (G1). |
+| O2. The wrapper's benchmark limit of 0.82 s may refuse on a slow day | It stays as it is: a refusal starts nothing and costs nothing. |
+| O3. The wrapper's refusal checkpoint is not among the stop rules | It is now a stop rule: more than 2% of a run's items refused stops the release before the next run. |
 
 ## Limits
 

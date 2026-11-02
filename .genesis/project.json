@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-11-02T13:19:59.721Z"
+    "updated_at": "2026-11-02T13:28:49.832Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2220,6 +2220,16 @@
       "status": "accepted",
       "source": "Owner, 2 Nov 2026; W2-10-release-runs pre-flight, section 6; follows DEC-W2-08-REVIEW-BUDGET",
       "recorded_at": "2026-11-02T13:19:59.721Z",
+      "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-10-STOPS",
+      "title": "A broken freeze is reported, and one more stop rule",
+      "text": "If something the freeze pins is found changed after it, the release check says not eligible and that result is published like any other; the gate checks that the published result is consistent, not that it passed. The gate reads the freeze commit from the generation record, not from a fixed tag name, so a second freeze made before any world was generated still works. If a run's refusals pass the wrapper's two per cent checkpoint, I stop before the next run, as with the cost rule. The benchmark limit stays as it is, since a refusal starts nothing and costs nothing.",
+      "status": "accepted",
+      "source": "Owner, 2 Nov 2026; W2-10-release-runs design, O1-O3; adds to DEC-W2-10-CHOICES",
+      "recorded_at": "2026-11-02T13:28:49.832Z",
       "paths": [],
       "tags": []
     }
