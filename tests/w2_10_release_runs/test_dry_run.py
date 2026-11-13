@@ -99,7 +99,28 @@ BREAKS = {  # name: (change, the check that must fail, a text its problem contai
     "a run over USD 0.30 with a run after it": (
         lambda m: m.log(spends={sorted(m.plans["frozen"])[0]: Decimal("0.31")}), "G12", "over 0.30"),
     "spend over USD 2.00 with a run after it": (lambda m: m.log(spends=_spend_all(m, "0.29")), "G12", "over 2.00"),
+    # review round 2
+    "a reason on a valid run's row": (
+        _log(lambda m, t: _row(m, t, "valid", lambda line: line.replace("| valid |  |", "| valid | fine |"))),
+        "G6", "valid or replaced"),
+    "a Results row for a world that is not a release world": (
+        _log(lambda m, t: t.replace("`release/check-frozen.json` | PASS |", "`release/check-frozen.json` | PASS |\n"
+                                    "| practice | `00000000` | `release/check-practice.json` | PASS |")),
+        "G9", "not a release world"),
+    "two Results rows for one world": (
+        _log(lambda m, t: t.replace("`release/check-frozen.json` | PASS |", "`release/check-frozen.json` | PASS |\n"
+                                    + next(line for line in t.split("\n") if "`release/check-frozen.json`" in line))),
+        "G9", "Results row of the frozen world"),
+    "a line of an items file that is not an item record": (
+        lambda m: _items(m, lambda lines: lines[:1] + [b"{not json"] + lines[2:]), "G12", "not an item record"),
 }
+
+
+def _items(made, change):
+    """Change the item lines of the first valid frozen-world run's items file."""
+    run = next(run_id for run_id, plan in sorted(made.plans["frozen"].items()) if plan == "valid")
+    path = made.clone.joinpath("release", "frozen", run, "items.jsonl")
+    path.write_bytes(b"\n".join(change(path.read_bytes().split(b"\n"))))
 
 
 @pytest.mark.parametrize("name", BREAKS)
@@ -137,17 +158,37 @@ def _built(tmp_path, practice, **variant):
     return made_up.build(tmp_path.joinpath("made"), practice, **variant)
 
 
+def _reproduced(made):
+    """Both worlds' check outputs from the documented command, so every published-result case checks G5 too (review
+    round 2, finding N4)."""
+    return {world: gate.reproduce(made.clone, world, made.run_set(world), made.freeze) for world in gate.WORLDS}
+
+
 def test_a_published_fail_passes(tmp_path, practice):
-    made = _built(tmp_path, practice, frozen=("valid",) * 3, fresh=("unsafe", "valid", "valid"))
+    made = _built(tmp_path, practice, frozen=("valid",), fresh=("unsafe", "valid", "valid"))
     assert json.loads(made.clone.joinpath("release", "check-fresh.json").read_text())["result"] == "FAIL"
-    assert gate.problems(made.clone) == []
+    reproduced = _reproduced(made)
+    assert gate.problems(made.clone, reproduced) == []
+    path = made.clone.joinpath("release", "check-fresh.json")  # and an edited output on this FAIL branch
+    made.amend(lambda m: path.write_bytes(path.read_bytes().replace(b'"FAIL"', b'"PASS (safety counts only)"')))
+    assert named(gate.problems(made.clone, reproduced), "G5", "check-fresh")
 
 
-def test_a_published_no_fresh_world_passes(tmp_path, practice):
-    made = _built(tmp_path, practice, reject=10, frozen=("valid",) * 3)
+@pytest.fixture(scope="module")
+def no_fresh_lost_index(tmp_path_factory, practice):
+    """One release for two published results: NO FRESH WORLD (a test generator rejects all ten tries), and a frozen
+    world whose index a crash cut off, with one run whose items file a crash cut mid-line, copied in as it is
+    (DEC-W2-10-LOST-INDEX). One build, since each takes about 8 s."""
+    made = made_up.build(tmp_path_factory.mktemp("lost"), practice, reject=10, frozen=("valid", "valid", "cut"),
+                         lost_index=("frozen",))
+    return made, _reproduced(made)
+
+
+def test_a_published_no_fresh_world_passes(no_fresh_lost_index):
+    made, reproduced = no_fresh_lost_index
     fresh = json.loads(made.clone.joinpath("release", "check-fresh.json").read_text())
     assert (fresh["result"], fresh["run_set"]) == (release.NO_FRESH_WORLD, gate.NO_RUN_SET)
-    assert gate.problems(made.clone) == []
+    assert gate.problems(made.clone, reproduced) == []
 
 
 def test_a_broken_freeze_published_as_not_eligible_passes(tmp_path, practice):
@@ -159,7 +200,22 @@ def test_a_broken_freeze_published_as_not_eligible_passes(tmp_path, practice):
         assert output["result"] == "NOT ELIGIBLE"
         assert any(p.endswith("README.md: changed after the freeze, and it is not a file the release may change")
                    for p in output["not_eligible_because"])
-    assert not any(one.startswith("G2:") for one in gate.problems(made.clone))
+    assert not any(one.startswith(("G2:", "G5:")) for one in gate.problems(made.clone, _reproduced(made)))
+
+
+def test_a_lost_index_and_a_cut_off_items_file_published_as_not_eligible_pass(no_fresh_lost_index):
+    """DEC-W2-10-LOST-INDEX and review round 2, finding N2: a crash leaves the frozen world's index cut off and one
+    run's items file ending mid-line. The world is copied in as it is, the index that is not JSON left out with its
+    hash printed for the log, and published as NOT ELIGIBLE; the gate passes it and reads the cut file's whole
+    records."""
+    made, reproduced = no_fresh_lost_index
+    assert "index.json" in made.left_out and not made.clone.joinpath("release", "frozen", "index.json").exists()
+    cut = next(run for run, plan in made.plans["frozen"].items() if plan == "cut")
+    assert not made.clone.joinpath("release", "frozen", cut, "items.jsonl").read_bytes().endswith(b"\n")
+    output = json.loads(made.clone.joinpath("release", "check-frozen.json").read_text())
+    assert output["result"] == "NOT ELIGIBLE" and set(output["release"]["runs"]["replaced"].values()) == \
+        {"not listed in the index"}
+    assert gate.problems(made.clone, reproduced) == []
 
 
 def _rules(clone):
@@ -167,18 +223,51 @@ def _rules(clone):
     path.write_text(path.read_text() + "\n# a change (test)\n")
 
 
+def _completed(made):
+    return next(run for run, plan in made.plans["rehearsal"].items() if plan == "valid")
+
+
+def _delete_report(made, folder):
+    """A required file of the completed rehearsal deleted, and its SHA256SUMS made again to match."""
+    folder.joinpath(_completed(made), "report.json").unlink()
+    rc.sums(folder)
+
+
+def _falsify_workers(made, folder):
+    """A rehearsal made with two workers whose manifest is edited to say one, the release runs' setting, and its
+    SHA256SUMS made again to match."""
+    path = folder.joinpath(_completed(made), "manifest.json")
+    manifest = json.loads(path.read_text())
+    manifest["workers"] = manifest["run_set_inputs"]["workers"] = 1
+    path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+    rc.sums(folder)
+
+
+def _link_report(made, folder):
+    """The completed rehearsal's report replaced by a relative link to the same bytes elsewhere in the tree, so its
+    hash still holds. (The fresh-world step refuses a link to an absolute path anywhere in the freeze's tree.)"""
+    path = folder.joinpath(_completed(made), "report.json")
+    made.clone.joinpath("docs", "linked-report.json").write_bytes(path.read_bytes())
+    path.unlink()
+    path.symlink_to(Path("..", "..", "docs", "linked-report.json"))
+
+
+NONE = {"frozen": (), "fresh": (), "checks": False}  # no release run at all: the rehearsal is bound to the freeze alone
 VARIANTS = {  # name: (build keywords, the check that must fail, a text its problem contains)
-    "rehearsal evidence committed after the freeze": (
-        {"rehearsal_after_freeze": True, "frozen": ("valid",), "fresh": (), "checks": False}, "G8", "by the freeze"),
+    "rehearsal evidence committed after the freeze": ({"rehearsal_after_freeze": True, **NONE}, "G8", "by the freeze"),
     "a rehearsal on the frozen world, not the practice world": (
-        {"rehearsal_world": lambda clone: clone.joinpath("data", "world"), "frozen": ("valid",), "fresh": (),
-         "checks": False}, "G8", "no completed"),
+        {"rehearsal_world": lambda clone: clone.joinpath("data", "world"), **NONE}, "G8", "no completed"),
     "code changed between the rehearsal and the freeze": (
-        {"before_freeze": _rules, "frozen": ("valid",), "fresh": (), "checks": False}, "G8", "triage_agent/rules.py"),
-    "no completed rehearsal, only an aborted one": (
-        {"rehearsal": ("aborted",), "frozen": ("valid",), "fresh": (), "checks": False}, "G8", "no completed"),
-    "a rehearsal with other run settings than the release runs": (
-        {"rehearsal_workers": 2, "frozen": ("valid",), "fresh": (), "checks": False}, "G8", "no completed"),
+        {"before_freeze": _rules, **NONE}, "G8", "triage_agent/rules.py"),
+    "no completed rehearsal, only an aborted one": ({"rehearsal": ("aborted",), **NONE}, "G8", "no completed"),
+    "a rehearsal with other run settings than the freeze's configuration, and no release run": (
+        {"rehearsal_workers": 2, **NONE}, "G8", "no completed"),
+    "a required rehearsal file deleted, with SHA256SUMS to match": (
+        {"rehearsal_evidence": _delete_report, **NONE}, "G8", "report.json missing"),
+    "a falsified rehearsal manifest field, with SHA256SUMS to match": (
+        {"rehearsal_workers": 2, "rehearsal_evidence": _falsify_workers, **NONE}, "G8", "do not agree"),
+    "a rehearsal file committed as a symbolic link": (
+        {"rehearsal_evidence": _link_report, **NONE}, "G8", "symbolic link"),
     "fresh-world checkpoints committed before the generation record": (
         {"checkpoints_before_generation": True, "frozen": (), "fresh": ("valid",), "checks": False}, "G7",
         "before the generation record"),

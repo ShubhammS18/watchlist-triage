@@ -1,10 +1,12 @@
 # Release runs (W2-10)
 
-Status: design revised after review round 1 (2 Nov 2026), and the gate tests built. Round 1 of at most four
+Status: design and gate tests revised after review round 2 (13 Nov 2026). Round 1 of at most four
 (`DEC-W2-10-REVIEW-BUDGET`) reviewed the design and found four blockers and five smaller issues; the owner accepted all
-nine (see "Review round 1"). Requirements: FR-23, AC-19, and AC-1 to AC-6 and AC-12 on the release worlds. Rules:
-`DEC-W2-RELEASE-RULES`, as built by `DEC-W2-08-CHOICES` and `DEC-W2-08-CHECKPOINTS`, and done and checked as
-`DEC-W2-10-CHOICES` and `DEC-W2-10-STOPS` say.
+nine (see "Review round 1"). Round 2 reviewed the gate tests and the dry run, found round-1 findings 4, 7 and 8 not
+resolved and five new findings, and the owner accepted all of them (see "Review round 2"). Requirements: FR-23, AC-19,
+and AC-1 to AC-6 and AC-12 on the release worlds. Rules: `DEC-W2-RELEASE-RULES`, as built by `DEC-W2-08-CHOICES` and
+`DEC-W2-08-CHECKPOINTS`, and done and checked as `DEC-W2-10-CHOICES`, `DEC-W2-10-STOPS` and `DEC-W2-10-LOST-INDEX`
+say.
 
 This task runs the release and publishes it. It adds three things, and no harness, agent or wrapper code:
 - the gate tests (`tests/w2_10_release_runs/`), which check the published release from committed files only and
@@ -38,6 +40,18 @@ The five smaller issues:
 | 7. No recovery for a missing or damaged index | Index snapshots during each run, a check after any crash, and the restore rule ("After a crash"). |
 | 8. Placeholders in the commands | Every command is now a real one. Run IDs, run sets and the freeze commit are read from the files that hold them. |
 | 9. The freeze commit was not shown being made | Step 2 now makes it. |
+
+## Review round 2
+
+| Finding | What changed |
+|---|---|
+| Round-1 #4 and N1 (blocker). G8 trusted the rehearsal's manifest, did not need its scored files, and was not bound to any agent when there was no release run | G8 now needs every file of the completed rehearsal and its set report, and checks them as one run: the run ID, run set, run-set inputs and index entry agree; the items file is the one the manifest names; the report and set report are the manifest's; the log, verified against its checkpoint, starts with the manifest's run and ends with those items. Its agent and settings must be the ones the freeze's own `config/run-triage.json` gives with the freeze's own code, whether or not there are release runs. Three wrong releases: a required file deleted, a manifest field falsified, both with `SHA256SUMS` made again, and other settings with no release run. |
+| Round-1 #7. A crash could leave a run folder with no index and no snapshot covering it, and no path to publish | `DEC-W2-10-LOST-INDEX`: that world is published as it is, as NOT ELIGIBLE, and the gate accepts it when it is consistent ("After a crash", G6). An index that is not JSON makes the check refuse, so it stays outside the repository byte for byte, with its SHA-256 in the log (owner, 13 Nov 2026). The dry run publishes one. |
+| Round-1 #8. The steps read the index after a wrapper refusal, and the fresh and re-run commands were described, not given | `after_run` branches on the wrapper's exit code: after a refusal (exit 2) it copies and commits nothing. Otherwise it needs a new index entry. There are separate commands for a first run, a fresh-world run and a re-run, for each world. |
+| N2 (blocker). A crash-cut items file made the gate raise | G12 reads only whole records, by a stated rule. A run whose manifest does not say completed may end in one cut-off line, which is not counted. Any other line that is not an item record is a named G12 problem. The lost-index release has a cut-off items file and passes. A break adds a bad line. |
+| N3. G8 could read rehearsal files through links | G8 reads nothing under `rehearsal/` while there is a link or a non-regular file there, on disk or at the freeze or the publish commit. A wrong release commits a link. |
+| N4. The FAIL, NO FRESH WORLD and broken-freeze cases skipped G5 | Each reproduces both outputs with the documented command and passes them to the gate. An edited output on the FAIL release fails G5. |
+| N5. A valid row's Reason, and extra Results rows, were not checked | A valid row's Reason must be empty, and the Results table must have exactly one row for each world and none for anything else. Three breaks. |
 
 ## Supersedes
 
@@ -107,13 +121,30 @@ Set these once per shell:
 
 ```
 REPO=~/projects/watchlist-triage; REL=~/release-1; CO=$REL/checkout; PY=$REPO/.venv/bin/python
-last_run() { $PY -c "import json,sys; print(json.load(open(sys.argv[1]))['runs'][-1]['run_id'])" "$1/index.json"; }
+runs_in() { $PY -c "import json,sys,os; p=sys.argv[1]+'/index.json'; print(len(json.load(open(p))['runs']) if os.path.exists(p) else 0)" "$1"; }
+new_run() { $PY -c "import json,sys; r=json.load(open(sys.argv[1]+'/index.json'))['runs']; print(r[-1]['run_id'] if len(r) > int(sys.argv[2]) else '')" "$1" "$2"; }
 run_set() { $PY -c "import json,sys,os; p=sys.argv[1]; r=json.load(open(p))['runs'] if os.path.exists(p) else []; print(r[0]['run_set'] if r else '0'*64)" "$1/index.json"; }
 same_runs() { $PY -c "import json,sys,pathlib; o=pathlib.Path(sys.argv[1]); i={e['run_id'] for e in json.loads(o.joinpath('index.json').read_text())['runs']}; d={p.name for p in o.iterdir() if p.is_dir() and p.name!='sets'}; print('index and folders agree' if i==d else f'MISMATCH: folders only {sorted(d-i)}, index only {sorted(i-d)}'); sys.exit(i!=d)" "$1"; }
-checkpoint() { [ -f "$1/$2/checkpoint.json" ] && cp "$1/$2/checkpoint.json" "$REPO/audit/checkpoints/$2.json" && echo "checkpoint $2 copied" || echo "run $2 wrote no checkpoint"; }
+checkpoint() { if [ -f "$1/$2/checkpoint.json" ]; then cp "$1/$2/checkpoint.json" "$REPO/audit/checkpoints/$2.json" && echo "checkpoint $2 copied"; else echo "run $2 wrote no checkpoint"; return 1; fi; }
+after_run() {  # after_run EXIT OUT RUNS-BEFORE WORLD: what the wrapper's exit and the index say, then the checkpoint
+  if [ "$1" = 2 ]; then echo "REFUSED: no run started. Nothing is copied, committed or logged. Fix what it names (a missing re-run cause: use the re-run command) and paste the command again."; return 0; fi
+  RUN=$(new_run "$2" "$3") && [ -n "$RUN" ] || { echo "STOP: exit $1 and no new index entry: see After a crash"; return 1; }
+  echo "run $RUN, exit $1"
+  [ -f "$2/$RUN/checkpoint.json" ] && $PY -m harness verify-log "$2/$RUN/audit.jsonl" "$2/$RUN/checkpoint.json"
+  [ "$4" = rehearsal ] && return 0  # the rehearsal's checkpoints are committed with its evidence
+  cd $REPO && mkdir -p audit/checkpoints && checkpoint "$2" "$RUN" && git add "audit/checkpoints/$RUN.json" && git commit -m "Release 1: checkpoint $RUN ($4)" && git push
+}
+copy_as_is() {  # copy_as_is OUT WORLD: a world whose index is lost, copied in as it is (DEC-W2-10-LOST-INDEX)
+  o=$1; d=$REPO/release/$2; [ ! -e $d ] || { echo "STOP: $d exists"; return 1; }
+  mkdir -p $d && for r in $o/*/; do cp -r $r $d/; done
+  if $PY -c "import json,sys; json.load(open(sys.argv[1]))" $o/index.json 2>/dev/null; then cp $o/index.json $d/; elif [ -e $o/index.json ]; then sha256sum $o/index.json; fi
+  [ ! -e $o/index.json.tmp ] || sha256sum $o/index.json.tmp
+  (cd $d && find . -type f ! -name SHA256SUMS -printf '%P\n' | LC_ALL=C sort | xargs -d '\n' sha256sum > SHA256SUMS) && (cd $o && sha256sum --quiet -c $d/SHA256SUMS) && echo "copied as it is; any SHA-256 line above is a file left out: paste it into the log"
+}
 ```
 
-`index.json` lists runs in the order their entries were last written, so `last_run` names the run just made.
+`index.json` lists runs in the order their entries were last written, so `new_run` names the run just made, and only
+if the index has more entries than before the run.
 
 **Before every paid run:**
 1. Plug the charger in and close VS Code and other heavy programs.
@@ -125,11 +156,18 @@ checkpoint() { [ -f "$1/$2/checkpoint.json" ] && cp "$1/$2/checkpoint.json" "$RE
 with the run's output folder for OUT and its world for WORLD. The harness writes the index only when a run starts
 and when it ends, so this copy is exactly what it wrote at the start ("After a crash").
 
+**Every paid run** is one of the commands below. Each counts the index entries first, then ends with `after_run`
+(review round 1, finding 8):
+- **Exit 2:** the wrapper refused and started nothing. `after_run` says so and stops. There is nothing to copy,
+  commit or log.
+- **Any other exit:** it needs a new index entry, or it says STOP. It verifies the run's log if the run wrote a
+  checkpoint. For a release run it copies, commits and pushes that checkpoint. A killed run writes none.
+- **A refused count:** if `runs_in` cannot read the index, the run is never started and `after_run` says STOP. Go to
+  "After a crash".
+
 **After every paid run:**
 1. Wait about 10 minutes, then note the balance again.
-2. Find the run with `RUN=$(last_run OUT)`, then check its log:
-   `$PY -m harness verify-log OUT/$RUN/audit.jsonl OUT/$RUN/checkpoint.json`.
-3. Write the run's row in the release log.
+2. Write the run's row in the release log, with `$RUN` as `after_run` printed it.
 
 **Stop rules:** stop before the next run and talk if any of these happens. The gate checks all three (G12).
 - a run costs over USD 0.30 (`DEC-W2-10-CHOICES`);
@@ -151,11 +189,21 @@ cat > $REL/run-practice.json <<EOF
  "infra_invalid_threshold": "0.02", "price_table": "$REL/rehearsal-checkout/config/prices.json",
  "modelled_time": "$REL/rehearsal-checkout/config/modelled_time.json"}
 EOF
-cd $REL/rehearsal-checkout && $PY -m baseline_run run $REL/run-practice.json $REL/out-rehearsal
 ```
 
-Once it has a completed, clean run (another try goes into the same `$REL/out-rehearsal`, with `--rerun-cause`),
-commit the evidence:
+The rehearsal, a first run:
+
+```
+cd $REL/rehearsal-checkout && N=$(runs_in $REL/out-rehearsal) && $PY -m baseline_run run $REL/run-practice.json $REL/out-rehearsal; after_run $? $REL/out-rehearsal "$N" rehearsal
+```
+
+A re-run into the same folder: type what went wrong with the run it replaces, then Enter.
+
+```
+read -r CAUSE; cd $REL/rehearsal-checkout && N=$(runs_in $REL/out-rehearsal) && $PY -m baseline_run run $REL/run-practice.json $REL/out-rehearsal --rerun-cause "$CAUSE"; after_run $? $REL/out-rehearsal "$N" rehearsal
+```
+
+Once it has a completed, clean run, commit the evidence:
 
 ```
 cd $REPO && same_runs $REL/out-rehearsal
@@ -239,13 +287,21 @@ cat > $REL/run-fresh.json <<EOF
 EOF
 ```
 
-One frozen-world run, then its checkpoint (fresh-world runs: `run-fresh.json`, `out-fresh`, `(fresh)`):
+Each command is one run, then its checkpoint. For a re-run, type what went wrong with the run it replaces, then
+Enter.
 
 ```
-cd $CO && $PY -m baseline_run run config/run-triage.json $REL/out-frozen
-RUN=$(last_run $REL/out-frozen); cd $REPO && mkdir -p audit/checkpoints && checkpoint $REL/out-frozen $RUN
-git add audit/checkpoints docs/release-log.md && git commit -m "Release 1: checkpoint $RUN (frozen)" && git push
+# frozen world, a first run or any run that replaces nothing
+cd $CO && N=$(runs_in $REL/out-frozen) && $PY -m baseline_run run config/run-triage.json $REL/out-frozen; after_run $? $REL/out-frozen "$N" frozen
+# frozen world, a re-run
+read -r CAUSE; cd $CO && N=$(runs_in $REL/out-frozen) && $PY -m baseline_run run config/run-triage.json $REL/out-frozen --rerun-cause "$CAUSE"; after_run $? $REL/out-frozen "$N" frozen
+# fresh world, a first run or any run that replaces nothing
+cd $CO && N=$(runs_in $REL/out-fresh) && $PY -m baseline_run run $REL/run-fresh.json $REL/out-fresh; after_run $? $REL/out-fresh "$N" fresh
+# fresh world, a re-run
+read -r CAUSE; cd $CO && N=$(runs_in $REL/out-fresh) && $PY -m baseline_run run $REL/run-fresh.json $REL/out-fresh --rerun-cause "$CAUSE"; after_run $? $REL/out-fresh "$N" fresh
 ```
+
+The run's log row is committed with the next commit that stages `docs/release-log.md`.
 
 For each world:
 - Stop at three valid runs, and never make more than five runs.
@@ -284,8 +340,22 @@ A WSL crash or a guard kill leaves the run unfinished. Before anything else:
 - **A run folder that is empty** (a crash between creating the folder and writing its index entry; the index is
   written before any call) made no call. Remove it with `rmdir`, which removes only an empty folder, and note it in
   the log under that world's table, not as a run row.
-- **If no snapshot covers the folders:** stop and talk. That world's run output cannot be made whole without writing
-  records by hand.
+- **If no snapshot covers the folders** (`DEC-W2-10-LOST-INDEX`), on the frozen or fresh world, the attempt is
+  published as it is, not repaired:
+  - Start no other run into that folder, and none on that world. Its result will be NOT ELIGIBLE.
+  - In step 6, copy that world with `copy_as_is $REL/out-WORLD WORLD` instead of the copy step. It copies every run
+    folder and `sets/` byte for byte, and `index.json` only if it is JSON. Then it lists and verifies them.
+  - **What stays out:** an index that is not JSON stays in `$REL` byte for byte, and so does any `index.json.tmp`.
+    The check refuses an index that is not JSON, and a `.tmp` file is not a file the release may add, so it would
+    break the freeze for both worlds (owner, 13 Nov 2026). `copy_as_is` prints their SHA-256 lines; paste them under
+    that world's table in the log.
+  - **The log:** each run folder gets a row with its Console spend. A run the index does not list has State,
+    Re-run cause and Harness USD `none`.
+  - **The check:** in step 7, `run_set` gives 64 zeros for a world with no index. The check says NOT ELIGIBLE and
+    names each run folder the index does not list. The gate accepts that when it is published consistently (G6;
+    tested).
+- **If no snapshot covers the rehearsal's folders:** stop and talk. Nothing from that folder can be committed as
+  rehearsal evidence without writing records by hand.
 
 ### 6. Copy the run output in (Claude, when asked)
 
@@ -294,7 +364,8 @@ cd $REPO && for w in frozen fresh; do [ -d $REL/out-$w ] || continue; same_runs 
 git add release && git commit -m "Release 1: run output" && git push
 ```
 
-The copy step copies byte for byte, writes `SHA256SUMS` in `baseline/`'s format, and verifies both sides.
+The copy step copies byte for byte, writes `SHA256SUMS` in `baseline/`'s format, and verifies both sides. A world
+whose index was lost is copied with `copy_as_is` instead ("After a crash"); `same_runs` would refuse it.
 
 ### 7. The check on both worlds, from a clean checkout (Claude or the owner)
 
@@ -405,15 +476,15 @@ Wave-2 spend: USD <total> (before this log 0.95 + rehearsal <a> + frozen <b> + f
 
 How each column is filled:
 - **Run ID:** in backticks.
-- **State:** the index's.
+- **State:** the index's, or `none` for a run the index does not list.
 - **Valid or replaced** and **Reason:** the check output's `release.runs`. The Reason is empty for a valid run.
 - **Re-run cause:** the index's, or `none`.
 - **Checkpoint committed:** `yes` or `no`.
 - **Harness USD:** the run's known cost from its index entry, rounded to the places written, or `none` for a run
-  with no cost, such as a killed run.
+  with no cost, such as a killed run or one the index does not list.
 - **Agent commit** (rehearsal): the run's commit, in full or its first 7 or 12 characters.
-- **Results:** the run set's first eight characters in backticks, `` `release/check-<world>.json` ``, and the result
-  exactly as the output gives it.
+- **Results:** exactly one row for each world, and no other row. Each has the run set's first eight characters in
+  backticks, `` `release/check-<world>.json` ``, and the result exactly as the output gives it.
 
 ## The gate tests (`tests/w2_10_release_runs/`, the gate `tests`)
 
@@ -434,19 +505,20 @@ They read committed files and git only. They call no model and make no network r
 | G3 | **The seed is the function's:** every try's seed equals `release.fresh_seed(freeze, counter)`, with counters running 0, 1, … with no gap. | the record |
 | G4 | **One accepted generation:** the fresh-world output shows the committed record equal to the check's own replay. Ten rejections with NO FRESH WORLD pass. | the fresh output |
 | G5 | **The committed check output is what the check gives:** byte-identical to the documented command run at the publish commit. | the reproduced outputs |
-| G6 | **Every run is in the log, within five per world.** The index, the run folders and the log rows name the same runs, at most five. They are of the published run set, and a NO FRESH WORLD has no fresh runs and the zero run set. Each row's state, re-run cause and Harness USD are the index's, its valid or replaced and reason are the check's, its checkpoint cell is right, and its Spend USD is the Console difference. | the log, `release/<world>`, the outputs, the tree |
+| G6 | **Every run is in the log, within five per world.** The log rows name every run of the index and every run folder, at most five. If the index and the run folders do not name the same runs (an index lost in a crash), that world must be published as NOT ELIGIBLE (`DEC-W2-10-LOST-INDEX`). The runs are of the published run set, and a NO FRESH WORLD has no fresh runs and the zero run set. Each row's state, re-run cause and Harness USD are the index's (`none` for a run it does not list). Its valid or replaced and reason are the check's, a valid run's Reason being empty. Its checkpoint cell is right, and its Spend USD is the Console difference. | the log, `release/<world>`, the outputs, the tree |
 | G7 | **Order in the history:** no release-world checkpoint at or before the freeze. `release/generation.json` added after the freeze, in an ancestor of every commit that adds a fresh-world checkpoint. | git history |
-| G8 | **A completed rehearsal of the frozen agent on the practice world came first:** `rehearsal/` and its `SHA256SUMS` committed by the freeze; rows, index and folders the same runs; each finished run's log verifying against a checkpoint the freeze holds. At least one rehearsal that is completed, clean, not infrastructure-invalid, on the practice world (`e2cbcb69…`), with every run-set input but commit and world equal to the release runs', made at a commit before the freeze from which only `tests/w2_10_release_runs/`, `docs/`, `.genesis/`, `audit/checkpoints/` and `rehearsal/` changed. | `rehearsal/`, the log, git |
-| G9 | **Published and consistent:** the tag `release-1` is the commit checked, both outputs are committed, the Results rows equal them, and the running total is 0.95 plus every Spend USD, by section. | the log, the outputs, git |
+| G8 | **A completed rehearsal of the frozen agent on the practice world came first.** Nothing is read under `rehearsal/` while it holds a link or a non-regular file, on disk or at the freeze or the publish commit. `rehearsal/` and its `SHA256SUMS` are committed by the freeze. The rows, index and folders name the same runs, and each finished run's log verifies against a checkpoint the freeze holds. At least one rehearsal is completed, clean, not infrastructure-invalid and on the practice world (`e2cbcb69…`). It was made at a commit before the freeze from which only `tests/w2_10_release_runs/`, `docs/`, `.genesis/`, `audit/checkpoints/` and `rehearsal/` changed. **Its files hold together as one run:** every file a completed run writes is there, with its set report; the run ID, run set, run-set inputs and index entry agree; the prompt and rule-code hashes bind; the items file is the manifest's; the report and the set report are the manifest's; and the log starts with the manifest's run and ends with those items. **Its agent:** every run-set input but commit and world equals what the freeze's own `config/run-triage.json` gives with the freeze's own code, and the release runs' inputs, so it is bound with no release run too. | `rehearsal/`, the log, git, the freeze's configuration |
+| G9 | **Published and consistent:** the tag `release-1` is the commit checked, both outputs are committed, the Results table has exactly one row for each world that equals its output and no other row, and the running total is 0.95 plus every Spend USD, by section. | the log, the outputs, git |
 | G10 | **The sign-off:** `release.signoff_problem` is None, as in W2-08's sign-off test, here at the tag. | the log, the outputs, the index |
 | G11 | **Push evidence:** the "Freeze and push" section holds the peeled line `<freeze>` TAB `refs/tags/<tag>^{}`, and that tag names the freeze commit. It cannot show the order (Limits). | the log, git |
-| G12 | **The stop rules:** every run, rehearsal included, is ordered by its run ID. No run may come after one that cost over USD 0.30 (the larger of its harness cost and its Spend USD), or whose refusals passed 2% (from its items, as the wrapper counts them), or by which the spend passed USD 2.00. | the log, the run output |
+| G12 | **The stop rules:** every run, rehearsal included, is ordered by its run ID. No run may come after one that cost over USD 0.30 (the larger of its harness cost and its Spend USD), or whose refusals passed 2% (from its items, as the wrapper counts them), or by which the spend passed USD 2.00. **Items files:** only whole records count. A run whose manifest does not say completed may end in one cut-off line, a crash while the harness wrote the file, and that line is not counted. Any other line that is not an item record is a problem, since the refusal share cannot be read (review round 2, finding N2). | the log, the run output |
 
 None of these asks whether the release passed. A published FAIL, NOT ELIGIBLE (a broken freeze included) or NO FRESH
 WORLD passes the gate when it is consistent.
 
 **The dry run** (`test_dry_run.py`). Each made-up release is built the way the steps above build the real one:
-1. a shared clone of the repository;
+1. a shared clone of the repository, with the test candidate's settings committed as its `config/run-triage.json`,
+   so the freeze configures the made-up release candidate;
 2. a rehearsal on the practice world, made from seed 20261027 by the repository's own generator into a temporary
    folder, and its evidence committed through the copy step;
 3. a freeze commit and annotated tag;
@@ -458,54 +530,70 @@ WORLD passes the gate when it is consistent.
 The tests:
 - **One whole release** (three valid frozen runs beside one killed and one aborted, three valid fresh runs) passes
   every rule, and its committed outputs equal the documented command's.
-- **Fourteen breaks** of that release, each made in a commit on top of it, each fail their named rule:
+- **Eighteen breaks** of that release, each made in a commit on top of it, each fail their named rule:
   - a run missing from the log, and a row for a run that is not there (G6);
-  - a replaced run called valid, a wrong harness amount, and Spend USD that is not the Console difference (G6);
-  - a wrong running total, and a wrong result (G9);
+  - a replaced run called valid, a valid run with a reason, a wrong harness amount, and Spend USD that is not the
+    Console difference (G6);
+  - a wrong running total, a wrong result, a Results row for a world that is not a release world, and two Results
+    rows for one world (G9);
   - the tag-object line in place of the peeled line (G11);
   - an edited check output (G5);
   - a seed not from the function (G3);
   - a code change after the freeze published without NOT ELIGIBLE (G2);
   - the publish tag not on the commit checked (G9);
-  - a run over USD 0.30 with a run after it, and spend over USD 2.00 with a run after it (G12).
-- **Eight wrong releases,** each built with one fault, each fail their named rule:
+  - a run over USD 0.30 with a run after it, spend over USD 2.00 with a run after it, and a line of an items file
+    that is not an item record (G12).
+- **Eleven wrong releases,** each built with one fault, each fail their named rule:
   - rehearsal evidence committed after the freeze, a rehearsal on the frozen world, code changed between the
-    rehearsal and the freeze, only an aborted rehearsal, and a rehearsal with other run settings (G8);
+    rehearsal and the freeze, and only an aborted rehearsal (G8);
+  - with no release run at all, so the rehearsal is bound by the freeze's configuration alone (G8):
+    - a rehearsal with other run settings;
+    - a required rehearsal file deleted, with `SHA256SUMS` made again to match;
+    - a rehearsal manifest field falsified to the configured setting, with `SHA256SUMS` made again to match;
+    - a rehearsal file committed as a symbolic link to the same bytes;
   - fresh-world checkpoints committed before the generation record (G7);
   - refusals over 2% with a run after them (G12);
   - six runs on one world (G6).
 
   A control built the same short way shows that none of those rules fails on a right release, so each variant's
   problem is its own.
-- **These pass, each published consistently:**
-  - a published FAIL (an unsafe fresh-world answer);
+- **These pass, each published consistently,** with both outputs reproduced by the documented command (G5):
+  - a published FAIL (an unsafe fresh-world answer); the same release with an edited check output then fails G5;
   - a published NO FRESH WORLD (a test generator rejecting all ten tries);
   - a broken freeze published as NOT ELIGIBLE;
+  - a frozen world whose index a crash cut off, with a run whose items file a crash cut mid-line, copied in with the
+    documented `copy_as_is` and published as NOT ELIGIBLE (`DEC-W2-10-LOST-INDEX`, review round 2, finding N2);
   - a second freeze tagged `release-1-freeze-2`.
 
 ## Gate timing
 
 Genesis stops a gate at 120 s; the aim is under 100 s.
 
-The suite is 28 passed and 1 xfailed (the real release). Its first full run, before the control test was added
-(27 passed), on battery under `tools/memory_guard.sh`, not through `tools/timed_run.sh`, took 79.7 s, with machine
-memory peaking at 1,929 MB. The slowest parts:
-- the whole base release, about 20 s, including the practice world and four checks;
-- the FAIL release, 9.9 s;
-- the broken freeze, 7.3 s;
-- each wrong release, 3.6 to 5.7 s.
+After review round 2 the suite is 36 passed and 1 xfailed (the real release). Its first full run with the round-2
+tests took 118 s, over the aim. Three things were cut, and no check was dropped:
+- **Short builds:** the wrong releases with no fresh-world run and no check output no longer generate a fresh world
+  (about 2 s each), since they check none of G3, G4 and G5. Their generation record only names the freeze. The four
+  G8 cases that need no release run make none, and skip the worktree.
+- **One build for two results:** NO FRESH WORLD and the lost index share one build. The FAIL release has one
+  frozen-world run, not three.
+- The gate also remembers the refusal share of each items file by its SHA-256, since the dry run asks about each one
+  many times.
 
-Three runs of the gate command through `tools/timed_run.sh` on 2 Nov 2026, charger in and fixed benchmark checked,
-one at a time:
+The slowest parts now: the whole base release, about 18 s; the FAIL release with both outputs reproduced, 12.5 s;
+the broken freeze, 10.3 s; the NO FRESH WORLD and lost-index build, 6.4 s; each wrong release, at most 4.9 s.
 
-| Run | Result | Time | Benchmark | Memory in use, before and peak |
-|---|---|---|---|---|
-| 1 | 28 passed, 1 xfailed | 76.11 s | 0.775 s | 1,732 MB, 1,901 MB |
-| 2 | 28 passed, 1 xfailed | 75.51 s | 0.778 s | 1,737 MB, 1,929 MB |
-| 3 | 28 passed, 1 xfailed | 76.79 s | 0.778 s | 1,757 MB, 1,907 MB |
+Three runs of the gate command through `tools/timed_run.sh` on 13 Nov 2026, charger in and fixed benchmark checked,
+one at a time. Time is pytest's own. Wall is the whole `timed_run.sh` command, its checks included:
 
-The slowest, 76.79 s, is 23 s under the 100-second aim and 43 s under the limit. After the publish, the real-release
-test also runs the check on both worlds; its time is measured then, three times again.
+| Run | Result | Time | Wall | Benchmark | Memory in use, before and peak |
+|---|---|---|---|---|---|
+| 1 | 36 passed, 1 xfailed | 95.27 s | 105.3 s | 0.745 s | 1,586 MB, 1,811 MB |
+| 2 | 36 passed, 1 xfailed | 87.05 s | 94.3 s | 0.745 s | 1,595 MB, 1,721 MB |
+| 3 | 36 passed, 1 xfailed | 91.73 s | 101.9 s | 0.755 s | 1,505 MB, 1,700 MB |
+
+The slowest, 95.27 s, is under the 100-second aim and 25 s under the limit. The machine was slower that day than on
+2 Nov: the unchanged W2-08 suite took 119.61 s, against 77.05 s in review round 2. After the publish, the
+real-release test also runs the check on both worlds; its time is measured then, three times again.
 
 ## Limits
 
@@ -520,8 +608,15 @@ These are the W2-08 limits, still in force:
 - **The Console:** the gate checks the log's arithmetic, the sign-off rule and the stop rules on the figures written,
   not the Console itself. Those are the owner's. A killed run's cost rests on the Console alone.
 - **Publication:** the gate checks the commit and the tag, not that they were pushed. The push is the owner's step.
-- **The rehearsal's agent:** G8 compares the rehearsal's run-set inputs with the release runs'. With no completed
-  release run there is nothing to compare, and only the code-unchanged rule applies.
+- **The rehearsal's agent:** G8 compares the rehearsal's run-set inputs, but commit and world, with what the freeze's
+  own `config/run-triage.json` gives, worked out with the freeze's code, and with every release run's. It binds the
+  agent and settings the freeze configures, not that the owner ran that agent: a run's files written by hand to
+  agree with each other and with a checkpoint would pass, as the W2-08 limits say of any committed run.
+- **The rehearsal's figures:** the practice world is not committed. So G8 cannot work out the report's figures or
+  the log's input hashes again. It checks that the files agree with each other and with the committed checkpoint.
+- **A lost index:** a world published as it is under `DEC-W2-10-LOST-INDEX` shows its runs only from their folders
+  and logs. The bytes left out are shown only by the SHA-256 lines the owner pastes into the log. A rehearsal whose
+  index is lost is not covered: that is "stop and talk".
 - **The dry run's agent:** the made-up runs use W2-08's model-free test candidate, so the dry run shows the rules,
   not the triage agent. The real release's agent is bound by its prompt and rule-code hashes (section 1 of the
   pre-flight, and G8).

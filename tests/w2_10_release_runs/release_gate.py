@@ -5,14 +5,17 @@ list of text, [] when the published release is complete and consistent. It never
 published FAIL, NOT ELIGIBLE or NO FRESH WORLD is fine when it is consistent. It calls no model and makes no network
 request. `reproduce` runs the release check itself, as the release steps do."""
 import json
+import os
 import re
+import stat
 import subprocess
 import sys
+import tempfile
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from fractions import Fraction
 from pathlib import Path
 
-from harness import audit, release
+from harness import audit, release, release_check
 from harness import manifest as records
 
 PRACTICE_WORLD_HASH = "e2cbcb692714c1d334de63a0f6db184d51466029ac91cabdc60b89507026ecb8"  # seed 20261027
@@ -34,6 +37,27 @@ RESULT_COLUMNS = ["World", "Run set", "Check output", "Result"]
 SAME = ("agent", "model_config", "prompt_hash", "rule_code_hash", "price_table", "modelled_time", "workers",
         "pacer_per_minute", "infra_invalid_threshold")
 TOTAL = re.compile(r"Wave-2 spend: USD (\S+) \(before this log 0\.95 \+ rehearsal (\S+) \+ frozen (\S+) \+ fresh (\S+)\)")
+RELEASE_CONFIG = "config/run-triage.json"  # the release candidate's configuration, which the freeze pins
+# the run-set inputs but commit and world that a configuration gives, as harness.run.run makes them, worked out with
+# the code of the checkout it runs in (review round 2, finding N1)
+_INPUTS = r"""
+import json, sys
+from pathlib import Path
+from harness import manifest as records
+from harness.run import PROMPTS
+path = Path(sys.argv[1]); raw = json.loads(path.read_text(encoding="utf-8"))
+load = lambda key: json.loads(path.parent.joinpath(raw[key]).read_text(encoding="utf-8"))
+inputs = {"agent": raw["agent"], "prompt_hash": PROMPTS.get(raw["agent"], PROMPTS["baseline"])["sha256"],
+          "model_config": records.content_hash(load("model_config")), "workers": raw["workers"],
+          "pacer_per_minute": raw["pacer_per_minute"], "infra_invalid_threshold": raw["infra_invalid_threshold"],
+          "price_table": records.content_hash(load("price_table")),
+          "modelled_time": records.content_hash(load("modelled_time"))}
+rule_code = PROMPTS.get(raw["agent"], {}).get("rule_code_sha256")
+if rule_code is not None:
+    inputs["rule_code_hash"] = rule_code
+print(json.dumps(inputs))
+"""
+_ANCHORS = {}  # {freeze commit: the run-set inputs its configuration gives}; a freeze's code never changes
 
 
 def git(repo, *args):
@@ -102,20 +126,88 @@ def _spend(row, where):
 
 
 def _refusals(run_dir):
-    """The share of a run's items the model refused, as the wrapper's refusal checkpoint counts it, or None."""
+    """(the share of a run's items the model refused, as the wrapper's refusal checkpoint counts it, or None; why the
+    share cannot be read, or None). Only complete records count. A run whose manifest does not say completed may end
+    in one cut-off line, which a crash while the harness writes the file leaves, and that line is not counted. Any
+    other line that is not an item record makes the share unreadable (review round 2, finding N2)."""
     items = Path(run_dir, "items.jsonl")
     if not items.is_file():
-        return None
-    kinds = [json.loads(line)["result"]["failure_kind"] for line in items.read_text(encoding="utf-8").splitlines()]
-    return Fraction(kinds.count("model_refusal"), len(kinds)) if kinds else Fraction(0)
+        return None, None
+    data = items.read_bytes()
+    manifest = _json(Path(run_dir, "manifest.json"))
+    key = (records.sha256(data), isinstance(manifest, dict) and manifest.get("state") == "completed")
+    if key not in _SHARES:  # the same bytes always give the same answer; the dry run asks about each file often
+        _SHARES[key] = _share(data, key[1])
+    return _SHARES[key]
+
+
+_SHARES = {}
+
+
+def _share(data, completed):
+    *lines, tail = data.split(b"\n")  # tail is b"" when the file ends with a newline
+    if tail and completed:
+        return None, "its items file does not end with a newline, but its manifest says completed"
+    kinds = []
+    for number, line in enumerate(lines, 1):
+        try:
+            kinds.append(json.loads(line)["result"]["failure_kind"])
+        except (ValueError, KeyError, TypeError):
+            return None, f"line {number} of its items file is not an item record"
+    return (Fraction(kinds.count("model_refusal"), len(kinds)) if kinds else Fraction(0)), None
 
 
 def _runs(folder):
-    """{run ID: index entry} and the run folders of one run-output folder."""
-    index = _json(Path(folder, "index.json")) or {"runs": []}
-    entries = {entry["run_id"]: entry for entry in index["runs"]}
+    """{run ID: index entry} and the run folders of one run-output folder. An index that is missing, not JSON or not
+    of the index's shape gives no entries."""
+    index = _json(Path(folder, "index.json"))
+    runs = index.get("runs") if isinstance(index, dict) else None
+    runs = runs if isinstance(runs, list) else []
+    entries = {entry["run_id"]: entry for entry in runs
+               if isinstance(entry, dict) and isinstance(entry.get("run_id"), str)}
     dirs = {p.name for p in Path(folder).iterdir() if p.is_dir() and p.name != "sets"} if Path(folder).is_dir() else set()
     return entries, dirs
+
+
+def _anchor(repo, freeze, broken):
+    """The run-set inputs but commit and world that the freeze's own configuration gives with the freeze's own code,
+    or None if they cannot be worked out. When the freeze is not broken, the checkout's code is the freeze's."""
+    if freeze not in _ANCHORS:
+        with tempfile.TemporaryDirectory() as scratch:
+            where = Path(repo)
+            if broken:
+                where = Path(scratch, "freeze")
+                git(repo, "worktree", "add", "-q", "--detach", str(where), freeze)
+            try:
+                done = subprocess.run([sys.executable, "-B", "-c", _INPUTS, RELEASE_CONFIG], cwd=where,
+                                      capture_output=True, text=True)
+            finally:
+                if broken:
+                    git(repo, "worktree", "remove", "--force", str(where))
+        _ANCHORS[freeze] = json.loads(done.stdout) if done.returncode == 0 else None
+    return _ANCHORS[freeze]
+
+
+def _unsafe(repo, refs):
+    """Every symbolic link or other non-regular file under rehearsal/, on disk or in the trees of `refs`, as text.
+    Nothing under rehearsal/ is read while there is one (review round 2, finding N3)."""
+    top, found = Path(repo, REHEARSAL_DIR), []
+    if top.is_symlink():
+        return [f"{REHEARSAL_DIR} is a symbolic link"]
+    for root, dirs, files in os.walk(top):  # os.walk never enters a linked folder; it is listed and caught here
+        for name in sorted(dirs + files):
+            path = Path(root, name)
+            mode = os.lstat(path).st_mode
+            if stat.S_ISLNK(mode) or not (stat.S_ISDIR(mode) or stat.S_ISREG(mode)):
+                kind = "a symbolic link" if stat.S_ISLNK(mode) else "not a regular file"
+                found.append(f"{path.relative_to(repo).as_posix()} is {kind}")
+    for ref in refs:
+        for line in git(repo, "ls-tree", "-r", ref, "--", f"{REHEARSAL_DIR}/").splitlines():
+            meta, path = line.split("\t", 1)
+            mode = meta.split(" ")[0]
+            if mode not in release.REGULAR:
+                found.append(f"{path} is committed at {ref[:12]} with git mode {mode}, not as a regular file")
+    return found
 
 
 def _added_in(repo, freeze, path):
@@ -186,14 +278,19 @@ def problems(repo, reproduced=None):
         rows, bad = _table(text, HEADINGS[world], RUN_COLUMNS)
         found += [f"G6: {bad}"] if bad else []
         logged = [row["Run ID"].strip("`") for row in rows]
-        if set(entries) != dirs or set(logged) != dirs or len(logged) != len(set(logged)):
-            found.append(f"G6: the {world} world's index, run folders and log rows do not name the same runs")
-        if len(dirs | set(entries) | set(logged)) > 5:
-            found.append(f"G6: the {world} world has {len(dirs | set(entries) | set(logged))} runs, above five")
+        runs_found = dirs | set(entries)
+        if set(logged) != runs_found or len(logged) != len(set(logged)):
+            found.append(f"G6: the {world} world's log rows, and its index and run folders, do not name the same runs")
+        if len(runs_found | set(logged)) > 5:
+            found.append(f"G6: the {world} world has {len(runs_found | set(logged))} runs, above five")
         output = outputs[world] if isinstance(outputs[world], dict) else {}
+        # an index lost in a crash is published as it is, and that world as NOT ELIGIBLE (DEC-W2-10-LOST-INDEX)
+        if set(entries) != dirs and output.get("result") != "NOT ELIGIBLE":
+            found.append(f"G6: the {world} world's index and run folders do not name the same runs, and it is not "
+                         "published as NOT ELIGIBLE")
         runs = ((output.get("release") or {}).get("runs")) or {"valid": [], "replaced": {}}
         run_set = output.get("run_set")
-        if entries and {entry["run_set"] for entry in entries.values()} != {run_set}:
+        if entries and {entry.get("run_set") for entry in entries.values()} != {run_set}:
             found.append(f"G6: the {world} world's runs are not all of the published run set")
         if world == "fresh" and output.get("result") == release.NO_FRESH_WORLD and (dirs or run_set != NO_RUN_SET):
             found.append("G6: NO FRESH WORLD is published, but there are fresh-world runs or another run set")
@@ -202,15 +299,16 @@ def problems(repo, reproduced=None):
             run, where = row["Run ID"].strip("`"), f"the {world} world's row for {row['Run ID']}"
             entry = entries.get(run)
             wanted = ("valid", "") if run in runs["valid"] else ("replaced", runs["replaced"].get(run))
-            if (row["Valid or replaced"], row["Reason"] if wanted[0] == "replaced" else "") != wanted:
+            if (row["Valid or replaced"], row["Reason"]) != wanted:  # a valid run's Reason is empty (round 2, N5)
                 found.append(f"G6: {where}: valid or replaced and the reason are not the check's {wanted}")
-            if entry is not None:
-                if row["State"] != entry["state"]:
-                    found.append(f"G6: {where}: state {row['State']!r} is not the index's {entry['state']!r}")
-                if row["Re-run cause"] != (entry["rerun_cause"] or "none"):
-                    found.append(f"G6: {where}: the re-run cause is not the index's")
-                bad = _harness_cell(row["Harness USD"], _cost(entry))
-                found += [f"G6: {where}: {bad}"] if bad else []
+            # a run the index does not list has no state, re-run cause or harness cost to state: each is none
+            state, cause = (entry.get("state"), entry.get("rerun_cause") or "none") if entry else ("none", "none")
+            if row["State"] != state:
+                found.append(f"G6: {where}: state {row['State']!r} is not the index's {state!r}")
+            if row["Re-run cause"] != cause:
+                found.append(f"G6: {where}: the re-run cause is not the index's {cause!r}")
+            bad = _harness_cell(row["Harness USD"], _cost(entry))
+            found += [f"G6: {where}: {bad}"] if bad else []
             committed = repo.joinpath("audit", "checkpoints", f"{run}.json").is_file()
             if row["Checkpoint committed"] != ("yes" if committed else "no"):
                 found.append(f"G6: {where}: Checkpoint committed must say {'yes' if committed else 'no'}")
@@ -219,9 +317,10 @@ def problems(repo, reproduced=None):
             spends[world] = spends.get(world, 0) + (spend or 0)
             logged_spend[run] = spend
         # the stop rules read every run the committed output holds, logged or not
-        for run in sorted(dirs | set(entries)):
-            ordered.append((run, world, logged_spend.get(run), _cost(entries.get(run)),
-                            _refusals(repo.joinpath("release", world, run))))
+        for run in sorted(runs_found):
+            share, bad = _refusals(repo.joinpath("release", world, run))
+            found += [f"G12: {world} run {run}: {bad}, so its refusal share cannot be read"] if bad else []
+            ordered.append((run, world, logged_spend.get(run), _cost(entries.get(run)), share))
     # G7: order in the history
     freeze_tree = set(git(repo, "ls-tree", "-r", "--name-only", freeze).splitlines())
     added = _added_in(repo, freeze, release.GENERATION)
@@ -237,10 +336,12 @@ def problems(repo, reproduced=None):
                     ["git", "merge-base", "--is-ancestor", added, commit], cwd=repo).returncode != 0:
                 found.append(f"G7: the checkpoint of fresh-world run {run} was committed before the generation record")
     # G8: a completed rehearsal of the frozen agent on the practice world came first, with its evidence frozen
-    found += _rehearsal(repo, text, freeze, freeze_tree, spends, ordered)
-    # G9: published and consistent
+    found += _rehearsal(repo, text, freeze, freeze_tree, spends, ordered, broken)
+    # G9: published and consistent, with exactly one Results row for each world (review round 2, finding N5)
     rows, bad = _table(text, "Results", RESULT_COLUMNS)
     found += [f"G9: {bad}"] if bad else []
+    found += [f"G9: the Results table has a row for {row['World']!r}, which is not a release world"
+              for row in rows if row["World"] not in WORLDS]
     for world in WORLDS:
         output = outputs[world] if isinstance(outputs[world], dict) else {}
         wanted = [{"World": world, "Run set": f"`{str(output.get('run_set'))[:8]}`",
@@ -272,12 +373,65 @@ def problems(repo, reproduced=None):
     return found
 
 
-def _rehearsal(repo, text, freeze, freeze_tree, spends, ordered):
+def _unit(folder, run, entry, manifest):
+    """Why a completed rehearsal run's files do not hold together as one run, or None (review round 2, finding N1).
+    Every file a completed run writes is there, with its run set's set report. The run ID, run set, run-set inputs
+    and index entry agree, and so do the prompt and rule-code hashes. The items file is the one the manifest names.
+    The report and the set report are this manifest's. The log, which has verified against its committed checkpoint,
+    starts with this manifest's run and ends with these items. The log's input hashes are its own: the practice
+    world is not committed, so they cannot be made again."""
+    run_dir, run_set = folder.joinpath(run), manifest.get("run_set")
+    missing = [name for name in release.RUN_FILES if not run_dir.joinpath(name).is_file()]
+    missing += [] if folder.joinpath("sets", f"{run_set}.json").is_file() else [f"sets/{run_set}.json"]
+    if missing:
+        return f"{', '.join(missing)} missing"
+    inputs, prompt, entry = manifest["run_set_inputs"], manifest["prompt"] or {}, entry or {}
+    if not (manifest["run_id"] == run and run.endswith(f"-{run_set[:8]}") and records.content_hash(inputs) == run_set
+            and entry.get("run_set") == run_set and entry.get("state") == "completed"):
+        return "its run ID, run set, run-set inputs and index entry do not agree"
+    if (inputs["commit"], inputs["world_hash"], inputs["agent"]) != \
+            (manifest["git"]["commit"], manifest["world"]["world_hash"], manifest["agent"]):
+        return "its manifest's commit, world and agent are not its run-set inputs'"
+    bad = release_check.hash_problem(run, manifest)
+    if bad:
+        return bad
+    data = run_dir.joinpath("items.jsonl").read_bytes()
+    if records.sha256(data) != manifest["outputs"]["sha256"]:
+        return "its items file is not the one its manifest names"
+    report = _json(run_dir.joinpath("report.json"))
+    validity = {"dirty": manifest["git"]["dirty"], "infra_invalid": manifest["infra_invalid"]["marked"]}
+    validity["valid"] = not (validity["dirty"] or validity["infra_invalid"])
+    if (report["run_id"], report["run_set"], report["manifest"], report["validity"]) != \
+            (run, run_set, manifest, validity):
+        return "its report is not its manifest's"
+    listed = _json(folder.joinpath("sets", f"{run_set}.json"))
+    if listed["run_set"] != run_set or not any(one["run_id"] == run and one["valid"] for one in listed["runs"]):
+        return f"sets/{run_set}.json does not list it as a valid run of its run set"
+    logged = [json.loads(line) for line in run_dir.joinpath(audit.LOG).read_bytes().split(b"\n") if line]
+    wanted = {"event": "run_started", "run_set": run_set, "commit": manifest["git"]["commit"],
+              "dirty": manifest["git"]["dirty"], "world_hash": inputs["world_hash"], "agent": manifest["agent"],
+              "prompt_sha256": prompt.get("sha256"), "rule_code_sha256": inputs.get("rule_code_hash"),
+              "config_sha256": manifest["config_sha256"], "framing_code_sha256": manifest["framing_code_sha256"]}
+    if {key: logged[0].get(key) for key in wanted} != wanted:
+        return "its log's start record is not its manifest's"
+    hashes = {one["item_id"]: one["input_sha256"] for one in logged if one["event"] == "recommendation"}
+    lines = [json.loads(line) for line in data.split(b"\n") if line]
+    return release.items_problem(run, logged, lines, manifest, hashes)
+
+
+def _rehearsal(repo, text, freeze, freeze_tree, spends, ordered, broken):
+    """G8: a completed, clean rehearsal on the practice world, of the agent and settings the freeze's own
+    configuration gives, whose files hold together as one run, committed by the freeze with nothing linked."""
+    unsafe = _unsafe(repo, (freeze, "HEAD"))
+    if unsafe:
+        return [f"G8: {one}; nothing in {REHEARSAL_DIR}/ is read" for one in unsafe]
     found = []
     folder = repo.joinpath(REHEARSAL_DIR)
-    listed = {line.split("  ", 1)[1]: line.split("  ", 1)[0]
-              for line in (folder.joinpath("SHA256SUMS").read_text(encoding="utf-8").splitlines()
-                           if folder.joinpath("SHA256SUMS").is_file() else [])}
+    listed = {}
+    for line in (folder.joinpath("SHA256SUMS").read_text(encoding="utf-8").splitlines()
+                 if folder.joinpath("SHA256SUMS").is_file() else []):
+        digest, _, name = line.partition("  ")
+        listed[name] = digest
     files = {p.relative_to(folder).as_posix() for p in folder.rglob("*") if p.is_file() and p.name != "SHA256SUMS"}
     if not listed or set(listed) != files or any(records.sha256(folder.joinpath(name).read_bytes()) != digest
                                                  for name, digest in listed.items()):
@@ -295,6 +449,9 @@ def _rehearsal(repo, text, freeze, freeze_tree, spends, ordered):
             manifest = _json(repo.joinpath("release", world, run, "manifest.json"))
             if manifest:
                 release_inputs.append(manifest["run_set_inputs"])
+    anchor = _anchor(repo, freeze, broken)  # binds the rehearsal even when there is no release run (round 2, N1)
+    if anchor is None:
+        found.append(f"G8: the run-set inputs that the freeze's {RELEASE_CONFIG} gives cannot be worked out")
     completed, logged_spend = False, {}
     for row in rows:
         run = row["Run ID"].strip("`")
@@ -325,16 +482,28 @@ def _rehearsal(repo, text, freeze, freeze_tree, spends, ordered):
             found.append(f"G8: between rehearsal run {run}'s commit and the freeze, more than tests, docs, records and "
                          f"evidence changed (first: {next(p for p in changed if not p.startswith(CODE_FREE))})")
             continue
-        inputs = manifest["run_set_inputs"]
-        if (manifest["state"] == "completed" and not manifest["git"]["dirty"] and not manifest["infra_invalid"]["marked"]
-                and manifest["world"]["world_hash"] == PRACTICE_WORLD_HASH
-                and all({k: one.get(k) for k in SAME} == {k: inputs.get(k) for k in SAME} for one in release_inputs)):
+        if manifest["state"] != "completed" or manifest["git"]["dirty"] or manifest["infra_invalid"]["marked"]:
+            continue
+        try:
+            bad = _unit(folder, run, entries.get(run), manifest)
+        except (KeyError, TypeError, ValueError, AttributeError, IndexError) as error:
+            bad = f"its files are not of the shapes a run writes ({type(error).__name__})"
+        if bad:
+            found.append(f"G8: rehearsal run {run}'s files do not hold together as one run: {bad}")
+            continue
+        same = {k: manifest["run_set_inputs"].get(k) for k in SAME}
+        if (manifest["world"]["world_hash"] == PRACTICE_WORLD_HASH and anchor is not None
+                and same == {k: anchor.get(k) for k in SAME}
+                and all({k: one.get(k) for k in SAME} == same for one in release_inputs)):
             completed = True
     for run in sorted(dirs | set(entries)):  # the stop rules read every rehearsal run, logged or not
-        ordered.append((run, "rehearsal", logged_spend.get(run), _cost(entries.get(run)), _refusals(folder.joinpath(run))))
+        share, bad = _refusals(folder.joinpath(run))
+        found += [f"G12: rehearsal run {run}: {bad}, so its refusal share cannot be read"] if bad else []
+        ordered.append((run, "rehearsal", logged_spend.get(run), _cost(entries.get(run)), share))
     if not completed:
-        found.append("G8: there is no completed, clean rehearsal on the practice world with the release runs' agent "
-                     "and settings, made at a commit whose code the freeze kept")
+        found.append("G8: there is no completed, clean rehearsal on the practice world with the agent and settings of "
+                     f"the freeze's {RELEASE_CONFIG} and of the release runs, made at a commit whose code the freeze "
+                     "kept")
     return found
 
 

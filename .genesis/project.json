@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-11-02T13:28:49.832Z"
+    "updated_at": "2026-11-13T13:59:02.813Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2230,6 +2230,16 @@
       "status": "accepted",
       "source": "Owner, 2 Nov 2026; W2-10-release-runs design, O1-O3; adds to DEC-W2-10-CHOICES",
       "recorded_at": "2026-11-02T13:28:49.832Z",
+      "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-10-LOST-INDEX",
+      "title": "A run whose index is lost in a crash is published, not repaired",
+      "text": "If a crash leaves a release run folder with no recoverable index, the attempt is kept exactly as it is, its Console spend is logged, and that world's result is published as not eligible. Nothing is repaired by hand. The index is written with an atomic replace, so this should be rare.",
+      "status": "accepted",
+      "source": "Owner, 13 Nov 2026; W2-10-release-runs review round 2, round-1 finding 7; DEC-W2-10-STOPS",
+      "recorded_at": "2026-11-13T13:59:02.781Z",
       "paths": [],
       "tags": []
     }

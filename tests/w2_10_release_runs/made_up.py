@@ -2,6 +2,7 @@
 of the repository, never in it. No model is called: every run is made by W2-08's test candidate agent with the stub
 provider (release_common), and the rehearsal's practice world is the real one, made from seed 20261027 by the
 repository's own generator into a temporary folder."""
+import json
 import subprocess
 import sys
 from decimal import Decimal
@@ -12,13 +13,31 @@ import release_gate as gate
 from test_generation import PATCH  # W2-08's test generator that rejects its first tries
 
 from baseline_run.copy_step import copy_baseline
-from harness import audit, release, release_check
+from harness import audit, release, release_check, score
 from worldgen.truth import load_truth
 
-BEHAVIOURS = {"valid": {}, "killed": {}, "aborted": {"abort_after": 40}, "unsafe": {"close_true_match": True},
-              "refusals": {"refusals": True}}
+# "cut": killed while the harness wrote its items file, which ends in a cut-off line (review round 2, finding N2)
+BEHAVIOURS = {"valid": {}, "killed": {}, "cut": {}, "aborted": {"abort_after": 40},
+              "unsafe": {"close_true_match": True}, "refusals": {"refusals": True}}
+KILLED = ("killed", "cut")
 FULL = ("valid", "killed", "aborted", "valid", "valid")  # three valid runs, one killed and one aborted, replaced
 SPEND, KILLED_SPEND, BALANCE = Decimal("0.10"), Decimal("0.05"), Decimal("4.56")
+# the made-up release candidate's configuration, committed as the freeze's config/run-triage.json: the settings
+# release_common.make_runs gives every run, so the rehearsal and the release runs are of the configured agent
+CONFIG = {"agent": "candidate", "world": "../data/world", "model_config": "model-stub.json", "workers": 1,
+          "pacer_per_minute": None, "infra_invalid_threshold": "0.05", "price_table": "prices.json",
+          "modelled_time": "modelled_time.json"}
+DOC = rc.REPO.joinpath("docs", "w2-10-release-runs.md")
+
+
+def copy_as_is(clone, out, world):
+    """The documented copy of a run-output folder whose index is lost (DEC-W2-10-LOST-INDEX), run as written: the
+    `copy_as_is` function of the release steps, in bash. Returns what it prints."""
+    lines = DOC.read_text(encoding="utf-8").splitlines()
+    start = next(n for n, line in enumerate(lines) if line.startswith("copy_as_is() {"))
+    function = "\n".join(lines[start:lines.index("}", start) + 1])
+    script = f'REPO={clone}; PY={sys.executable}\n{function}\ncopy_as_is {out} {world}\n'
+    return subprocess.run(["bash", "-c", script], check=True, capture_output=True, text=True).stdout
 
 
 def practice_world(folder):
@@ -45,9 +64,15 @@ class Release:
         """Runs of `plan` on `world`, made with records.REPO at `at`, killed where the plan says. Returns the output."""
         with rc.at(at):
             out, ids = rc.make_runs(self.folder.joinpath(name), world, [BEHAVIOURS[p] for p in plan], truth, workers)
+            if name == "rehearsal":  # run-and-score scores each run, so the rehearsal has its reports and set report
+                score.score_all(out, world)
         for kind, run_id in zip(plan, ids):
-            if kind == "killed":
+            if kind in KILLED:
+                items = out.joinpath(run_id, "items.jsonl").read_bytes()
                 rc.kill(out, run_id)
+                if kind == "cut":  # two whole records and half of the third
+                    lines = items.split(b"\n")
+                    out.joinpath(run_id, "items.jsonl").write_bytes(b"\n".join(lines[:2]) + b"\n" + lines[2][:40])
         self.outs[name], self.plans[name] = out, dict(zip(ids, plan))
         return out
 
@@ -77,7 +102,7 @@ class Release:
         balance, rows, totals = BALANCE, {}, {}
         ordered = sorted((run_id, name) for name in self.plans for run_id in self.plans[name])
         for run_id, name in ordered:
-            spend = spends.get(run_id, KILLED_SPEND if self.plans[name][run_id] == "killed" else SPEND)
+            spend = spends.get(run_id, KILLED_SPEND if self.plans[name][run_id] in KILLED else SPEND)
             rows[run_id] = (f"{balance}", f"{balance - spend}", f"{spend}")
             balance -= spend
             totals[name] = totals.get(name, Decimal(0)) + spend
@@ -97,13 +122,15 @@ class Release:
             if outputs[world] is None:  # a variant built without check outputs
                 continue
             runs = (outputs[world]["release"]["runs"] or {"valid": [], "replaced": {}})
-            index = rc.records.read_index(self.clone.joinpath("release", world))
-            for n, entry in enumerate(index["runs"], 1):
-                run_id = entry["run_id"]
+            # a row for every run of the index and every run folder: a lost index lists none (DEC-W2-10-LOST-INDEX)
+            entries, dirs = gate._runs(self.clone.joinpath("release", world))
+            for n, run_id in enumerate(sorted(set(entries) | dirs), 1):
+                entry = entries.get(run_id)
                 valid = run_id in runs["valid"]
                 point = self.clone.joinpath("audit", "checkpoints", f"{run_id}.json").is_file()
-                text.append(f"| {n} | `{run_id}` | {entry['state']} | {'valid' if valid else 'replaced'} | "
-                            f"{'' if valid else runs['replaced'][run_id]} | {entry['rerun_cause'] or 'none'} | "
+                state, cause = (entry["state"], entry["rerun_cause"] or "none") if entry else ("none", "none")
+                text.append(f"| {n} | `{run_id}` | {state} | {'valid' if valid else 'replaced'} | "
+                            f"{'' if valid else runs['replaced'][run_id]} | {cause} | "
                             f"{'yes' if point else 'no'} | {harness(entry)} | {' | '.join(rows[run_id])} | test |")
         text += ["", "## Results", "| " + " | ".join(gate.RESULT_COLUMNS) + " |", "|---|---|---|---|"]
         for world, output in outputs.items():
@@ -139,13 +166,18 @@ def harness(entry):
 
 def build(folder, practice, frozen=FULL, fresh=("valid",) * 3, rehearsal=("valid",), reject=0, rehearsal_world=None,
           rehearsal_workers=1, before_freeze=None, rehearsal_after_freeze=False, checkpoints_before_generation=False,
-          before_checks=None, checks=True):
-    """A made-up release, published and tagged. The keywords make the variants of the dry run."""
+          before_checks=None, checks=True, rehearsal_evidence=None, lost_index=()):
+    """A made-up release, published and tagged. The keywords make the variants of the dry run: `rehearsal_evidence`
+    changes the rehearsal evidence before it is committed, and each world of `lost_index` loses its index in a crash
+    and is copied in as it is."""
     made = Release(folder)
     clone = made.clone
     subprocess.run(["git", "clone", "-q", "--shared", str(rc.REPO), str(clone)], check=True)
     for key, value in (("user.name", "Test"), ("user.email", "test@example.invalid"), ("commit.gpgsign", "false")):
         rc.git(clone, "config", key, value)
+    clone.joinpath(gate.RELEASE_CONFIG).write_text(json.dumps(CONFIG, indent=2) + "\n", encoding="utf-8")
+    clone.joinpath("config", CONFIG["model_config"]).write_text(json.dumps(rc.STUB) + "\n", encoding="utf-8")
+    made.commit("The release candidate's configuration (test)")
     if reject:
         path = clone.joinpath("worldgen", "build.py")
         text = path.read_text(encoding="utf-8")
@@ -158,6 +190,8 @@ def build(folder, practice, frozen=FULL, fresh=("valid",) * 3, rehearsal=("valid
         made.runs(clone, world, rehearsal, rc.fresh_truth(world), "rehearsal", workers=rehearsal_workers)
         copy_baseline(made.outs["rehearsal"], clone.joinpath(gate.REHEARSAL_DIR))
         made.checkpoints("rehearsal")
+        if rehearsal_evidence:
+            rehearsal_evidence(made, clone.joinpath(gate.REHEARSAL_DIR))
         made.commit("W2-10: rehearsal evidence (test)")
 
     if not rehearsal_after_freeze:
@@ -171,14 +205,19 @@ def build(folder, practice, frozen=FULL, fresh=("valid",) * 3, rehearsal=("valid
     rc.git(clone, "tag", "-a", "-m", "freeze", "release-1-freeze")
     if rehearsal_after_freeze:
         rehearse()
-    record = release.make_fresh_world(made.freeze, made.folder.joinpath("fresh-world"),
-                                      made.folder.joinpath("generation.json"), repo=clone) \
-        if not rehearsal_after_freeze else None
     checkout = made.folder.joinpath("checkout")
-    rc.git(clone, "worktree", "add", "-q", "--detach", str(checkout), made.freeze)
-    if rehearsal_after_freeze:  # the generation needs HEAD at the freeze: make it from the freeze's own checkout
+    short = not fresh and not checks
+    if frozen or not short:
+        rc.git(clone, "worktree", "add", "-q", "--detach", str(checkout), made.freeze)
+    if short:
+        # a short build, with no fresh-world run and no check output, checks none of G3, G4 and G5: its generation
+        # record only names the freeze, and no world is generated (a generation takes about 2 s)
+        record = {"freeze_commit": made.freeze, "tries": [], "accepted": None}
+        made.folder.joinpath("generation.json").write_text(json.dumps(record) + "\n", encoding="utf-8")
+    else:  # the generation needs HEAD at the freeze, so a rehearsal made after the freeze uses the freeze's checkout
         record = release.make_fresh_world(made.freeze, made.folder.joinpath("fresh-world"),
-                                          made.folder.joinpath("generation.json"), repo=checkout)
+                                          made.folder.joinpath("generation.json"),
+                                          repo=checkout if rehearsal_after_freeze else clone)
 
     def generation():
         clone.joinpath("release").mkdir(exist_ok=True)
@@ -199,10 +238,15 @@ def build(folder, practice, frozen=FULL, fresh=("valid",) * 3, rehearsal=("valid
     if checkpoints_before_generation:
         generation()
     for name in ("frozen", "fresh"):
-        if name in made.outs:
+        if name in lost_index:  # a crash cut the index off mid-write: it is not JSON, and no snapshot covers it
+            index = made.outs[name].joinpath("index.json")
+            index.write_bytes(index.read_bytes()[:100])
+            made.left_out = copy_as_is(clone, made.outs[name], name)
+        elif name in made.outs:
             copy_baseline(made.outs[name], clone.joinpath("release", name))
     made.commit("Release 1: run output (test)")
-    rc.git(clone, "worktree", "remove", "--force", str(checkout))
+    if checkout.exists():
+        rc.git(clone, "worktree", "remove", "--force", str(checkout))
     if before_checks:
         before_checks(clone)
         made.commit("A change after the freeze (test)")
