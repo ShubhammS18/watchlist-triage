@@ -591,9 +591,43 @@ one at a time. Time is pytest's own. Wall is the whole `timed_run.sh` command, i
 | 2 | 36 passed, 1 xfailed | 87.05 s | 94.3 s | 0.745 s | 1,595 MB, 1,721 MB |
 | 3 | 36 passed, 1 xfailed | 91.73 s | 101.9 s | 0.755 s | 1,505 MB, 1,700 MB |
 
-The slowest, 95.27 s, is under the 100-second aim and 25 s under the limit. The machine was slower that day than on
-2 Nov: the unchanged W2-08 suite took 119.61 s, against 77.05 s in review round 2. After the publish, the
-real-release test also runs the check on both worlds; its time is measured then, three times again.
+The machine was slower that day than on 2 Nov, with other heavy programs open: the unchanged W2-08 suite took
+119.61 s, against 77.05 s in review round 2.
+
+**Re-timed on 17 Nov 2026,** with other heavy programs closed. VS Code stayed open, since the project runs in it.
+The charger was in and the fixed benchmark checked, through `tools/timed_run.sh`, one at a time, with
+`MEMORY_GUARD_MAX_SECONDS=200` so that the guard's 110-second default could not stop a slow gate:
+
+| Gate | Run | Result | Time | Wall | Benchmark | Memory in use, before and peak |
+|---|---|---|---|---|---|---|
+| `tests` (W2-10) | 1 | 36 passed, 1 xfailed | 81.96 s | 83.5 s | 0.848 s | 1,586 MB, 1,669 MB |
+| `tests` (W2-10) | 2 | 36 passed, 1 xfailed | 80.56 s | 81.7 s | 0.800 s | 1,510 MB, 1,629 MB |
+| `tests` (W2-10) | 3 | 36 passed, 1 xfailed | 85.10 s | 86.4 s | 0.797 s | 1,476 MB, 1,599 MB |
+| `w2-08` | 1 | 129 passed, 1 skipped, 1 xfailed | 74.07 s | 75.3 s | 0.791 s | 1,451 MB, 1,617 MB |
+| `w2-01` | 1 | 68 passed | 69.47 s | 70.7 s | 0.790 s | 1,446 MB, 1,682 MB |
+| `w2-02` | 1 | 68 passed | 6.23 s | 7.6 s | 0.822 s | 1,442 MB, 1,553 MB |
+| `secrets` | 1 | passed | | 0.3 s | | |
+
+**The real-release test, estimated.** After the publish, `test_published.py` stops being xfailed and does its own
+work: a clone, the check on both worlds, and every rule. That was timed on a made-up release of the largest real
+size: five runs on each world (three valid, one killed, one aborted) and a rehearsal. The same steps ran on it with
+the documented command, twice, through `tools/timed_run.sh`:
+
+| Part | Try 1 | Try 2 |
+|---|---|---|
+| clone and checkout of the tag | 0.29 s | 0.30 s |
+| the check, frozen world | 1.52 s | 1.52 s |
+| the check, fresh world (with the generation replay) | 3.42 s | 3.49 s |
+| every rule (`problems`) | 0.49 s | 0.45 s |
+| **the real-release test's own work** | **5.73 s** | **5.76 s** |
+
+The gate found no problem on that release. Real runs hold the same items as made-up ones, but a real model's logs
+may be somewhat larger, so take about 6 s.
+
+**So the dry run stays in the gate.** The slowest W2-10 run, 85.10 s, plus about 6 s is about 91 s, under the
+100-second aim and about 29 s under the limit. If a later timing puts that sum near 100 s, the dry run goes behind
+a by-hand switch, as W2-08's mutation proofs are, and is run by hand at review round 3 and just before the freeze.
+After the publish, the real-release test's time is measured three times again.
 
 ## Limits
 
