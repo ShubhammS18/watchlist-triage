@@ -12,3 +12,7 @@ DEC-W2-10-STOPS, DEC-W2-10-LOST-INDEX, DEC-W2-10-ROUND3.
 | Date | Run ID | Agent commit | Run set | State | Key figures | Harness USD | Console before | Console after | Spend USD | Peak memory MB | Note |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 17 Nov 2026 | `20261117T091935637500Z-2dd374e6` | `34432e809c8c` | `2dd374e6` | completed | true matches closed 0, ambiguous closed 0, over-escalation 4/1620 | 0.0999 | 4.56 | 4.46 | 0.10 | 1292 | rehearsal, first try; 889 attempts for 888 calls, the one without token counts retried successfully; 0 refusals |
+
+## Freeze and push
+
+The freeze commit is the commit that adds this heading.
