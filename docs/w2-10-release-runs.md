@@ -583,7 +583,9 @@ WORLD passes the gate when it is consistent.
 1. a shared clone of the repository, with the test candidate's settings committed as its `config/run-triage.json`,
    so the freeze configures the made-up release candidate;
 2. a rehearsal on the practice world, made from seed 20261027 by the repository's own generator into a temporary
-   folder, and its evidence committed through the copy step;
+   folder, and its evidence committed through the copy step. Once the real rehearsal evidence is committed, the clone
+   holds it, so the made-up release first removes it in a commit of its own: its rehearsal is then made from a clean
+   tree (found by the first by-hand dry run, 17 Nov 2026);
 3. a freeze commit and annotated tag;
 4. `make_fresh_world` and the generation record;
 5. runs from a separate worktree at the freeze, made by W2-08's test candidate with the stub provider;

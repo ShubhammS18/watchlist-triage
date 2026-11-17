@@ -3,6 +3,7 @@ of the repository, never in it. No model is called: every run is made by W2-08's
 provider (release_common), and the rehearsal's practice world is the real one, made from seed 20261027 by the
 repository's own generator into a temporary folder."""
 import json
+import shutil
 import subprocess
 import sys
 from decimal import Decimal
@@ -190,6 +191,11 @@ def build(folder, practice, frozen=FULL, fresh=("valid",) * 3, rehearsal=("valid
         made.commit("A test generator (test)")
 
     def rehearse():
+        # the clone holds the real rehearsal evidence once it is committed: the made-up release has its own instead,
+        # and the removal is committed first, so that its rehearsal is made from a clean tree
+        if clone.joinpath(gate.REHEARSAL_DIR).exists():
+            shutil.rmtree(clone.joinpath(gate.REHEARSAL_DIR))
+            made.commit("The real rehearsal evidence removed (test)")
         world = rehearsal_world(clone) if rehearsal_world else practice
         made.runs(clone, world, rehearsal, rc.fresh_truth(world), "rehearsal", workers=rehearsal_workers)
         copy_baseline(made.outs["rehearsal"], clone.joinpath(gate.REHEARSAL_DIR))
