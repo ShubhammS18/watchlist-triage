@@ -152,6 +152,31 @@ copy_as_is() {  # copy_as_is OUT WORLD: a world whose index is lost, copied in a
   [ ! -e $o/index.json.tmp ] || left index.json.tmp
   (cd $d && find . -type f ! -name SHA256SUMS -printf '%P\n' | LC_ALL=C sort | xargs -d '\n' sha256sum > SHA256SUMS) && (cd $o && sha256sum --quiet -c $d/SHA256SUMS) && echo "copied as it is; paste every 'Left out' line above under the world's table in the log"
 }
+rehearsal_row() {  # rehearsal_row RUN CONSOLE_BEFORE CONSOLE_AFTER PEAK_MB NOTE: the run's row for the release log
+  $PY - "$REL/out-rehearsal" "$@" <<'PYEOF'
+import json, sys
+from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
+from pathlib import Path
+out, run, before, after, peak, note = Path(sys.argv[1]), *sys.argv[2:7]
+entry = next(e for e in json.loads(out.joinpath("index.json").read_text())["runs"] if e["run_id"] == run)
+manifest, report = out.joinpath(run, "manifest.json"), out.joinpath(run, "report.json")
+commit = json.loads(manifest.read_text())["git"]["commit"][:12] if manifest.exists() else "none"
+if report.exists():
+    o = json.loads(report.read_text())["figures"]["overall"]
+    e = o["over_escalation"]
+    figures = (f"true matches closed {o['missed_true_matches']}, ambiguous closed {o['ambiguous_closed']}, "
+               f"over-escalation {e['numerator']}/{e['denominator']}")
+else:
+    figures = "no report"
+known = (entry.get("cost") or {}).get("known_cost")
+harness = (Decimal(known["numerator"]) / Decimal(known["denominator"])).quantize(Decimal("0.0001"), ROUND_HALF_UP) \
+    if known else "none"
+spend = Decimal(before) - Decimal(after)
+print(f"| {date.today():%-d %b %Y} | `{run}` | `{commit}` | `{entry['run_set'][:8]}` | {entry['state']} | {figures} | "
+      f"{harness} | {before} | {after} | {spend} | {peak} | {note} |")
+PYEOF
+}
 ```
 
 `index.json` lists runs in the order their entries were last written, so `new_run` names the run just made, and only
@@ -214,7 +239,11 @@ A re-run into the same folder: type what went wrong with the run it replaces, th
 read -r CAUSE; cd $REL/rehearsal-checkout && N=$(runs_in $REL/out-rehearsal) && $PY -m baseline_run run $REL/run-practice.json $REL/out-rehearsal --rerun-cause "$CAUSE"; after_run $? $REL/out-rehearsal "$N" rehearsal
 ```
 
-Once it has a completed, clean run, commit the evidence:
+Once it has a completed, clean run, start the release log with its header and the Rehearsal table ("The release
+log" below), and add one row for every rehearsal run, killed or re-run ones included, with
+`rehearsal_row RUN CONSOLE_BEFORE CONSOLE_AFTER PEAK_MB NOTE >> docs/release-log.md`. It takes the date, run set,
+state, commit, key figures and harness cost from the run's own files, and Spend USD as before minus after. Then commit
+the evidence:
 
 ```
 cd $REPO && same_runs $REL/out-rehearsal
@@ -472,7 +501,7 @@ after (G6, G8).
 # Release 1 log
 
 Task W2-10-release-runs. Rules: DEC-W2-RELEASE-RULES, DEC-W2-08-CHOICES, DEC-W2-08-CHECKPOINTS, DEC-W2-10-CHOICES,
-DEC-W2-10-STOPS.
+DEC-W2-10-STOPS, DEC-W2-10-LOST-INDEX, DEC-W2-10-ROUND3.
 
 - Freeze commit: `<the 40-hex freeze commit>`, tag `release-1-freeze`
 - Starting point: wave-2 spend USD 0.95 (docs/w2-02-attempts.md); Console balance USD 4.56 (owner, 2 Nov 2026)

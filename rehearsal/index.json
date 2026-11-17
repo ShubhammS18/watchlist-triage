@@ -1,0 +1,36 @@
+{
+  "runs": [
+    {
+      "calls": {
+        "attempts": 889,
+        "input_tokens": 598916,
+        "output_tokens": 80107,
+        "without_token_counts": 1
+      },
+      "cause": null,
+      "cost": {
+        "at_least": true,
+        "attempts": 889,
+        "attempts_without_price": 0,
+        "attempts_without_token_counts": 1,
+        "currency": "USD",
+        "known_cost": {
+          "decimal": "0.0999451",
+          "denominator": 10000000,
+          "not_applicable": false,
+          "numerator": 999451,
+          "rounded": false
+        },
+        "statement": "at least 0.0999451 USD; 1 attempts without token counts"
+      },
+      "dirty": false,
+      "infra_invalid": false,
+      "rerun_cause": null,
+      "run_id": "20261117T091935637500Z-2dd374e6",
+      "run_set": "2dd374e655c08a3e714ded31fbcc14050f2fcaabb86a371fe4210d80de3dbec8",
+      "started_at": "2026-11-17T09:19:35.637500+00:00",
+      "state": "completed"
+    }
+  ],
+  "sets": {}
+}
