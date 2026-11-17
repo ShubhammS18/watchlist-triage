@@ -54,6 +54,7 @@ class Release:
     def __init__(self, folder):
         self.folder, self.clone = Path(folder), Path(folder, "repo")
         self.outs, self.plans, self.spends = {}, {}, {}
+        self.left_out = {}  # {world: what copy_as_is printed}
 
     def commit(self, message):
         rc.git(self.clone, "add", "-A")
@@ -132,6 +133,9 @@ class Release:
                 text.append(f"| {n} | `{run_id}` | {state} | {'valid' if valid else 'replaced'} | "
                             f"{'' if valid else runs['replaced'][run_id]} | {cause} | "
                             f"{'yes' if point else 'no'} | {harness(entry)} | {' | '.join(rows[run_id])} | test |")
+            # the owner pastes the 'Left out' lines copy_as_is prints under the world's table (round 3, R3-2)
+            left = [line for line in self.left_out.get(world, "").splitlines() if line.startswith("- Left out:")]
+            text += [""] + left if left else []
         text += ["", "## Results", "| " + " | ".join(gate.RESULT_COLUMNS) + " |", "|---|---|---|---|"]
         for world, output in outputs.items():
             if output is not None:
@@ -241,7 +245,7 @@ def build(folder, practice, frozen=FULL, fresh=("valid",) * 3, rehearsal=("valid
         if name in lost_index:  # a crash cut the index off mid-write: it is not JSON, and no snapshot covers it
             index = made.outs[name].joinpath("index.json")
             index.write_bytes(index.read_bytes()[:100])
-            made.left_out = copy_as_is(clone, made.outs[name], name)
+            made.left_out[name] = copy_as_is(clone, made.outs[name], name)
         elif name in made.outs:
             copy_baseline(made.outs[name], clone.joinpath("release", name))
     made.commit("Release 1: run output (test)")

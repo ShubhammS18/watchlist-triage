@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-11-13T13:59:02.813Z"
+    "updated_at": "2026-11-17T08:54:53.150Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2240,6 +2240,16 @@
       "status": "accepted",
       "source": "Owner, 13 Nov 2026; W2-10-release-runs review round 2, round-1 finding 7; DEC-W2-10-STOPS",
       "recorded_at": "2026-11-13T13:59:02.781Z",
+      "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-10-ROUND3",
+      "title": "Fixes after the last review before the freeze",
+      "text": "The last review before the freeze found four issues, fixed without another round as my review budget says. A complete final line in a killed run's items file now counts toward the refusal stop rule even without its newline. Every file left out of a lost-index world needs a log entry with its path and hash; the bytes stay outside git, so the hash can only be checked against the copy I keep, and the README says so. The rehearsal's state and run-set cells must match its index and manifest. The gate's timing was close to my 100-second mark, so the dry run moves behind a by-hand switch: I run it once just before the freeze and commit its output as evidence, and the gate keeps the real-release test and the quick checks.",
+      "status": "accepted",
+      "source": "Owner, 17 Nov 2026; W2-10-release-runs review round 3, R3-1 to R3-4; DEC-W2-10-REVIEW-BUDGET, DEC-W2-10-LOST-INDEX",
+      "recorded_at": "2026-11-17T08:54:53.140Z",
       "paths": [],
       "tags": []
     }

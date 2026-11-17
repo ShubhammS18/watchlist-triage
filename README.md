@@ -52,6 +52,10 @@ customer to the listed person; of the model's answers, only "no link" closes, an
 Its limits:
 - one synthetic world;
 - the fresh-seed release test has not been run;
+- if a crash loses a release world's run index, that world is published as not eligible with its run output as it
+  was. Any file the release may not commit, such as the damaged index, stays outside git with the owner, so its
+  SHA-256 in the release log can be checked only against the owner's copy (`DEC-W2-10-LOST-INDEX`,
+  `DEC-W2-10-ROUND3`);
 - the second attempt's change was chosen after seeing the first attempt fail on this same world, so the frozen
   world is no longer unseen by the design;
 - the rules come from the same rubric the generator used to make the labels, so a high score shows the rubric can

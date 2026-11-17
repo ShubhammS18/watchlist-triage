@@ -127,9 +127,10 @@ def _spend(row, where):
 
 def _refusals(run_dir):
     """(the share of a run's items the model refused, as the wrapper's refusal checkpoint counts it, or None; why the
-    share cannot be read, or None). Only complete records count. A run whose manifest does not say completed may end
-    in one cut-off line, which a crash while the harness writes the file leaves, and that line is not counted. Any
-    other line that is not an item record makes the share unreadable (review round 2, finding N2)."""
+    share cannot be read, or None). Every complete record counts, as the wrapper's `splitlines()` counts it. A run
+    whose manifest does not say completed may end without a newline, as a crash while the harness writes the file
+    leaves it: that last line counts if it is a whole item record (review round 3, R3-1), and is left out only if it
+    is cut off. Any other line that is not an item record makes the share unreadable (review round 2, finding N2)."""
     items = Path(run_dir, "items.jsonl")
     if not items.is_file():
         return None, None
@@ -154,7 +155,40 @@ def _share(data, completed):
             kinds.append(json.loads(line)["result"]["failure_kind"])
         except (ValueError, KeyError, TypeError):
             return None, f"line {number} of its items file is not an item record"
+    if tail:  # an unfinished run's last line, without its newline
+        try:
+            kinds.append(json.loads(tail)["result"]["failure_kind"])
+        except (ValueError, KeyError, TypeError):
+            pass  # cut off by the crash: not a record, so not counted
     return (Fraction(kinds.count("model_refusal"), len(kinds)) if kinds else Fraction(0)), None
+
+
+LEFT_OUT = re.compile(r"- Left out: `([^`]+)`, SHA-256 `([0-9a-f]{64})`")
+LEFT_OUT_PATHS = ("index.json", "index.json.tmp")  # what copy_as_is leaves outside git (DEC-W2-10-LOST-INDEX)
+
+
+def left_out(text, world, folder):
+    """({path: SHA-256} of the "Left out" lines in the release log's section of `world`, problems). Every such line
+    has the form copy_as_is prints, for a file it may leave out, once. A world whose run folders are committed
+    without an index needs one for its index.json: the bytes stay outside git, so the log is the only committed
+    trace of them (review round 3, R3-2; DEC-W2-10-ROUND3)."""
+    heading = f"## {HEADINGS[world]}\n"
+    section = text.split(heading, 1)[1].split("\n## ", 1)[0] if heading in text else ""
+    found, problems = {}, []
+    for line in section.splitlines():
+        if not line.startswith("- Left out:"):
+            continue
+        match = LEFT_OUT.fullmatch(line.strip())
+        if not match or match[1] not in LEFT_OUT_PATHS or match[1] in found:
+            problems.append(f"G6: the {world} world's line {line.strip()!r} is not one 'Left out' entry, with a path "
+                            f"copy_as_is may leave out ({', '.join(LEFT_OUT_PATHS)}) and its SHA-256")
+            continue
+        found[match[1]] = match[2]
+    _, dirs = _runs(folder)
+    if dirs and not Path(folder, "index.json").exists() and "index.json" not in found:
+        problems.append(f"G6: the {world} world's run folders are committed with no index.json, and the log has no "
+                        "'Left out' entry with its path and SHA-256")
+    return found, problems
 
 
 def _runs(folder):
@@ -288,6 +322,7 @@ def problems(repo, reproduced=None):
         if set(entries) != dirs and output.get("result") != "NOT ELIGIBLE":
             found.append(f"G6: the {world} world's index and run folders do not name the same runs, and it is not "
                          "published as NOT ELIGIBLE")
+        found += left_out(text, world, repo.joinpath("release", world))[1]
         runs = ((output.get("release") or {}).get("runs")) or {"valid": [], "replaced": {}}
         run_set = output.get("run_set")
         if entries and {entry.get("run_set") for entry in entries.values()} != {run_set}:
@@ -456,6 +491,16 @@ def _rehearsal(repo, text, freeze, freeze_tree, spends, ordered, broken):
     for row in rows:
         run = row["Run ID"].strip("`")
         entry, manifest = entries.get(run), _json(folder.joinpath(run, "manifest.json"))
+        if entry is not None:  # the State and Run set cells are the index's and the manifest's (round 3, R3-3)
+            told = [entry] + ([manifest] if isinstance(manifest, dict) else [])
+            states = {str(one.get("state")) for one in told}
+            if states != {row["State"]}:
+                found.append(f"G8: the rehearsal row for {run}: state {row['State']!r} is not its index's and "
+                             f"manifest's {sorted(states)}")
+            sets = {str(one.get("run_set")) for one in told}
+            if len(sets) != 1 or row["Run set"] != f"`{next(iter(sets))[:8]}`":
+                found.append(f"G8: the rehearsal row for {run}: run set {row['Run set']} is not its index's and "
+                             "manifest's")
         bad = _harness_cell(row["Harness USD"], _cost(entry)) if entry else None
         found += [f"G8: the rehearsal row for {run}: {bad}"] if bad else []
         spend, bad = _spend(row, f"G8: the rehearsal row for {run}")

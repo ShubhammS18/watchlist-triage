@@ -1,8 +1,13 @@
 """W2-10 dry run (docs/w2-10-release-runs.md, "The gate tests"): the gate's rules on made-up releases, each built the
 way the real release is, in a shared clone, with fake models only. One whole release passes every check (G1 to G12);
 each break fails its named check; a FAIL, a NO FRESH WORLD, a broken freeze and a second freeze, each published
-consistently, pass."""
+consistently, pass.
+
+It runs only by hand, with W2_10_DRY_RUN=1, just before the freeze, and its output is committed as evidence
+(DEC-W2-10-ROUND3): it takes about 80 s, and the gate keeps the real-release test and the quick checks
+(test_quick.py) under the 100-second aim."""
 import json
+import os
 from decimal import Decimal
 from pathlib import Path
 
@@ -12,6 +17,9 @@ import made_up
 import release_common as rc
 import release_gate as gate
 from harness import release
+
+pytestmark = pytest.mark.skipif(os.environ.get("W2_10_DRY_RUN") != "1",
+                                reason="the dry run runs only with W2_10_DRY_RUN=1, by hand just before the freeze")
 
 
 def named(found, check, text=""):
@@ -111,9 +119,35 @@ BREAKS = {  # name: (change, the check that must fail, a text its problem contai
         _log(lambda m, t: t.replace("`release/check-frozen.json` | PASS |", "`release/check-frozen.json` | PASS |\n"
                                     + next(line for line in t.split("\n") if "`release/check-frozen.json`" in line))),
         "G9", "Results row of the frozen world"),
+    "a killed run's last item, a refusal, whole but without its newline, with runs after it": (
+        lambda m: _killed_refusal(m), "G12", "refusal checkpoint"),
+    "a rehearsal row whose State is not its index's": (
+        _log(lambda m, t: _rehearsal_row(t, 4, "aborted")), "G8", "state 'aborted'"),
+    "a rehearsal row whose Run set is not its index's": (
+        _log(lambda m, t: _rehearsal_row(t, 3, "`deadbeef`")), "G8", "run set `deadbeef`"),
     "a line of an items file that is not an item record": (
         lambda m: _items(m, lambda lines: lines[:1] + [b"{not json"] + lines[2:]), "G12", "not an item record"),
 }
+
+
+def _rehearsal_row(text, cell, value):
+    """`text` with one cell of the rehearsal's row (0 is Date) set to `value`."""
+    lines = text.split("\n")
+    at = next(n for n, line in enumerate(lines) if "| made up |" in line)
+    cells = lines[at].split(" | ")
+    cells[cell] = value
+    lines[at] = " | ".join(cells)
+    return "\n".join(lines)
+
+
+def _killed_refusal(made):
+    """The killed frozen-world run's items file, as a crash right after its first item can leave it: that one item, a
+    model refusal, whole, without its newline (review round 3, R3-1). A refusal share of 100%, with runs after it."""
+    killed = next(run for run, plan in sorted(made.plans["frozen"].items()) if plan == "killed")
+    valid = next(run for run, plan in sorted(made.plans["frozen"].items()) if plan == "valid")
+    line = json.loads(made.clone.joinpath("release", "frozen", valid, "items.jsonl").read_bytes().split(b"\n")[0])
+    line["result"]["failure_kind"] = "model_refusal"
+    made.clone.joinpath("release", "frozen", killed, "items.jsonl").write_text(json.dumps(line))
 
 
 def _items(made, change):
@@ -207,15 +241,23 @@ def test_a_lost_index_and_a_cut_off_items_file_published_as_not_eligible_pass(no
     """DEC-W2-10-LOST-INDEX and review round 2, finding N2: a crash leaves the frozen world's index cut off and one
     run's items file ending mid-line. The world is copied in as it is, the index that is not JSON left out with its
     hash printed for the log, and published as NOT ELIGIBLE; the gate passes it and reads the cut file's whole
-    records."""
+    records. The log's "Left out" entry for the index is required (review round 3, R3-2): without it the gate fails."""
     made, reproduced = no_fresh_lost_index
-    assert "index.json" in made.left_out and not made.clone.joinpath("release", "frozen", "index.json").exists()
+    lost = made.clone.joinpath(release.RELEASE_LOG).read_text().split("## Frozen world\n", 1)[1].split("\n## ", 1)[0]
+    entry = made.left_out["frozen"].split("\n")[0]  # what copy_as_is printed for the index it left out
+    assert entry.startswith("- Left out: `index.json`, SHA-256 `") and entry in lost
+    assert not made.clone.joinpath("release", "frozen", "index.json").exists()
     cut = next(run for run, plan in made.plans["frozen"].items() if plan == "cut")
     assert not made.clone.joinpath("release", "frozen", cut, "items.jsonl").read_bytes().endswith(b"\n")
     output = json.loads(made.clone.joinpath("release", "check-frozen.json").read_text())
     assert output["result"] == "NOT ELIGIBLE" and set(output["release"]["runs"]["replaced"].values()) == \
         {"not listed in the index"}
     assert gate.problems(made.clone, reproduced) == []
+    try:  # the same release with the index's "Left out" entry not written
+        made.amend(_log(lambda m, t: "\n".join(line for line in t.split("\n") if not line.startswith("- Left out:"))))
+        assert named(gate.problems(made.clone, reproduced), "G6", "no 'Left out' entry")
+    finally:
+        made.restore()
 
 
 def _rules(clone):
