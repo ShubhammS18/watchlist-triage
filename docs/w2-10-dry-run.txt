@@ -1,0 +1,7 @@
+0cffabd81075f3ff06da3950303c80afe9c3f424
+2026-11-17T13:41:18Z
+Power: plugged in
+benchmark: 0.787 s (N=12000000, result 983797)
+.......................................x....                             [100%]
+43 passed, 1 xfailed in 80.30s (0:01:20)
+exit=0  memory used: before 1458 MB, peak 1674 MB (limit for stopping 3000 MB)
