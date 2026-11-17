@@ -1,0 +1,13 @@
+{
+  "accepted": {
+    "counter": 0,
+    "seed": 3386666965265652,
+    "world_hash": "078687d3cd02886b0b45ccc21e20dfb5b39df58aeb1775774b91b140f5421d8e"
+  },
+  "freeze_commit": "fb4ab457ae9512c6073b59458c7263421b23d844",
+  "generator_version": "1",
+  "python": "3.12.3",
+  "seed_function": "int(sha256(\"<commit>:<counter>\")[:13 hex digits], 16)",
+  "tries": [],
+  "v": 1
+}
