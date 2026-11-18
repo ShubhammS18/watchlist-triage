@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-11-18T09:46:29.446Z"
+    "updated_at": "2026-11-18T13:55:03.408Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2262,6 +2262,19 @@
       "recorded_at": "2026-11-18T09:46:29.433Z",
       "paths": [
         "docs/release-log.md"
+      ],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-10-TEST-CLONES",
+      "title": "Test copies without the published release",
+      "text": "After the publish, the gate failed on the release-protocol test suite. Its test copies of the repository carried the real release: the real tags clashed with the tags the tests make, and the committed run output stopped the made-up releases from being built. Nothing was wrong with the release. I changed only test code: the copies are now made without tags and, in a commit of their own, remove the published release’s files, all of which came in with this task. The suite runs the same 131 tests as before the freeze with the same one skip, the dry run passes, and a broken freeze is still caught. I checked this myself; it had no review round. At the release-1 tag the old test code still fails this way, so the tests are run at main.",
+      "status": "accepted",
+      "source": "Owner, 18 Nov 2026; W2-10-release-runs gate failure on the W2-08 suite; DEC-W2-10-REVIEW-BUDGET",
+      "recorded_at": "2026-11-18T13:55:03.394Z",
+      "paths": [
+        "tests/w2_08_release_protocol/release_common.py",
+        "tests/w2_10_release_runs/made_up.py"
       ],
       "tags": []
     }
@@ -6520,16 +6533,28 @@
           "kind": "command",
           "command": ".venv/bin/python -m pytest tests/w2_10_release_runs -q -p no:cacheprovider",
           "mandatory": true,
-          "status": "pending",
-          "evidence": null
+          "status": "pass",
+          "evidence": {
+            "path": ".genesis/evidence/W2-10-release-runs-tests-226a6ead-5bc0-440f-bcce-f59b647bece7.json",
+            "hash": "9bc16dd68d26a0f26e5090231d38f228704570f96bd8467a1ae1f61cdddfdcb9",
+            "source_hash": "4582f8cf407b7b6c98d242d32b7ca46efe2752ee453655babee616d3de646f68",
+            "config_hash": "bae396443c3c8a048ec346de079752daaf6f6c9f0a3ca62c594f4bd11edb9fea",
+            "observed_at": "2026-11-18T09:48:32.783Z"
+          }
         },
         {
           "id": "w2-08",
           "kind": "command",
           "command": ".venv/bin/python -m pytest tests/w2_08_release_protocol -q -p no:cacheprovider",
           "mandatory": true,
-          "status": "pending",
-          "evidence": null
+          "status": "fail",
+          "evidence": {
+            "path": ".genesis/evidence/W2-10-release-runs-w2-08-4456afb6-c04b-43e0-a52f-29faedf05da6.json",
+            "hash": "032f33bc634f49e1bb6ab5919e9133a8624d65df90f2b56e7829d1342ffad036",
+            "source_hash": "4582f8cf407b7b6c98d242d32b7ca46efe2752ee453655babee616d3de646f68",
+            "config_hash": "bae396443c3c8a048ec346de079752daaf6f6c9f0a3ca62c594f4bd11edb9fea",
+            "observed_at": "2026-11-18T09:48:49.564Z"
+          }
         },
         {
           "id": "w2-01",
@@ -7904,6 +7929,54 @@
       "cost": null,
       "stop_reason": null,
       "ended_at": "2026-11-02T06:40:05.548Z"
+    },
+    {
+      "id": "226a6ead-5bc0-440f-bcce-f59b647bece7",
+      "task": "W2-10-release-runs",
+      "kind": "gate",
+      "command": ".venv/bin/python -m pytest tests/w2_10_release_runs -q -p no:cacheprovider",
+      "timeout": 120000,
+      "authorization": null,
+      "pid": 171171,
+      "child_pid": 171255,
+      "started_at": "2026-11-18T09:48:22.454Z",
+      "status": "passed",
+      "before_hash": "4582f8cf407b7b6c98d242d32b7ca46efe2752ee453655babee616d3de646f68",
+      "config_hash": "bae396443c3c8a048ec346de079752daaf6f6c9f0a3ca62c594f4bd11edb9fea",
+      "environment": {
+        "node": "v24.21.0",
+        "platform": "linux",
+        "arch": "x64",
+        "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+        "variables": {}
+      },
+      "cost": null,
+      "stop_reason": null,
+      "ended_at": "2026-11-18T09:48:32.783Z"
+    },
+    {
+      "id": "4456afb6-c04b-43e0-a52f-29faedf05da6",
+      "task": "W2-10-release-runs",
+      "kind": "gate",
+      "command": ".venv/bin/python -m pytest tests/w2_08_release_protocol -q -p no:cacheprovider",
+      "timeout": 120000,
+      "authorization": null,
+      "pid": 171171,
+      "child_pid": 171624,
+      "started_at": "2026-11-18T09:48:36.585Z",
+      "status": "failed",
+      "before_hash": "4582f8cf407b7b6c98d242d32b7ca46efe2752ee453655babee616d3de646f68",
+      "config_hash": "bae396443c3c8a048ec346de079752daaf6f6c9f0a3ca62c594f4bd11edb9fea",
+      "environment": {
+        "node": "v24.21.0",
+        "platform": "linux",
+        "arch": "x64",
+        "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+        "variables": {}
+      },
+      "cost": null,
+      "stop_reason": "command-failed",
+      "ended_at": "2026-11-18T09:48:49.564Z"
     }
   ],
   "authorizations": [],

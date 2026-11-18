@@ -1,0 +1,30 @@
+{
+  "task": "W2-10-release-runs",
+  "gate": "tests",
+  "kind": "command",
+  "attempt": "226a6ead-5bc0-440f-bcce-f59b647bece7",
+  "command": ".venv/bin/python -m pytest tests/w2_10_release_runs -q -p no:cacheprovider",
+  "started_at": "2026-11-18T09:48:22.454Z",
+  "observed_at": "2026-11-18T09:48:32.783Z",
+  "exit_code": 0,
+  "signal": null,
+  "stdout": "sssssssssssssssssssssssssssssssssssssss.....                             [100%]\n5 passed, 39 skipped in 6.14s\n",
+  "stderr": "",
+  "failure": null,
+  "receipt": null,
+  "revision": {
+    "commit": "47940742cf08fa94c2c937cb2c858fd6444b9ccc",
+    "dirty": true
+  },
+  "source_hash": "4582f8cf407b7b6c98d242d32b7ca46efe2752ee453655babee616d3de646f68",
+  "before_hash": "4582f8cf407b7b6c98d242d32b7ca46efe2752ee453655babee616d3de646f68",
+  "config_hash": "bae396443c3c8a048ec346de079752daaf6f6c9f0a3ca62c594f4bd11edb9fea",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "arch": "x64",
+    "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+    "variables": {}
+  },
+  "hash": "9bc16dd68d26a0f26e5090231d38f228704570f96bd8467a1ae1f61cdddfdcb9"
+}
