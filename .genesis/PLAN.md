@@ -138,15 +138,15 @@
 
 ### W2-10-release-runs — The release is run under DEC-W2-RELEASE-RULES. One rehearsal run of the release candidate on the practice world comes first and is logged with its cost. Code, prompts, configuration and targets are then frozen in one freeze commit. From a clean checkout of that commit, the fresh world is generated with the derived seed, and the release candidate runs three times on the frozen world and three times on the fresh world, with at most five runs per world. The generation and every rejected try, both run sets, the release check's output for each world, the checkpoints and the Console sign-offs are committed, and every run, replaced or not, is a row in a release log with its cost. The result is published whatever it shows. The gate checks the committed files only and never calls a model: the freeze commit exists, the seed is the one the function gives for it, there is exactly one accepted generation, the committed check output is what the check gives on the committed runs, every run is in the log within five per world, and nothing the freeze pins changed after it. The gate checks that the result is published and consistent, not that it passed: a published FAIL or NOT ELIGIBLE completes this task.
 
-- state/risk: active / high
+- state/risk: done / high
 - requirements: FR-23, AC-19, AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, AC-12
 - scope: not bounded
-- gates: tests: .venv/bin/python -m pytest tests/w2_10_release_runs -q -p no:cacheprovider, w2-08: .venv/bin/python -m pytest tests/w2_08_release_protocol -q -p no:cacheprovider, w2-01: .venv/bin/python -m pytest tests/w2_01_acceptance -q -p no:cacheprovider, w2-02: .venv/bin/python -m pytest tests/w2_02_agent -q -p no:cacheprovider, secrets: pre-commit run gitleaks --all-files, independent-review: pending
+- gates: tests: .venv/bin/python -m pytest tests/w2_10_release_runs -q -p no:cacheprovider, w2-08: .venv/bin/python -m pytest tests/w2_08_release_protocol -q -p no:cacheprovider, w2-01: .venv/bin/python -m pytest tests/w2_01_acceptance -q -p no:cacheprovider, w2-02: .venv/bin/python -m pytest tests/w2_02_agent -q -p no:cacheprovider, secrets: pre-commit run gitleaks --all-files, independent-review: pass
 - next: Run the task pre-flight.
 
 ### W2-09-readme — The full README states what was demonstrated and what was not, as NFR-7 lists. It gives the release result for both worlds and says the fresh world passed or failed the safety counts, never every target. It lists every gap in DEC-W2-SCOPE with its requirement ID, says that the audit log records the agent's recommendations and not human decisions, and says there are no reviewer identities yet because operational mode was not built. A release checklist in docs/release-checklist.md reviews every public-facing claim against its evidence path, every industry statistic carries its citation, and docs/README.md lists the new docs. The gate checks that every checklist item names an evidence path that exists, that the README's gap list equals the scope record's, that every release figure the README gives matches the committed check output, and that the cited statistic carries its DOI.
 
-- state/risk: queued / medium
+- state/risk: active / medium
 - requirements: NFR-7, NFR-8
 - scope: not bounded
 - gates: tests: .venv/bin/python -m pytest tests/w2_09_readme -q -p no:cacheprovider, secrets: pre-commit run gitleaks --all-files, independent-review: pending

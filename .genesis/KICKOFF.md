@@ -4,11 +4,11 @@
 
 - objective: Triage sanctions/PEP name-match alerts from a frozen synthetic world: recommend close or escalate with cited evidence, human-approved, measured on zero missed planted true matches.
 - phase/status: build/active
-- active task: W2-10-release-runs — The release is run under DEC-W2-RELEASE-RULES. One rehearsal run of the release candidate on the practice world comes first and is logged with its cost. Code, prompts, configuration and targets are then frozen in one freeze commit. From a clean checkout of that commit, the fresh world is generated with the derived seed, and the release candidate runs three times on the frozen world and three times on the fresh world, with at most five runs per world. The generation and every rejected try, both run sets, the release check's output for each world, the checkpoints and the Console sign-offs are committed, and every run, replaced or not, is a row in a release log with its cost. The result is published whatever it shows. The gate checks the committed files only and never calls a model: the freeze commit exists, the seed is the one the function gives for it, there is exactly one accepted generation, the committed check output is what the check gives on the committed runs, every run is in the log within five per world, and nothing the freeze pins changed after it. The gate checks that the result is published and consistent, not that it passed: a published FAIL or NOT ELIGIBLE completes this task.
+- active task: W2-09-readme — The full README states what was demonstrated and what was not, as NFR-7 lists. It gives the release result for both worlds and says the fresh world passed or failed the safety counts, never every target. It lists every gap in DEC-W2-SCOPE with its requirement ID, says that the audit log records the agent's recommendations and not human decisions, and says there are no reviewer identities yet because operational mode was not built. A release checklist in docs/release-checklist.md reviews every public-facing claim against its evidence path, every industry statistic carries its citation, and docs/README.md lists the new docs. The gate checks that every checklist item names an evidence path that exists, that the README's gap list equals the scope record's, that every release figure the README gives matches the committed check output, and that the cited statistic carries its DOI.
 - blocker: none
 - next action: Run the task pre-flight.
 - phase instruction: Implement only the active task and prove it against current sources. Check `genesis query . impact PATH` before editing shared code.
-- gates: tests:stale, w2-08:fail, w2-01:pending, w2-02:pending, secrets:pending, independent-review:pending
+- gates: tests:pending, secrets:pending, independent-review:pending
 - recent failures: none
 
 ## Resume
@@ -17,9 +17,9 @@ Load Genesis and official Ponytail full, then run `genesis brief .` for the curr
 Fetch full records with `genesis context . --id ID` only when needed. Do not load project.json or historical proof wholesale.
 Ask the index before reading code: `genesis query . search|scope|callers|callees|impact|path` (`--json` for parsing). Run `genesis query . impact PATH` before editing shared code. Answers are advisory static analysis; `ambiguous` means candidates were not ruled out, so confirm in source.
 Run `genesis serve .` for a live map of the repository when structure is unclear; it reindexes on save and is read-only. Run `genesis index .` if the index is stale and nothing is watching.
-Context fingerprint: 9840fb6f153b18fc4285c76bb90ccb9a0702aa6da97815b4e66de08ff9ed473d. Use --since only after receiving that full packet; kickoff is not the packet.
+Context fingerprint: 660f490720db6f82074784a8899d137efae432c6f127c5577ef9c7ee1382e530. Use --since only after receiving that full packet; kickoff is not the packet.
+- DEC-W2-SCOPE: Release the evaluation half with an audit log; the operational half waits
 - DEC-W2-RELEASE-RULES: Release rules, fixed before the freeze
-- DEC-W2-08-CHOICES: How the release rules work in code, and what they cannot see
-- DEC-W2-10-STOPS: A broken freeze is reported, and one more stop rule
+- DEC-W2-05-CHOICES: The audit log: one chain per run, checkpoints committed by me
 Applicable invariants, active rules, authorization and proof references are in the packet. Truncated summaries are retrieval pointers, not the full evidence.
 Reuse fresh gates with --reuse. Reconcile interrupted attempts before replaying commands. Report state → evidence → blocker → next action; checkpoint before stopping.

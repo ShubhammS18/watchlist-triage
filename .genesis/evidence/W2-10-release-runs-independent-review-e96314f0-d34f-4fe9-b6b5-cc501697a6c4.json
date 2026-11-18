@@ -1,0 +1,13 @@
+{
+  "task": "W2-10-release-runs",
+  "gate": "independent-review",
+  "kind": "review",
+  "attempt": "e96314f0-d34f-4fe9-b6b5-cc501697a6c4",
+  "human": "Shubham Suradkar",
+  "reason": "Reviewed by GPT-6 Sol (medium) in fresh read-only Codex sessions over four rounds. Rounds 1 to 3, before the freeze, found problems in the release design and its tests; all were fixed and a paid rehearsal passed before the freeze. Round 4 checked the published release at the release-1 tag and found nothing wrong with the release, only stale README and design-doc wording, which I fixed after the tag. The first gate after the publish failed because the test copies inherited the real release; I had the test code fixed (DEC-W2-10-TEST-CLONES) and checked it myself, with no further review round. Release 1: frozen world PASS on every target, fresh world PASS on the safety counts only. W2-10 spent USD 0.70; both keys revoked.",
+  "observed_at": "2026-11-18T14:05:47.222Z",
+  "source_hash": "5ac895266aa3eec4d9f330af34dc283a7addab31bef8e6be6e68b506658e82f3",
+  "config_hash": "bae396443c3c8a048ec346de079752daaf6f6c9f0a3ca62c594f4bd11edb9fea",
+  "reviewed_proofs": "69da9fde6bbc666ca8ea50e9184488af1e501f93405fd6ce09da85dce3c58eb4",
+  "hash": "db274bf19217ad849098a8b86d6f93780ab61e252fbf0223a41116cea5f48c09"
+}
