@@ -1,5 +1,9 @@
 # Release runs (W2-10)
 
+**Pre-release design.** This is the design and gate-test record as it stood before the release ran. The published
+release is `docs/release-log.md` at the tag `release-1` (18 Nov 2026); review round 4 checked it there. Read the status,
+steps and limits below as written before the runs, not as the published task's status.
+
 Status: design and gate tests revised after review round 3 (17 Nov 2026), the last review before the freeze. Round 1 of
 at most four (`DEC-W2-10-REVIEW-BUDGET`) reviewed the design and found four blockers and five smaller issues; the owner
 accepted all nine (see "Review round 1"). Round 2 reviewed the gate tests and the dry run, found round-1 findings 4, 7

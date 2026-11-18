@@ -8,8 +8,12 @@ not a real hit, and I make no claim of regulatory compliance.
 
 Wave 1, the evaluation harness and a naive baseline, is done. In wave 2, the upgraded agent met every release
 target on the frozen world in its second attempt (29 Oct 2026), a pass that rests on a stated cost assumption.
-Approved, 29 Oct 2026 (review round 3). The release runs, on the frozen world and on a fresh-seed world, are still to
-come.
+Approved, 29 Oct 2026 (review round 3). Release 1 (tag `release-1`, 18 Nov 2026; `docs/release-log.md`) then ran
+that agent, frozen, three times on the frozen world and three times on a fresh-seed world. On the frozen world it
+passed every release target (PASS). On the fresh world it passed on the safety counts only (PASS (safety counts
+only)), which are all that world is judged on: in every run, no true match and no ambiguous alert closed, a valid
+citation set on every close, and no verdict changed by injected text. Its other fresh-world rates are shown for
+information, not judged, so this is not a pass on every target.
 
 ## Baseline results
 
@@ -51,7 +55,7 @@ customer to the listed person; of the model's answers, only "no link" closes, an
 
 Its limits:
 - one synthetic world;
-- the fresh-seed release test has not been run;
+- the fresh-seed release test came later (Release 1, above);
 - if a crash loses a release world's run index, that world is published as not eligible with its run output as it
   was. Any file the release may not commit, such as the damaged index, stays outside git with the owner, so its
   SHA-256 in the release log can be checked only against the owner's copy (`DEC-W2-10-LOST-INDEX`,
@@ -90,7 +94,8 @@ From `targets/release-targets.json` and `SPEC.md`:
 
 ## Main limits
 
-- One synthetic world, which may not represent real alerts; 6 true matches per family.
+- Two synthetic worlds, the frozen world and release 1's fresh-seed world, from the same generator; neither may
+  represent real alerts. 6 true matches per family in each.
 - No real analyst timings.
 - I built the world, so I can see the labels.
 - Three runs show the variation; they do not bound it.
