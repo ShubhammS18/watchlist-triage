@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-11-17T08:54:53.150Z"
+    "updated_at": "2026-11-18T09:46:29.446Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2251,6 +2251,18 @@
       "source": "Owner, 17 Nov 2026; W2-10-release-runs review round 3, R3-1 to R3-4; DEC-W2-10-REVIEW-BUDGET, DEC-W2-10-LOST-INDEX",
       "recorded_at": "2026-11-17T08:54:53.140Z",
       "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-10-REVIEW",
+      "title": "Release runs review",
+      "text": "Four review rounds. The first three, before the freeze, found problems in the design and tests, all fixed before the freeze. Round 4 checked the published release at its tag and found nothing wrong with the release itself, only stale wording in the README and the design doc. I fixed that in one commit after the tag, as the review budget allows for round-4 findings, and checked the diff myself; there was no fifth round. Release 1: frozen world PASS on every release target, fresh world PASS on the safety counts only. W2-10 spent USD 0.70; wave 2 USD 1.65.",
+      "status": "accepted",
+      "source": "Owner, 18 Nov 2026; W2-10-release-runs review rounds 1 to 4 (Codex); DEC-W2-10-REVIEW-BUDGET",
+      "recorded_at": "2026-11-18T09:46:29.433Z",
+      "paths": [
+        "docs/release-log.md"
+      ],
       "tags": []
     }
   ],
