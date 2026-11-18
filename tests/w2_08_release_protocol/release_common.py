@@ -79,12 +79,28 @@ def at(clone):
         yield
 
 
+# the published release's committed files: every one came in with W2-10's commits, none before (checked 18 Nov 2026)
+RELEASE_FILES = ("release", "rehearsal", "audit/checkpoints", "docs/release-log.md")
+
+
+def without_release(clone):
+    """Remove the published release's files from a test clone, in a commit of its own, so that a made-up release
+    starts from HEAD's code with no real release in its tree, and its runs are made from a clean tree."""
+    present = [name for name in RELEASE_FILES if Path(clone, name).exists()]
+    if present:
+        git(clone, "rm", "-r", "-q", "--", *present)
+        git(clone, "commit", "-q", "-m", "The published release removed (test)")
+
+
 def new_clone(folder):
-    """A shared clone of the repository's HEAD with a test freeze commit on top: (clone, freeze commit)."""
+    """A shared clone of the repository's HEAD, without the published release, with a test freeze commit on top:
+    (clone, freeze commit). The clone never fetches the repository's tags, so the real release's tags cannot clash
+    with the test ones."""
     folder = Path(folder)
-    subprocess.run(["git", "clone", "-q", "--shared", str(REPO), str(folder)], check=True)
+    subprocess.run(["git", "clone", "-q", "--shared", "--no-tags", str(REPO), str(folder)], check=True)
     for key, value in (("user.name", "Test"), ("user.email", "test@example.invalid"), ("commit.gpgsign", "false")):
         git(folder, "config", key, value)
+    without_release(folder)
     git(folder, "commit", "-q", "--allow-empty", "-m", "Freeze (test)")
     git(folder, "tag", "release-1-freeze")
     return folder, git(folder, "rev-parse", "HEAD").strip()
