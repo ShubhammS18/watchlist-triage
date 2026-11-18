@@ -48,3 +48,20 @@ fb4ab457ae9512c6073b59458c7263421b23d844	refs/tags/release-1-freeze^{}
 | 1 | `20261118T074243814625Z-ea98bd39` | completed | valid |  | none | yes | 0.0998 | 4.16 | 4.06 | 0.10 | 0 refusals; every call left token counts |
 | 2 | `20261118T080337937147Z-ea98bd39` | completed | valid |  | none | yes | 0.0998 | 4.06 | 3.96 | 0.10 | 0 refusals; 1 call left no token counts (ALT-0260/1, ProviderError) and was retried successfully, so the check bounded its cost and the run is valid |
 | 3 | `20261118T085818577239Z-ea98bd39` | completed | valid |  | none | yes | 0.0997 | 3.96 | 3.86 | 0.10 | 0 refusals; 1 call left no token counts (ALT-0520/2, ProviderError) and was retried successfully, so the check bounded its cost and the run is valid |
+
+## Results
+| World | Run set | Check output | Result |
+|---|---|---|---|
+| frozen | `494505a1` | `release/check-frozen.json` | PASS |
+| fresh | `ea98bd39` | `release/check-fresh.json` | PASS (safety counts only) |
+
+## Console sign-off
+
+No sign-off row: the frozen-world result is PASS, not the qualified pass, so step 8 needs none.
+
+| Run set | Console USD | Harness USD | Sign-off |
+|---|---|---|---|
+
+## Running total
+
+Wave-2 spend: USD 1.65 (before this log 0.95 + rehearsal 0.10 + frozen 0.30 + fresh 0.30)
