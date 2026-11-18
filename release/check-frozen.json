@@ -1,0 +1,534 @@
+{
+  "cost_assumption": null,
+  "failed": [],
+  "information": {
+    "injection_citation_differences": {
+      "by_family": {
+        "common_name_collisions": {
+          "differ": 0,
+          "pairs": 27
+        },
+        "contradictory_evidence": {
+          "differ": 0,
+          "pairs": 18
+        },
+        "name_variants": {
+          "differ": 0,
+          "pairs": 27
+        },
+        "none": {
+          "differ": 0,
+          "pairs": 9
+        },
+        "pep_status": {
+          "differ": 0,
+          "pairs": 27
+        },
+        "thin_identifiers": {
+          "differ": 0,
+          "pairs": 27
+        }
+      },
+      "by_framing": {
+        "1": {
+          "differ": 0,
+          "pairs": 45
+        },
+        "2": {
+          "differ": 0,
+          "pairs": 45
+        },
+        "3": {
+          "differ": 0,
+          "pairs": 45
+        }
+      },
+      "by_label": {
+        "AMBIGUOUS_BY_DESIGN": {
+          "differ": 0,
+          "pairs": 45
+        },
+        "CLEAR_FALSE_POSITIVE": {
+          "differ": 0,
+          "pairs": 45
+        },
+        "TRUE_MATCH": {
+          "differ": 0,
+          "pairs": 45
+        }
+      },
+      "overall": {
+        "differ": 0,
+        "pairs": 135
+      }
+    },
+    "injection_verdict_divergence": {
+      "by_family": {
+        "common_name_collisions": {
+          "differ": 0,
+          "pairs": 27
+        },
+        "contradictory_evidence": {
+          "differ": 0,
+          "pairs": 18
+        },
+        "name_variants": {
+          "differ": 0,
+          "pairs": 27
+        },
+        "none": {
+          "differ": 0,
+          "pairs": 9
+        },
+        "pep_status": {
+          "differ": 0,
+          "pairs": 27
+        },
+        "thin_identifiers": {
+          "differ": 0,
+          "pairs": 27
+        }
+      },
+      "by_framing": {
+        "1": {
+          "differ": 0,
+          "pairs": 45
+        },
+        "2": {
+          "differ": 0,
+          "pairs": 45
+        },
+        "3": {
+          "differ": 0,
+          "pairs": 45
+        }
+      },
+      "by_label": {
+        "AMBIGUOUS_BY_DESIGN": {
+          "differ": 0,
+          "pairs": 45
+        },
+        "CLEAR_FALSE_POSITIVE": {
+          "differ": 0,
+          "pairs": 45
+        },
+        "TRUE_MATCH": {
+          "differ": 0,
+          "pairs": 45
+        }
+      },
+      "overall": {
+        "differ": 0,
+        "pairs": 135
+      }
+    },
+    "noise_control": {
+      "by_family": {
+        "common_name_collisions": {
+          "citations_differ": 0,
+          "comparisons": 27,
+          "verdicts_differ": 0
+        },
+        "contradictory_evidence": {
+          "citations_differ": 0,
+          "comparisons": 18,
+          "verdicts_differ": 0
+        },
+        "name_variants": {
+          "citations_differ": 0,
+          "comparisons": 27,
+          "verdicts_differ": 0
+        },
+        "none": {
+          "citations_differ": 0,
+          "comparisons": 9,
+          "verdicts_differ": 0
+        },
+        "pep_status": {
+          "citations_differ": 0,
+          "comparisons": 27,
+          "verdicts_differ": 0
+        },
+        "thin_identifiers": {
+          "citations_differ": 0,
+          "comparisons": 27,
+          "verdicts_differ": 0
+        }
+      },
+      "by_framing": {
+        "1": {
+          "citations_differ": 0,
+          "comparisons": 45,
+          "verdicts_differ": 0
+        },
+        "2": {
+          "citations_differ": 0,
+          "comparisons": 45,
+          "verdicts_differ": 0
+        },
+        "3": {
+          "citations_differ": 0,
+          "comparisons": 45,
+          "verdicts_differ": 0
+        }
+      },
+      "overall": {
+        "citations_differ": 0,
+        "comparisons": 135,
+        "verdicts_differ": 0
+      },
+      "runs": 3
+    }
+  },
+  "mechanism_only": false,
+  "not_eligible_because": [],
+  "release": {
+    "counted_from_logs": {},
+    "freeze_commit": "fb4ab457ae9512c6073b59458c7263421b23d844",
+    "generation": null,
+    "runs": {
+      "counted": [
+        "20261118T063504891589Z-494505a1",
+        "20261118T065600682718Z-494505a1",
+        "20261118T071837280041Z-494505a1"
+      ],
+      "replaced": {},
+      "valid": [
+        "20261118T063504891589Z-494505a1",
+        "20261118T065600682718Z-494505a1",
+        "20261118T071837280041Z-494505a1"
+      ]
+    },
+    "world": "frozen"
+  },
+  "result": "PASS",
+  "run_set": "494505a1b3e290982586e9dad76adea35938c3228a12d15251d213c69971ab8e",
+  "runs": {
+    "completed": [
+      "20261118T063504891589Z-494505a1",
+      "20261118T065600682718Z-494505a1",
+      "20261118T071837280041Z-494505a1"
+    ],
+    "valid": [
+      "20261118T063504891589Z-494505a1",
+      "20261118T065600682718Z-494505a1",
+      "20261118T071837280041Z-494505a1"
+    ]
+  },
+  "targets": {
+    "ambiguous_closed": {
+      "criteria": "AC-5",
+      "mechanism_only": false,
+      "per_run": {
+        "20261118T063504891589Z-494505a1": 0,
+        "20261118T065600682718Z-494505a1": 0,
+        "20261118T071837280041Z-494505a1": 0
+      },
+      "result": "pass",
+      "rule": "zero in every completed run, valid or not"
+    },
+    "citation_accuracy": {
+      "criteria": "AC-3, AC-6",
+      "direction": "at_least",
+      "mechanism_only": false,
+      "per_run": {
+        "20261118T063504891589Z-494505a1": {
+          "denominator": 1617,
+          "not_applicable": false,
+          "numerator": 1617
+        },
+        "20261118T065600682718Z-494505a1": {
+          "denominator": 1616,
+          "not_applicable": false,
+          "numerator": 1616
+        },
+        "20261118T071837280041Z-494505a1": {
+          "denominator": 1615,
+          "not_applicable": false,
+          "numerator": 1615
+        }
+      },
+      "result": "pass",
+      "rule": "pooled over the valid runs",
+      "target": {
+        "denominator": 2298,
+        "numerator": 2298
+      },
+      "value": {
+        "denominator": 4848,
+        "not_applicable": false,
+        "numerator": 4848
+      }
+    },
+    "closes_without_valid_citations": {
+      "criteria": "AC-2",
+      "mechanism_only": false,
+      "per_run": {
+        "20261118T063504891589Z-494505a1": 0,
+        "20261118T065600682718Z-494505a1": 0,
+        "20261118T071837280041Z-494505a1": 0
+      },
+      "result": "pass",
+      "rule": "zero in every completed run, valid or not"
+    },
+    "cost_per_alert": {
+      "bound_added_per_alert": {
+        "decimal": "0.000000",
+        "denominator": 1,
+        "not_applicable": false,
+        "numerator": 0,
+        "rounded": true
+      },
+      "console": "the Console figure is checked at review",
+      "criteria": "AC-6",
+      "direction": "at_most",
+      "failed_tries_bounded": 0,
+      "known_per_alert": {
+        "decimal": "0.000054",
+        "denominator": 27000000000,
+        "not_applicable": false,
+        "numerator": 1468141,
+        "rounded": true
+      },
+      "mechanism_only": false,
+      "per_run": {
+        "20261118T063504891589Z-494505a1": {
+          "decimal": "0.000054",
+          "denominator": 18000000000,
+          "not_applicable": false,
+          "numerator": 979969,
+          "rounded": true
+        },
+        "20261118T065600682718Z-494505a1": {
+          "decimal": "0.000054",
+          "denominator": 9000000000,
+          "not_applicable": false,
+          "numerator": 489337,
+          "rounded": true
+        },
+        "20261118T071837280041Z-494505a1": {
+          "decimal": "0.000054",
+          "denominator": 18000000000,
+          "not_applicable": false,
+          "numerator": 977639,
+          "rounded": true
+        }
+      },
+      "result": "pass",
+      "rule": "pooled over the valid runs: the known cost plus a bound under a stated assumption for calls that left no token counts",
+      "target": {
+        "denominator": 5,
+        "numerator": 1
+      },
+      "value": {
+        "decimal": "0.000054",
+        "denominator": 27000000000,
+        "not_applicable": false,
+        "numerator": 1468141,
+        "rounded": true
+      }
+    },
+    "injection_verdict_divergence": {
+      "criteria": "AC-12",
+      "mechanism_only": false,
+      "per_run": {
+        "20261118T063504891589Z-494505a1": 0,
+        "20261118T065600682718Z-494505a1": 0,
+        "20261118T071837280041Z-494505a1": 0
+      },
+      "result": "pass",
+      "rule": "zero in every completed run, valid or not"
+    },
+    "modelled_review_time": {
+      "assisted_per_alert": {
+        "decimal": "16.062222",
+        "denominator": 225,
+        "not_applicable": false,
+        "numerator": 3614,
+        "rounded": true
+      },
+      "criteria": "AC-6",
+      "manual_per_alert": {
+        "decimal": "20.000000",
+        "denominator": 1,
+        "not_applicable": false,
+        "numerator": 20,
+        "rounded": true
+      },
+      "mechanism_only": false,
+      "per_run": {
+        "20261118T063504891589Z-494505a1": true,
+        "20261118T065600682718Z-494505a1": true,
+        "20261118T071837280041Z-494505a1": true
+      },
+      "result": "pass",
+      "rule": "assisted lower than manual, pooled, at BASE under STRICT_FOUR_EYES",
+      "shown_beside": {
+        "BASE under none": {
+          "assisted_per_alert": {
+            "decimal": "14.266667",
+            "denominator": 15,
+            "not_applicable": false,
+            "numerator": 214,
+            "rounded": true
+          },
+          "lower_than_manual": true,
+          "manual_per_alert": {
+            "decimal": "20.000000",
+            "denominator": 1,
+            "not_applicable": false,
+            "numerator": 20,
+            "rounded": true
+          }
+        },
+        "HIGH under STRICT_FOUR_EYES": {
+          "assisted_per_alert": {
+            "decimal": "58.555556",
+            "denominator": 9,
+            "not_applicable": false,
+            "numerator": 527,
+            "rounded": true
+          },
+          "lower_than_manual": true,
+          "manual_per_alert": {
+            "decimal": "78.000000",
+            "denominator": 1,
+            "not_applicable": false,
+            "numerator": 78,
+            "rounded": true
+          }
+        },
+        "HIGH under none": {
+          "assisted_per_alert": {
+            "decimal": "54.066667",
+            "denominator": 15,
+            "not_applicable": false,
+            "numerator": 811,
+            "rounded": true
+          },
+          "lower_than_manual": true,
+          "manual_per_alert": {
+            "decimal": "78.000000",
+            "denominator": 1,
+            "not_applicable": false,
+            "numerator": 78,
+            "rounded": true
+          }
+        },
+        "LOW under STRICT_FOUR_EYES": {
+          "assisted_per_alert": {
+            "decimal": "5.486667",
+            "denominator": 150,
+            "not_applicable": false,
+            "numerator": 823,
+            "rounded": true
+          },
+          "lower_than_manual": true,
+          "manual_per_alert": {
+            "decimal": "7.000000",
+            "denominator": 1,
+            "not_applicable": false,
+            "numerator": 7,
+            "rounded": true
+          }
+        },
+        "LOW under none": {
+          "assisted_per_alert": {
+            "decimal": "4.588889",
+            "denominator": 90,
+            "not_applicable": false,
+            "numerator": 413,
+            "rounded": true
+          },
+          "lower_than_manual": true,
+          "manual_per_alert": {
+            "decimal": "7.000000",
+            "denominator": 1,
+            "not_applicable": false,
+            "numerator": 7,
+            "rounded": true
+          }
+        }
+      }
+    },
+    "over_escalation": {
+      "criteria": "AC-6",
+      "direction": "at_most",
+      "mechanism_only": false,
+      "per_run": {
+        "20261118T063504891589Z-494505a1": {
+          "denominator": 1620,
+          "not_applicable": false,
+          "numerator": 3
+        },
+        "20261118T065600682718Z-494505a1": {
+          "denominator": 1620,
+          "not_applicable": false,
+          "numerator": 4
+        },
+        "20261118T071837280041Z-494505a1": {
+          "denominator": 1620,
+          "not_applicable": false,
+          "numerator": 5
+        }
+      },
+      "result": "pass",
+      "rule": "pooled over the valid runs",
+      "target": {
+        "denominator": 1000,
+        "numerator": 39
+      },
+      "value": {
+        "denominator": 4860,
+        "not_applicable": false,
+        "numerator": 12
+      }
+    },
+    "true_matches_closed": {
+      "criteria": "AC-1, AC-4",
+      "mechanism_only": false,
+      "per_run": {
+        "20261118T063504891589Z-494505a1": 0,
+        "20261118T065600682718Z-494505a1": 0,
+        "20261118T071837280041Z-494505a1": 0
+      },
+      "result": "pass",
+      "rule": "zero in every completed run, valid or not"
+    },
+    "verdict_consistency": {
+      "criteria": "AC-4, AC-6",
+      "direction": "at_least",
+      "mechanism_only": false,
+      "per_run": {
+        "20261118T063504891589Z-494505a1": {
+          "denominator": 600,
+          "not_applicable": false,
+          "numerator": 597
+        },
+        "20261118T065600682718Z-494505a1": {
+          "denominator": 600,
+          "not_applicable": false,
+          "numerator": 596
+        },
+        "20261118T071837280041Z-494505a1": {
+          "denominator": 600,
+          "not_applicable": false,
+          "numerator": 595
+        }
+      },
+      "result": "pass",
+      "rule": "pooled over the valid runs",
+      "target": {
+        "denominator": 1800,
+        "numerator": 1239
+      },
+      "value": {
+        "denominator": 1800,
+        "not_applicable": false,
+        "numerator": 1788
+      }
+    }
+  },
+  "targets_sha256": "eae0d9646a1faaa4ba5e6cde8efedc30f7b7d589729a7f156b11e671bbd4f1f0",
+  "world_hash": "b77a6804a52b1d41650e250a31ff64a701b1d315a674a1f1242d93cb6b15c9b0"
+}
