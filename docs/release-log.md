@@ -25,3 +25,26 @@ fb4ab457ae9512c6073b59458c7263421b23d844	refs/tags/release-1-freeze^{}
 
 - Tag page: https://github.com/ShubhammS18/watchlist-triage/releases/tag/release-1-freeze
 - Owner, 2026-11-17: the tag was public, as shown above, before the fresh world was made.
+
+## Generation
+
+- Run at (UTC): 2026-11-17T14:06:13Z (the owner's `date -u` reading at the generation step)
+- One try, accepted at counter 0; no rejected try. The release check's own replay matches the record.
+
+| Counter | Seed | Outcome | Error type | World hash |
+|---|---|---|---|---|
+| 0 | 3386666965265652 | accepted | none | `078687d3cd02886b0b45ccc21e20dfb5b39df58aeb1775774b91b140f5421d8e` |
+
+## Frozen world
+| # | Run ID | State | Valid or replaced | Reason | Re-run cause | Checkpoint committed | Harness USD | Console before | Console after | Spend USD | Note |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | `20261118T063504891589Z-494505a1` | completed | valid |  | none | yes | 0.1000 | 4.46 | 4.36 | 0.10 | 0 refusals; every call left token counts |
+| 2 | `20261118T065600682718Z-494505a1` | completed | valid |  | none | yes | 0.0999 | 4.36 | 4.26 | 0.10 | 0 refusals; every call left token counts |
+| 3 | `20261118T071837280041Z-494505a1` | completed | valid |  | none | yes | 0.0998 | 4.26 | 4.16 | 0.10 | 0 refusals; every call left token counts |
+
+## Fresh world
+| # | Run ID | State | Valid or replaced | Reason | Re-run cause | Checkpoint committed | Harness USD | Console before | Console after | Spend USD | Note |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | `20261118T074243814625Z-ea98bd39` | completed | valid |  | none | yes | 0.0998 | 4.16 | 4.06 | 0.10 | 0 refusals; every call left token counts |
+| 2 | `20261118T080337937147Z-ea98bd39` | completed | valid |  | none | yes | 0.0998 | 4.06 | 3.96 | 0.10 | 0 refusals; 1 call left no token counts (ALT-0260/1, ProviderError) and was retried successfully, so the check bounded its cost and the run is valid |
+| 3 | `20261118T085818577239Z-ea98bd39` | completed | valid |  | none | yes | 0.0997 | 3.96 | 3.86 | 0.10 | 0 refusals; 1 call left no token counts (ALT-0520/2, ProviderError) and was retried successfully, so the check bounded its cost and the run is valid |
