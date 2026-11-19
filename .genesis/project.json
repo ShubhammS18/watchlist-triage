@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-11-19T07:40:54.096Z"
+    "updated_at": "2026-11-19T07:57:27.206Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2299,6 +2299,19 @@
       "source": "Owner, 19 Nov 2026; W2-09 pre-flight",
       "recorded_at": "2026-11-19T07:40:54.095Z",
       "paths": [],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-09-NO-PRE-RELEASE-REVIEW",
+      "title": "Release 1 had no pre-release checklist review",
+      "text": "The spec asks for a release checklist that reviews the public text against the evidence before a release. The wave-2 plan put the README and checklist after the release runs, so Release 1 went out on 18 Nov before the checklist existed, and the README at its tag still says the runs are to come. That can't be fixed after the release. The README now says so plainly, the checklist covers the README at main, and it applies from the next release. The gap list stays as it is, because this is about the order of the work, not a missing feature.",
+      "status": "accepted",
+      "source": "Owner, 19 Nov 2026; W2-09 review round 1 (Codex); NFR-8; DEC-W2-SCOPE",
+      "recorded_at": "2026-11-19T07:57:27.205Z",
+      "paths": [
+        "README.md",
+        "docs/release-checklist.md"
+      ],
       "tags": []
     }
   ],
