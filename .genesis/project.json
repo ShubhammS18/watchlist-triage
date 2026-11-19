@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-11-18T14:05:53.681Z"
+    "updated_at": "2026-11-19T07:40:54.096Z"
   },
   "policy": {
     "ponytail": "full",
@@ -2276,6 +2276,29 @@
         "tests/w2_08_release_protocol/release_common.py",
         "tests/w2_10_release_runs/made_up.py"
       ],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-09-CHOICES",
+      "title": "README and checklist choices",
+      "text": "The README leads with the release result, then what was not built and what the evidence does not show, then how it was evaluated and the earlier history. The release figures come from the committed check outputs and the gap list from the scope record, and a gate test keeps both in step. No human spot-check of the reasons was done, and the README says so. The Kim and Yang figure is shown as they report it, citing earlier sources, and the spec stays as approved. The spend comes from my Console readings. The W2-10 review reports are added as saved, and round 4 was saved on 19 Nov from the session output.",
+      "status": "accepted",
+      "source": "Owner, 19 Nov 2026; W2-09 pre-flight; DEC-W2-SCOPE; DEC-W2-RELEASE-RULES",
+      "recorded_at": "2026-11-19T07:40:45.302Z",
+      "paths": [
+        "README.md",
+        "docs/release-checklist.md"
+      ],
+      "tags": []
+    },
+    {
+      "id": "DEC-W2-09-REVIEW-BUDGET",
+      "title": "README review budget",
+      "text": "At most two read-only review rounds by a fresh Codex session. Round 1 reviews the README, checklist, docs index and gate test together, and checks every figure against the check outputs. Round 2 only confirms the fixes. Anything it finds is fixed by narrowing the wording, with no third round.",
+      "status": "accepted",
+      "source": "Owner, 19 Nov 2026; W2-09 pre-flight",
+      "recorded_at": "2026-11-19T07:40:54.095Z",
+      "paths": [],
       "tags": []
     }
   ],
