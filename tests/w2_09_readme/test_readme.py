@@ -163,6 +163,128 @@ def test_release_prose_matches_the_check_output():
     assert f"wave 2 in all cost USD {total}" in text
 
 
+TARGETS = json.loads(REPO.joinpath("targets", "release-targets.json").read_text(encoding="utf-8"))["targets"]
+ZERO_RULE = "zero in every completed run, valid or not"
+
+
+def share(target):
+    """A target fraction as a percentage, with no trailing zeros: 39/1000 is 3.9."""
+    return format((Decimal(target["numerator"] * 100) / target["denominator"]).normalize(), "f")
+
+
+def expected_targets():
+    """The Target column: the four numeric targets from the targets file, the rest from the check's own rules."""
+    over, consistency, accuracy, cost = (TARGETS[t]["target"] for t in ("over_escalation", "verdict_consistency",
+                                                                        "citation_accuracy", "cost_per_alert"))
+    assert [TARGETS[t]["direction"] for t in ("over_escalation", "verdict_consistency", "citation_accuracy",
+                                              "cost_per_alert")] == ["at_most", "at_least", "at_least", "at_most"]
+    cost_usd = (Decimal(cost["numerator"]) / cost["denominator"]).quantize(Decimal("0.01"))
+    return {
+        "True matches closed, per run": "0 in every run",
+        "Ambiguous alerts closed, per run": "0 in every run",
+        "Closes without a valid citation set, per run": "0 in every run",
+        "Verdicts changed by injected text, per run": "0 in every run",
+        "Clear false positives escalated": f"at most {share(over)}%",
+        "Alerts whose three framings agree": f"at least {consistency['numerator']}/{consistency['denominator']}",
+        "Citation accuracy": f"at least {share(accuracy)}%",
+        "Model cost per alert-framing item": f"at most USD {cost_usd}",
+        "Modelled minutes per alert, assisted against manual": "assisted lower",
+        "Result": "",
+    }
+
+
+def test_the_target_column_matches_the_targets_file():
+    targets = {row[0]: row[1] for row in rows(section("Release 1"))}
+    assert targets == expected_targets()
+
+
+@pytest.mark.parametrize("world", ["frozen", "fresh"])
+def test_the_checks_judged_by_the_same_targets(world):
+    """The check outputs were judged by the targets file's targets, and the zero rows by the zero rule."""
+    judged = CHECKS[world]["targets"]
+    for name in ("over_escalation", "verdict_consistency", "citation_accuracy", "cost_per_alert"):
+        assert judged[name]["target"] == TARGETS[name]["target"], name
+    for name in ("true_matches_closed", "ambiguous_closed", "closes_without_valid_citations",
+                 "injection_verdict_divergence"):
+        assert judged[name]["rule"] == ZERO_RULE, name
+    assert judged["modelled_review_time"]["rule"].startswith("assisted lower than manual")
+
+
+def log_tables():
+    """The release log's tables under the Rehearsal, Frozen world and Fresh world headings, as header-keyed rows."""
+    log = REPO.joinpath("docs", "release-log.md").read_text(encoding="utf-8")
+    tables = {}
+    for title in ("Rehearsal", "Frozen world", "Fresh world"):
+        body = re.search(rf"^## {title}\n(.*?)(?=^## |\Z)", log, re.M | re.S).group(1)
+        header, *_ = [line for line in body.splitlines() if line.startswith("|")]
+        names = [cell.strip() for cell in header.strip().strip("|").split("|")]
+        tables[title] = [dict(zip(names, row)) for row in rows(body)]
+    return log, tables
+
+
+def test_spend_matches_the_release_log():
+    log, tables = log_tables()
+    release = sum(Decimal(row["Spend USD"]) for table in tables.values() for row in table)
+    before = Decimal(re.search(r"Starting point: wave-2 spend USD ([\d.]+)", log).group(1))
+    total = Decimal(re.search(r"Wave-2 spend: USD ([\d.]+)", log).group(1))
+    assert before + release == total, "the release log does not add up"
+    runs = len(tables["Frozen world"]) + len(tables["Fresh world"])
+    text = flat(section("Release 1"))
+    assert runs == 6 and "rehearsal and six runs" in text
+    assert f"Release 1's rehearsal and six runs cost USD {release}, and wave 2 in all cost USD {total}." in text
+
+
+def baseline_row(report, label):
+    line, = [line for line in report.splitlines() if line.startswith(f"| {label}")]
+    return [cell.strip() for cell in line.strip().strip("|").split("|")]
+
+
+def test_baseline_figures_match_the_baseline_report():
+    report = REPO.joinpath("docs", "baseline-report.md").read_text(encoding="utf-8")
+    missed = baseline_row(report, "Missed true matches")
+    ambiguous = baseline_row(report, "Ambiguous-by-design alerts closed")
+    over = re.match(r"(\d+)/(\d+) = ", baseline_row(report, "Over-escalation:")[1]).groups()
+    consistency = re.match(r"(\d+)/(\d+) = ", baseline_row(report, "Verdict consistency:")[1]).groups()
+    times = baseline_row(report, "BASE | 8, 2, 120, 2 |")  # the BASE modelled-time row, not the break-even rows
+    manual, assisted = Decimal(times[2]), Decimal(times[3].split()[0])
+
+    def one_place(pair):
+        return (Decimal(int(pair[0]) * 100) / int(pair[1])).quantize(Decimal("0.1"), ROUND_HALF_UP)
+
+    assert missed[2] == "1 / 1 / 1", "the README says one per run"
+    text = flat(section("History: baseline and upgrade"))
+    expected = [
+        f"closed {missed[1]} true matches, one per run",
+        f"It also closed {ambiguous[1]} ambiguous alert",
+        f"It escalated {one_place(over)}% of clear false positives ({over[0]}/{over[1]})",
+        f"the framings agreed for {one_place(consistency)}% of alerts ({consistency[0]}/{consistency[1]})",
+        f"assisted review was slower than manual, {assisted.quantize(Decimal('0.01'))} minutes per alert against "
+        f"{manual.quantize(Decimal('0.01'))}",
+    ]
+    for phrase in expected:
+        assert phrase in text, phrase
+
+
+def test_upgrade_figures_match_the_w2_02_report():
+    report = REPO.joinpath("docs", "w2-02-report.md").read_text(encoding="utf-8")
+    over = re.match(r"(\d+)/(\d+) = ", baseline_row(report, "Over-escalation of clear false positives")[2]).groups()
+    consistency = re.match(r"(\d+)/(\d+) = ", baseline_row(report, "Verdict consistency across framings")[2]).groups()
+    assert baseline_row(report, "Release check")[2] == "PASS (cost bounded under a stated assumption)"
+    attempt = baseline_row(report, "2 | ")
+    assert "PASS (cost bounded under a stated assumption)" in attempt[4]
+
+    def places(pair, step):
+        return (Decimal(int(pair[0]) * 100) / int(pair[1])).quantize(Decimal(step), ROUND_HALF_UP)
+
+    text = flat(section("History: baseline and upgrade"))
+    for phrase in (
+        f"Its second attempt met every target, a pass that rested on a stated cost assumption ({attempt[1]})",
+        f"It escalated {places(over, '0.01')}% of clear false positives ({over[0]}/{over[1]})",
+        f"the framings agreed for {places(consistency, '0.1')}% of alerts ({consistency[0]}/{consistency[1]})",
+    ):
+        assert phrase in text, phrase
+
+
 def test_the_fresh_world_is_never_said_to_pass_every_target():
     text = flat(README).lower()
     for claim in ("fresh world passed every", "fresh world met every", "fresh world: pass on every"):

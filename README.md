@@ -86,6 +86,10 @@ What follows from this:
 
 ## What the evidence does not show
 
+- **Release 1 had no pre-release review of its public text.** The specification asks for a release checklist that
+  reviews all public-facing text against the evidence before release (NFR-8). Release 1 was published on 18 Nov 2026,
+  before the checklist existed, and the README at the `release-1` tag still says the release runs are to come.
+  `docs/release-checklist.md` covers this README at `main` and applies from the next release.
 - **Synthetic worlds.** Two worlds, the frozen world and the fresh-seed world, both from my generator. Neither may
   represent real alerts, whose fields are messier.
 - **Small samples.** 6 true matches per primary family in each world, too few for a per-family claim.
