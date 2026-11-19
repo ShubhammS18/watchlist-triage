@@ -9,7 +9,7 @@
     "non_goals": [],
     "trust_boundary": "local repository",
     "created_at": "2026-10-07T06:37:05.676Z",
-    "updated_at": "2026-11-19T08:02:34.573Z"
+    "updated_at": "2026-11-19T08:06:24.019Z"
   },
   "policy": {
     "ponytail": "full",
@@ -23,11 +23,11 @@
     }
   },
   "lifecycle": {
-    "phase": "build",
-    "status": "active",
-    "active_task": "W2-09-readme",
+    "phase": "verify",
+    "status": "ready",
+    "active_task": null,
     "blocker": null,
-    "next_action": "Run the task pre-flight."
+    "next_action": "Review completed work and choose the next bounded outcome."
   },
   "commands": {},
   "workflow": {
@@ -7022,7 +7022,7 @@
     {
       "id": "W2-09-readme",
       "outcome": "The full README states what was demonstrated and what was not, as NFR-7 lists. It gives the release result for both worlds and says the fresh world passed or failed the safety counts, never every target. It lists every gap in DEC-W2-SCOPE with its requirement ID, says that the audit log records the agent's recommendations and not human decisions, and says there are no reviewer identities yet because operational mode was not built. A release checklist in docs/release-checklist.md reviews every public-facing claim against its evidence path, every industry statistic carries its citation, and docs/README.md lists the new docs. The gate checks that every checklist item names an evidence path that exists, that the README's gap list equals the scope record's, that every release figure the README gives matches the committed check output, and that the cited statistic carries its DOI.",
-      "state": "active",
+      "state": "done",
       "risk": "medium",
       "owner": null,
       "scope": [],
@@ -7042,24 +7042,42 @@
           "kind": "command",
           "command": ".venv/bin/python -m pytest tests/w2_09_readme -q -p no:cacheprovider",
           "mandatory": true,
-          "status": "pending",
-          "evidence": null
+          "status": "pass",
+          "evidence": {
+            "path": ".genesis/evidence/W2-09-readme-tests-0c2e6aed-78da-4ca2-bf46-cfe9f18176d9.json",
+            "hash": "47da07ebd667dc2f481927f5cbd6a492aca29cdd2910cc648ff3d95f91585990",
+            "source_hash": "a138fc0cd596b2137c59a5f15b867f1476c4cfdfe0bf331dd2cde64a4ba96598",
+            "config_hash": "0fcd3b886639c732e40b1ae845f8143fb8cbf82d8b607f8fda58541ed3f437f9",
+            "observed_at": "2026-11-19T08:04:36.686Z"
+          }
         },
         {
           "id": "secrets",
           "kind": "command",
           "command": "pre-commit run gitleaks --all-files",
           "mandatory": true,
-          "status": "pending",
-          "evidence": null
+          "status": "pass",
+          "evidence": {
+            "path": ".genesis/evidence/W2-09-readme-secrets-2957300e-2b62-4aaf-ba98-035b7d9af316.json",
+            "hash": "fac1a82ccd84a83f3dd6fce8cb461b958d7ea6e59dbf63dd98c8baef22a2464a",
+            "source_hash": "a138fc0cd596b2137c59a5f15b867f1476c4cfdfe0bf331dd2cde64a4ba96598",
+            "config_hash": "0fcd3b886639c732e40b1ae845f8143fb8cbf82d8b607f8fda58541ed3f437f9",
+            "observed_at": "2026-11-19T08:04:49.015Z"
+          }
         },
         {
           "id": "independent-review",
           "kind": "review",
           "command": "",
           "mandatory": true,
-          "status": "pending",
-          "evidence": null
+          "status": "pass",
+          "evidence": {
+            "path": ".genesis/evidence/W2-09-readme-independent-review-53d84b4a-8237-47a9-84ea-d8f724ea457a.json",
+            "hash": "b766e9d0d3392f995129150c8e02f71c06080a6d8d0448458f55147bb8a205bd",
+            "source_hash": "a138fc0cd596b2137c59a5f15b867f1476c4cfdfe0bf331dd2cde64a4ba96598",
+            "config_hash": "0fcd3b886639c732e40b1ae845f8143fb8cbf82d8b607f8fda58541ed3f437f9",
+            "observed_at": "2026-11-19T08:06:18.623Z"
+          }
         }
       ],
       "next_action": "Run the task pre-flight.",
@@ -7068,7 +7086,7 @@
       "failures": [],
       "limitations": [],
       "created_at": "2026-10-30T09:08:23.903Z",
-      "updated_at": "2026-10-30T09:08:23.903Z",
+      "updated_at": "2026-11-19T08:06:24.018Z",
       "base_manifest": {
         ".github/workflows/world-drift.yml": "6293adc696ad1bf6162370845dad32016dd7c0a8d2687f548ba9f7bad26dc2fa",
         ".gitignore": "05272076c15c79ba32ab1d10bbad87ff61436dfd0a365d60c0e0b550edb2e4db",
@@ -7628,6 +7646,15 @@
       "task": "W2-10-release-runs",
       "human": "Shubham Suradkar",
       "reason": "Reviewed by GPT-6 Sol (medium) in fresh read-only Codex sessions over four rounds. Rounds 1 to 3, before the freeze, found problems in the release design and its tests; all were fixed and a paid rehearsal passed before the freeze. Round 4 checked the published release at the release-1 tag and found nothing wrong with the release, only stale README and design-doc wording, which I fixed after the tag. The first gate after the publish failed because the test copies inherited the real release; I had the test code fixed (DEC-W2-10-TEST-CLONES) and checked it myself, with no further review round. Release 1: frozen world PASS on every target, fresh world PASS on the safety counts only. W2-10 spent USD 0.70; both keys revoked.",
+      "revision": null
+    },
+    {
+      "id": "53d84b4a-8237-47a9-84ea-d8f724ea457a",
+      "at": "2026-11-19T08:06:18.623Z",
+      "action": "approve",
+      "task": "W2-09-readme",
+      "human": "Shubham Suradkar",
+      "reason": "Reviewed by GPT-6 Sol (medium) in two read-only Codex rounds, as budgeted. Round 1 found two blockers: Release 1 went out before the checklist existed, and the checklist claimed wider coverage than it had; it also found gaps in the gate's figure checks. I had the gate extended, with each new check shown failing on a deliberate break, and the timing stated plainly in the README. Round 2 confirmed the gate fixes and asked for narrower wording, which I made and checked myself. The task outcome asked for every public-facing claim; the checklist covers only the top-level README, as DEC-W2-09-REVIEW says, and Release 1 had no pre-release checklist review.",
       "revision": null
     }
   ],
@@ -8591,6 +8618,54 @@
       "cost": null,
       "stop_reason": null,
       "ended_at": "2026-11-18T14:00:07.020Z"
+    },
+    {
+      "id": "0c2e6aed-78da-4ca2-bf46-cfe9f18176d9",
+      "task": "W2-09-readme",
+      "kind": "gate",
+      "command": ".venv/bin/python -m pytest tests/w2_09_readme -q -p no:cacheprovider",
+      "timeout": 120000,
+      "authorization": null,
+      "pid": 28228,
+      "child_pid": 28314,
+      "started_at": "2026-11-19T08:04:25.192Z",
+      "status": "passed",
+      "before_hash": "a138fc0cd596b2137c59a5f15b867f1476c4cfdfe0bf331dd2cde64a4ba96598",
+      "config_hash": "0fcd3b886639c732e40b1ae845f8143fb8cbf82d8b607f8fda58541ed3f437f9",
+      "environment": {
+        "node": "v24.21.0",
+        "platform": "linux",
+        "arch": "x64",
+        "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+        "variables": {}
+      },
+      "cost": null,
+      "stop_reason": null,
+      "ended_at": "2026-11-19T08:04:36.686Z"
+    },
+    {
+      "id": "2957300e-2b62-4aaf-ba98-035b7d9af316",
+      "task": "W2-09-readme",
+      "kind": "gate",
+      "command": "pre-commit run gitleaks --all-files",
+      "timeout": 120000,
+      "authorization": null,
+      "pid": 28228,
+      "child_pid": 28557,
+      "started_at": "2026-11-19T08:04:40.724Z",
+      "status": "passed",
+      "before_hash": "a138fc0cd596b2137c59a5f15b867f1476c4cfdfe0bf331dd2cde64a4ba96598",
+      "config_hash": "0fcd3b886639c732e40b1ae845f8143fb8cbf82d8b607f8fda58541ed3f437f9",
+      "environment": {
+        "node": "v24.21.0",
+        "platform": "linux",
+        "arch": "x64",
+        "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+        "variables": {}
+      },
+      "cost": null,
+      "stop_reason": null,
+      "ended_at": "2026-11-19T08:04:49.015Z"
     }
   ],
   "authorizations": [],

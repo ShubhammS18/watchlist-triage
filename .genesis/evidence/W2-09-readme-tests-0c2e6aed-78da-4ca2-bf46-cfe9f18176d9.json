@@ -1,0 +1,30 @@
+{
+  "task": "W2-09-readme",
+  "gate": "tests",
+  "kind": "command",
+  "attempt": "0c2e6aed-78da-4ca2-bf46-cfe9f18176d9",
+  "command": ".venv/bin/python -m pytest tests/w2_09_readme -q -p no:cacheprovider",
+  "started_at": "2026-11-19T08:04:25.192Z",
+  "observed_at": "2026-11-19T08:04:36.686Z",
+  "exit_code": 0,
+  "signal": null,
+  "stdout": "................                                                         [100%]\n16 passed in 0.06s\n",
+  "stderr": "",
+  "failure": null,
+  "receipt": null,
+  "revision": {
+    "commit": "1710250ffba2e18bd4cab87228aff98f84bb0147",
+    "dirty": true
+  },
+  "source_hash": "a138fc0cd596b2137c59a5f15b867f1476c4cfdfe0bf331dd2cde64a4ba96598",
+  "before_hash": "a138fc0cd596b2137c59a5f15b867f1476c4cfdfe0bf331dd2cde64a4ba96598",
+  "config_hash": "0fcd3b886639c732e40b1ae845f8143fb8cbf82d8b607f8fda58541ed3f437f9",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "arch": "x64",
+    "verifier": "cbdddbf25e5ed5f3406b93881ae54f64d11a8c54f0bfe177d19d9d9946a6a971",
+    "variables": {}
+  },
+  "hash": "47da07ebd667dc2f481927f5cbd6a492aca29cdd2910cc648ff3d95f91585990"
+}
