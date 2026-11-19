@@ -4,9 +4,9 @@ The claims in the top-level `README.md` at `main`, each with the committed evide
 that one file. Other public text, such as `SPEC.md`, the design docs, the reports and the review reports, is not
 reviewed here.
 
-Release 1 was published on 18 Nov 2026, before this checklist existed, so release 1 had no pre-release review of its
-public text; the README at the tag `release-1` is the one before this rewrite. This checklist covers the README at
-`main` and applies from the next release.
+Release 1 was published on 18 Nov 2026, before this checklist existed, so release 1 had no pre-release checklist review of
+all its public text; the README at the tag `release-1` is the one before this rewrite. This checklist covers the README
+at `main` and is to be used before the next release.
 
 Decision records such as `DEC-W2-SCOPE` are in `.genesis/project.json`. The gate test `tests/w2_09_readme` checks:
 - that every evidence path below exists;
@@ -76,4 +76,4 @@ Every industry statistic in `README.md`, with its citation.
 | C40 | No test needs an API key; `tests/w2_07_isolation/` needs user namespaces | Running the tests | `tests/t07_baseline/fake_api.py`, `tests/t07_baseline/test_adapter.py`, `tests/w2_07_isolation/` |
 | C41 | Apache-2.0 | Licence | `LICENSE` |
 | C42 | The install and test instructions: a virtual environment and `requirements-dev.txt`, the network once for pytest, a git clone because several suites read the git history, Python 3.12 on Linux (WSL), and the loop over every suite. Not re-run from a fresh clone for this checklist | Running the tests | `requirements-dev.txt`, `tests/t07_baseline/`, `tests/w2_08_release_protocol/release_common.py`, `tests/w2_10_release_runs/made_up.py`, `tools/check_world_drift.py` |
-| C43 | Release 1 had no pre-release review of its public text; this checklist covers the README at `main` and applies from the next release | What the evidence does not show | `SPEC.md` (NFR-8), `docs/release-log.md`, `docs/reviews/W2-09-readme-review-round-1.md` |
+| C43 | Release 1 had no pre-release checklist review of all its public text; this checklist covers the README at `main` and is to be used before the next release | What the evidence does not show | `SPEC.md` (NFR-8), `docs/release-log.md`, `docs/reviews/W2-09-readme-review-round-1.md` |

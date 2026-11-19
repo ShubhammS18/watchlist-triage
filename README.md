@@ -86,10 +86,10 @@ What follows from this:
 
 ## What the evidence does not show
 
-- **Release 1 had no pre-release review of its public text.** The specification asks for a release checklist that
-  reviews all public-facing text against the evidence before release (NFR-8). Release 1 was published on 18 Nov 2026,
-  before the checklist existed, and the README at the `release-1` tag still says the release runs are to come.
-  `docs/release-checklist.md` covers this README at `main` and applies from the next release.
+- **Release 1 had no pre-release checklist review of all its public text.** The specification asks for a release
+  checklist that reviews all public-facing text against the evidence before release (NFR-8). Release 1 was published
+  on 18 Nov 2026, before the checklist existed, and the README at the `release-1` tag still says the release runs are
+  to come. `docs/release-checklist.md` covers this README at `main` and is to be used before the next release.
 - **Synthetic worlds.** Two worlds, the frozen world and the fresh-seed world, both from my generator. Neither may
   represent real alerts, whose fields are messier.
 - **Small samples.** 6 true matches per primary family in each world, too few for a per-family claim.
@@ -188,8 +188,8 @@ for t in tests/t0*/ tests/w2_*/; do .venv/bin/python -m pytest "$t" -q -p no:cac
 - `tools/`, `trial/`: the drift check and timing aids; the settings and alerts of the T07 trial
 - `docs/`, `tests/`: design docs, reviews, evidence; tests per task
 
-`docs/README.md` says which design docs are current. `docs/release-checklist.md` checks each claim above against its
-evidence.
+`docs/README.md` says which design docs are current. `docs/release-checklist.md` lists this README's claims with their
+evidence; it covers this README only, not all public text.
 
 ## Licence
 
